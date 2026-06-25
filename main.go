@@ -1,3 +1,4 @@
+// package main creates a Telegram bot and zap logger.
 package main
 
 import (
@@ -30,6 +31,7 @@ func main() {
 	b.Start()
 }
 
+// createLogger creates a production zap logger.
 func createLogger() (*zap.Logger, error) {
 	const op = "main.createLogger"
 
@@ -41,6 +43,9 @@ func createLogger() (*zap.Logger, error) {
 	return logger, nil
 }
 
+// createBot creates a Telegram bot.
+// It uses the BOT_TOKEN environment variable.
+// Timeout is set to 10 seconds.
 func createBot() (*tele.Bot, error) {
 	const op = "main.createBot"
 
