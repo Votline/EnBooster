@@ -1,12 +1,18 @@
-// Package ui creates replykeyboard and catch her events
+// Package ui reply.go creates replykeyboard
 package ui
 
 import (
 	tele "gopkg.in/telebot.v3"
 )
 
-// MainMenu creates a replykeyboard with buttons.
-func MainMenu(btnTexts []string) *tele.ReplyMarkup {
+// InlineBtn is a button for inline keyboard
+type InlineBtn struct {
+	Text string
+	Data string
+}
+
+// ReplyMenu creates a replykeyboard with buttons.
+func ReplyMenu(btnTexts []string) *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{ResizeKeyboard: true}
 
 	currentRow := make([]tele.Btn, 0, 2)
@@ -18,7 +24,7 @@ func MainMenu(btnTexts []string) *tele.ReplyMarkup {
 
 		if len(currentRow) == 2 {
 			btns = append(btns, menu.Row(currentRow...))
-			currentRow = currentRow[:0]
+			currentRow = make([]tele.Btn, 0, 2)
 		}
 	}
 
@@ -27,6 +33,32 @@ func MainMenu(btnTexts []string) *tele.ReplyMarkup {
 	}
 
 	menu.Reply(btns...)
+
+	return menu
+}
+
+// InlineMenu creates a inline keyboard with buttons.
+func InlineMenu(btnData []InlineBtn) *tele.ReplyMarkup {
+	menu := &tele.ReplyMarkup{}
+
+	var rows []tele.Row
+	var currentRow []tele.Btn
+
+	for _, btn := range btnData {
+		btn := menu.Data(btn.Text, btn.Data)
+		currentRow = append(currentRow, btn)
+
+		if len(currentRow) == 2 {
+			rows = append(rows, menu.Row(currentRow...))
+			currentRow = make([]tele.Btn, 0, 2)
+		}
+	}
+
+	if len(currentRow) > 0 {
+		rows = append(rows, menu.Row(currentRow...))
+	}
+
+	menu.Inline(rows...)
 
 	return menu
 }

@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"enbstr/internal/ui"
+	"enbstr/internal/router"
 
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
@@ -24,10 +24,7 @@ func main() {
 		log.Fatal("Failed to create bot", zap.Error(err))
 	}
 
-	menu := ui.MainMenu([]string{"/start", "/help", "/ping"})
-	b.Handle("/ping", func(c tele.Context) error {
-		return c.Send("pong", menu)
-	})
+	router.Setup(b)
 
 	log.Info("Bot is successfully created")
 
