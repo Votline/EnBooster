@@ -24,9 +24,14 @@ func main() {
 		log.Fatal("Failed to create bot", zap.Error(err))
 	}
 
+	inline := ui.InlineMenu([]ui.InlineBtn{
+		{Text: "Start", Data: "/start"},
+		{Text: "Help", Data: "/help"},
+		{Text: "Ping", Data: "/ping"},
+	})
 	menu := ui.MainMenu([]string{"/start", "/help", "/ping"})
 	b.Handle("/ping", func(c tele.Context) error {
-		return c.Send("pong", menu)
+		return c.Send("pong", menu, inline)
 	})
 
 	log.Info("Bot is successfully created")

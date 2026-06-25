@@ -1,4 +1,4 @@
-// Package ui creates replykeyboard and catch her events
+// Package ui reply.go creates replykeyboard
 package ui
 
 import (
