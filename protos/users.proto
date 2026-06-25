@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package users;
+option go_package="generated-users/;usersservice";
+
+message RegReq {
+  string uuid = 1;
+}
+message RegRes {}
+
+message GetReq {
+  string uuid = 1;
+}
+message GetRes {
+  int32 best_task = 1;
+  int32 worst_task = 2;
+  int64 streak = 3;
+}
+
+message DelReq {
+  string uuid = 1;
+}
+message DelRes {}
+
+service UsersService {
+  rpc RegUser (RegReq) returns (RegRes);
+  rpc GetUser (GetReq) returns (GetRes);
+  rpc DelUser (DelReq) returns (DelRes);
+}

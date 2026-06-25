@@ -5,3 +5,38 @@ services:
       dockerfile: gateway/Dockerfile
     env_file:
       - .env
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+
+  users-service:
+    build:
+      context: .
+      dockerfile: users-service/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "${USERS_PORT}:${USERS_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - ./users-service/init.sql:/docker-entrypoint-initdb.d/1-users.sql:ro
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 10s
+      retries: 10
+      start_period: 3s
+
+
