@@ -1,10 +1,12 @@
-// package main creates a Telegram bot and zap logger.
+// Package main creates a Telegram bot and zap logger.
 package main
 
 import (
 	"fmt"
 	"os"
 	"time"
+
+	"enbstr/internal/ui"
 
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
@@ -22,8 +24,9 @@ func main() {
 		log.Fatal("Failed to create bot", zap.Error(err))
 	}
 
+	menu := ui.MainMenu([]string{"/start", "/help", "/ping"})
 	b.Handle("/ping", func(c tele.Context) error {
-		return c.Send("pong")
+		return c.Send("pong", menu)
 	})
 
 	log.Info("Bot is successfully created")
