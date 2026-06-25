@@ -19,7 +19,7 @@ func Setup(bot *tele.Bot) {
 	})
 
 	bot.Handle("/start", func(c tele.Context) error {
-		return c.Send("Hello, I'm EnBooster!", menu, inline)
+		return c.Send("Hello, I'm EnBooster!", menu)
 	})
 
 	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
