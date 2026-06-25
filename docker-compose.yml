@@ -5,6 +5,8 @@ services:
       dockerfile: gateway/Dockerfile
     env_file:
       - .env
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
 
   users-service:
     build:
@@ -12,6 +14,8 @@ services:
       dockerfile: users-service/Dockerfile
     env_file:
       - .env
+    ports:
+      - "${USERS_PORT}:${USERS_PORT}"
     depends_on:
       postgres:
         condition: service_healthy
