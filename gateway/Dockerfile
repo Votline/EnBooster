@@ -13,4 +13,5 @@ FROM alpine:3.18
 WORKDIR /gateway
 
 COPY --from=builder /build/gateway/gateway ./
+COPY --from=builder /build/gateway/ssl ./ssl
 CMD ["./gateway"]

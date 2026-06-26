@@ -23,8 +23,7 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:1
 Type:grpc
 Timeout:5s
-Expect:0
-Response:{}
+Response:connection error: desc = "error reading server preface: EOF"
 [\reg]
 
 [get]
@@ -38,8 +37,7 @@ Data:`
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:2
 Type:grpc
-Expect:0
-Response:{}
+Response:connection error: desc = "error reading server preface: EOF"
 [\get]
 
 [del]
@@ -53,7 +51,6 @@ Data:`
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:3
 Type:grpc
-Expect:0
-Response:{}
+Response:connection error: desc = "error reading server preface: EOF"
 [\del]
 

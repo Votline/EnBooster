@@ -1,1 +1,3 @@
 .env
+gateway/ssl/
+users-service/ssl/
