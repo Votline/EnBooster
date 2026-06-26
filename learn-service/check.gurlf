@@ -1,0 +1,96 @@
+[setup]
+Target:localhost:50052
+Endpoint:learn.LearnService/NewTask
+ID:0
+Type:grpc
+Response:
+[\setup]
+
+[new_tasks]
+Target:localhost:50052
+Endpoint:learn.LearnService/NewTask
+Data:`
+    {
+        "json_data": "[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\"}]"
+    }
+`
+ProtoPath:../protos/learn.proto
+ID:1
+Type:grpc
+Timeout:5s
+Response:{"inserted":1}
+[\new_tasks]
+
+[get_all_tasks_by_level]
+Target:localhost:50052
+Endpoint:learn.LearnService/GetTask
+Data:`
+    {
+        "level": "Intermediate",
+        "position": 0
+    }
+`
+ProtoPath:../protos/learn.proto
+ID:2
+Type:grpc
+Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
+[\get_all_tasks_by_level]
+
+[get_one_task_by_pos]
+Target:localhost:50052
+Endpoint:learn.LearnService/GetTask
+Data:`
+    {
+        "level": "Intermediate",
+        "position": 1
+    }
+`
+ProtoPath:../protos/learn.proto
+ID:3
+Type:grpc
+Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
+[\get_one_task_by_pos]
+
+[new_words]
+Target:localhost:50052
+Endpoint:learn.LearnService/NewWords
+Data:`
+    {
+        "json_data": "[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\"}]"
+    }
+`
+ProtoPath:../protos/learn.proto
+ID:4
+Type:grpc
+Response:method NewWords not implemented
+[\new_words]
+
+[get_word_by_str]
+Target:localhost:50052
+Endpoint:learn.LearnService/GetWord
+Data:`
+    {
+        "search_data": "Run"
+    }
+`
+ProtoPath:../protos/learn.proto
+ID:5
+Type:grpc
+Response:{}
+[\get_word_by_str]
+
+[del_task]
+Target:localhost:50052
+Endpoint:learn.LearnService/DelTask
+Data:`
+    {
+        "level": "Intermediate",
+        "position": 1
+    }
+`
+ProtoPath:../protos/learn.proto
+ID:6
+Type:grpc
+Response:{}
+[\del_task]
+

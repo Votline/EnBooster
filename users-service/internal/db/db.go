@@ -29,8 +29,6 @@ type User struct {
 func NewDB(log *zap.Logger) (*DB, error) {
 	const op = "db.New"
 
-	time.Sleep(5 * time.Second)
-
 	db, err := sqlx.Connect("postgres", os.Getenv("POSTGRES_URL"))
 	if err != nil {
 		return nil, fmt.Errorf("%s: sqlx connect: %w", op, err)
