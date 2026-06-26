@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package learn;
+option go_package = "generated-learn/;learnservice";
+
+message NewTaskReq {
+  string task_data = 1;
+}
+message NewTaskRes {
+  string task = 1;
+  string level = 2;
+  int32 task_id = 3;
+  string task_uuid = 4;
+}
+
+message GetTaskReq {
+  string task_uuid = 1;
+}
+message GetTaskRes {
+  string task = 1;
+  string level = 2;
+  int32 task_id = 3;
+}
+
+message DelTaskReq {
+  string task_uuid = 1;
+}
+message DelTaskRes {}
+
+message NewWordReq {
+  string word = 1;
+}
+message NewWordRes {
+  string word = 1;
+  string level = 2;
+  string first_letter = 3;
+  string word_uuid = 4;
+}
+
+message GetWordReq {
+  string word_uuid = 1;
+}
+message GetWordRes {
+  string word = 1;
+  string level = 2;
+  string first_letter = 3;
+}
+
+message DelWordReq {
+  string word_uuid = 1;
+}
+message DelWordRes {}
+
+service LearnService {
+  rpc NewTask (NewTaskReq) returns (NewTaskRes);
+  rpc GetTask (GetTaskReq) returns (GetTaskRes);
+  rpc DelTask (DelTaskReq) returns (DelTaskRes);
+
+  rpc NewWord (NewWordReq) returns (NewWordRes);
+  rpc GetWord (GetWordReq) returns (GetWordRes);
+  rpc DelWord (DelWordReq) returns (DelWordRes);
+}
