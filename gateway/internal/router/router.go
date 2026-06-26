@@ -3,11 +3,19 @@ package router
 
 import (
 	"enbstr/internal/ui"
+	"enbstr/internal/users"
 
+	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
-func Setup(bot *tele.Bot) {
+func Setup(bot *tele.Bot, log *zap.Logger) {
+	usrsrv, err := users.NewUS(log)
+	if err != nil {
+		log.Fatal("Failed to create users service", zap.Error(err))
+	}
+	usrsrv.RegisterRoutes(bot)
+
 	menu := ui.ReplyMenu([]string{
 		"Начать учёбу 📚", "Помощь 🤔️", "Профиль 👤",
 	})
@@ -18,20 +26,12 @@ func Setup(bot *tele.Bot) {
 		{Text: "exit", Data: "action_exit"},
 	})
 
-	bot.Handle("/start", func(c tele.Context) error {
-		return c.Send("Hello, I'm EnBooster!", menu)
-	})
-
 	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
 		return c.Send("Start lerning message", menu, inline)
 	})
 
 	bot.Handle("Помощь 🤔️", func(c tele.Context) error {
 		return c.Send("Help message")
-	})
-
-	bot.Handle("Профиль 👤", func(c tele.Context) error {
-		return c.Send("Profile message")
 	})
 
 	bot.Handle("\faction_next", func(c tele.Context) error {

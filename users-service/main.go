@@ -12,6 +12,7 @@ import (
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // usersserver provides users service grpc methods.
@@ -25,19 +26,24 @@ func main() {
 	log, _ := zap.NewProduction()
 	defer log.Sync()
 
+	creds, err := credentials.NewServerTLSFromFile("ssl/server.crt", "ssl/server.key")
+	if err != nil {
+		log.Fatal("failed to load TLS keys", zap.Error(err))
+	}
+
 	lis, err := net.Listen("tcp", ":"+os.Getenv("USERS_PORT"))
 	if err != nil {
-		log.Fatal("failed to listen: ", zap.Error(err))
+		log.Fatal("failed to listen", zap.Error(err))
 	}
 
 	db, err := db.NewDB(log)
 	if err != nil {
-		log.Fatal("failed to create db: ", zap.Error(err))
+		log.Fatal("failed to create db", zap.Error(err))
 	}
 	defer db.Close()
 
 	s := usersserver{log: log, db: db}
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterUsersServiceServer(srv, &s)
 
 	log.Info("Users service succesfully started")
@@ -87,7 +93,7 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 	s.log.Info("Successfully got user",
 		zap.Int("best task", int(ud.BestTask)),
 		zap.Int("worst task", int(ud.WorstTask)),
-		zap.Int("steak", int(ud.Streak)))
+		zap.Int("streak", int(ud.Streak)))
 
 	return &pb.GetRes{
 		BestTask:  ud.BestTask,

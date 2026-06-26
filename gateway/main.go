@@ -24,7 +24,7 @@ func main() {
 		log.Fatal("Failed to create bot", zap.Error(err))
 	}
 
-	router.Setup(b)
+	router.Setup(b, log)
 
 	log.Info("Bot is successfully created")
 
