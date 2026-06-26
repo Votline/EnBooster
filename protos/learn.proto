@@ -8,10 +8,13 @@ option go_package = "generated-learn/;learnservice";
 message NewTaskReq {
   string json_data = 1; // full pages
 }
-message NewTaskRes {}
+message NewTaskRes {
+  int32 inserted = 1;
+}
 
 message GetTaskReq {
-  string task_uuid = 1;
+  string level = 1;
+  int32 position = 2;
 }
 message GetTaskRes {
   string task = 1;
@@ -20,28 +23,32 @@ message GetTaskRes {
 }
 
 message DelTaskReq {
-  string task_uuid = 1;
+  string level = 1;
+  int32 position = 2;
 }
 message DelTaskRes {}
 
 // WORDS MESSAGES
 
 message NewWordsReq {
-  string json_words = 1; // many words in json format
+  string json_data = 1; // many words with explanations in json format
 }
-message NewWordsRes {}
+message NewWordsRes {
+  int32 inserted = 1;
+}
 
 message GetWordReq {
-  string word = 1;
+  string search_data = 1; // word or serial number
 }
 message GetWordRes {
-  string word = 1;
-  string level = 2;
-  string first_letter = 3;
+  string data = 1;
+  // words with explanations, level,
+  // first letter and serial number in json (many data)
 }
 
 message DelWordReq {
-  string word = 1;
+  string word = 1; // 1 word
+  int32 serial = 2; // 1 serial number
 }
 message DelWordRes {}
 

@@ -67,6 +67,7 @@ func (x *NewTaskReq) GetJsonData() string {
 
 type NewTaskRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Inserted      int32                  `protobuf:"varint,1,opt,name=inserted,proto3" json:"inserted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -101,9 +102,17 @@ func (*NewTaskRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{1}
 }
 
+func (x *NewTaskRes) GetInserted() int32 {
+	if x != nil {
+		return x.Inserted
+	}
+	return 0
+}
+
 type GetTaskReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskUuid      string                 `protobuf:"bytes,1,opt,name=task_uuid,json=taskUuid,proto3" json:"task_uuid,omitempty"`
+	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
+	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,11 +147,18 @@ func (*GetTaskReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetTaskReq) GetTaskUuid() string {
+func (x *GetTaskReq) GetLevel() string {
 	if x != nil {
-		return x.TaskUuid
+		return x.Level
 	}
 	return ""
+}
+
+func (x *GetTaskReq) GetPosition() int32 {
+	if x != nil {
+		return x.Position
+	}
+	return 0
 }
 
 type GetTaskRes struct {
@@ -207,7 +223,8 @@ func (x *GetTaskRes) GetAnswer() string {
 
 type DelTaskReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskUuid      string                 `protobuf:"bytes,1,opt,name=task_uuid,json=taskUuid,proto3" json:"task_uuid,omitempty"`
+	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
+	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -242,11 +259,18 @@ func (*DelTaskReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *DelTaskReq) GetTaskUuid() string {
+func (x *DelTaskReq) GetLevel() string {
 	if x != nil {
-		return x.TaskUuid
+		return x.Level
 	}
 	return ""
+}
+
+func (x *DelTaskReq) GetPosition() int32 {
+	if x != nil {
+		return x.Position
+	}
+	return 0
 }
 
 type DelTaskRes struct {
@@ -287,7 +311,7 @@ func (*DelTaskRes) Descriptor() ([]byte, []int) {
 
 type NewWordsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	JsonWords     string                 `protobuf:"bytes,1,opt,name=json_words,json=jsonWords,proto3" json:"json_words,omitempty"` // many words in json format
+	JsonData      string                 `protobuf:"bytes,1,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"` // many words with explanations in json format
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -322,15 +346,16 @@ func (*NewWordsReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *NewWordsReq) GetJsonWords() string {
+func (x *NewWordsReq) GetJsonData() string {
 	if x != nil {
-		return x.JsonWords
+		return x.JsonData
 	}
 	return ""
 }
 
 type NewWordsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Inserted      int32                  `protobuf:"varint,1,opt,name=inserted,proto3" json:"inserted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -365,9 +390,16 @@ func (*NewWordsRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{7}
 }
 
+func (x *NewWordsRes) GetInserted() int32 {
+	if x != nil {
+		return x.Inserted
+	}
+	return 0
+}
+
 type GetWordReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Word          string                 `protobuf:"bytes,1,opt,name=word,proto3" json:"word,omitempty"`
+	SearchData    string                 `protobuf:"bytes,1,opt,name=search_data,json=searchData,proto3" json:"search_data,omitempty"` // word or serial number
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -402,18 +434,16 @@ func (*GetWordReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetWordReq) GetWord() string {
+func (x *GetWordReq) GetSearchData() string {
 	if x != nil {
-		return x.Word
+		return x.SearchData
 	}
 	return ""
 }
 
 type GetWordRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Word          string                 `protobuf:"bytes,1,opt,name=word,proto3" json:"word,omitempty"`
-	Level         string                 `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`
-	FirstLetter   string                 `protobuf:"bytes,3,opt,name=first_letter,json=firstLetter,proto3" json:"first_letter,omitempty"`
+	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -448,30 +478,17 @@ func (*GetWordRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetWordRes) GetWord() string {
+func (x *GetWordRes) GetData() string {
 	if x != nil {
-		return x.Word
-	}
-	return ""
-}
-
-func (x *GetWordRes) GetLevel() string {
-	if x != nil {
-		return x.Level
-	}
-	return ""
-}
-
-func (x *GetWordRes) GetFirstLetter() string {
-	if x != nil {
-		return x.FirstLetter
+		return x.Data
 	}
 	return ""
 }
 
 type DelWordReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Word          string                 `protobuf:"bytes,1,opt,name=word,proto3" json:"word,omitempty"`
+	Word          string                 `protobuf:"bytes,1,opt,name=word,proto3" json:"word,omitempty"`      // 1 word
+	Serial        int32                  `protobuf:"varint,2,opt,name=serial,proto3" json:"serial,omitempty"` // 1 serial number
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,6 +528,13 @@ func (x *DelWordReq) GetWord() string {
 		return x.Word
 	}
 	return ""
+}
+
+func (x *DelWordReq) GetSerial() int32 {
+	if x != nil {
+		return x.Serial
+	}
+	return 0
 }
 
 type DelWordRes struct {
@@ -556,37 +580,40 @@ const file_learn_proto_rawDesc = "" +
 	"\vlearn.proto\x12\x05learn\")\n" +
 	"\n" +
 	"NewTaskReq\x12\x1b\n" +
-	"\tjson_data\x18\x01 \x01(\tR\bjsonData\"\f\n" +
+	"\tjson_data\x18\x01 \x01(\tR\bjsonData\"(\n" +
 	"\n" +
-	"NewTaskRes\")\n" +
+	"NewTaskRes\x12\x1a\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\">\n" +
 	"\n" +
-	"GetTaskReq\x12\x1b\n" +
-	"\ttask_uuid\x18\x01 \x01(\tR\btaskUuid\"N\n" +
+	"GetTaskReq\x12\x14\n" +
+	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\"N\n" +
 	"\n" +
 	"GetTaskRes\x12\x12\n" +
 	"\x04task\x18\x01 \x01(\tR\x04task\x12\x14\n" +
 	"\x05level\x18\x02 \x01(\tR\x05level\x12\x16\n" +
-	"\x06answer\x18\x03 \x01(\tR\x06answer\")\n" +
+	"\x06answer\x18\x03 \x01(\tR\x06answer\">\n" +
 	"\n" +
-	"DelTaskReq\x12\x1b\n" +
-	"\ttask_uuid\x18\x01 \x01(\tR\btaskUuid\"\f\n" +
+	"DelTaskReq\x12\x14\n" +
+	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\"\f\n" +
 	"\n" +
-	"DelTaskRes\",\n" +
-	"\vNewWordsReq\x12\x1d\n" +
+	"DelTaskRes\"*\n" +
+	"\vNewWordsReq\x12\x1b\n" +
+	"\tjson_data\x18\x01 \x01(\tR\bjsonData\")\n" +
+	"\vNewWordsRes\x12\x1a\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\"-\n" +
 	"\n" +
-	"json_words\x18\x01 \x01(\tR\tjsonWords\"\r\n" +
-	"\vNewWordsRes\" \n" +
-	"\n" +
-	"GetWordReq\x12\x12\n" +
-	"\x04word\x18\x01 \x01(\tR\x04word\"Y\n" +
+	"GetWordReq\x12\x1f\n" +
+	"\vsearch_data\x18\x01 \x01(\tR\n" +
+	"searchData\" \n" +
 	"\n" +
 	"GetWordRes\x12\x12\n" +
-	"\x04word\x18\x01 \x01(\tR\x04word\x12\x14\n" +
-	"\x05level\x18\x02 \x01(\tR\x05level\x12!\n" +
-	"\ffirst_letter\x18\x03 \x01(\tR\vfirstLetter\" \n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"8\n" +
 	"\n" +
 	"DelWordReq\x12\x12\n" +
-	"\x04word\x18\x01 \x01(\tR\x04word\"\f\n" +
+	"\x04word\x18\x01 \x01(\tR\x04word\x12\x16\n" +
+	"\x06serial\x18\x02 \x01(\x05R\x06serial\"\f\n" +
 	"\n" +
 	"DelWordRes2\xb7\x02\n" +
 	"\fLearnService\x12/\n" +
