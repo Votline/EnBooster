@@ -163,9 +163,7 @@ func (x *GetTaskReq) GetPosition() int32 {
 
 type GetTaskRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Task          string                 `protobuf:"bytes,1,opt,name=task,proto3" json:"task,omitempty"`
-	Level         string                 `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`
-	Answer        string                 `protobuf:"bytes,3,opt,name=answer,proto3" json:"answer,omitempty"`
+	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -200,23 +198,9 @@ func (*GetTaskRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetTaskRes) GetTask() string {
+func (x *GetTaskRes) GetData() string {
 	if x != nil {
-		return x.Task
-	}
-	return ""
-}
-
-func (x *GetTaskRes) GetLevel() string {
-	if x != nil {
-		return x.Level
-	}
-	return ""
-}
-
-func (x *GetTaskRes) GetAnswer() string {
-	if x != nil {
-		return x.Answer
+		return x.Data
 	}
 	return ""
 }
@@ -587,12 +571,10 @@ const file_learn_proto_rawDesc = "" +
 	"\n" +
 	"GetTaskReq\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
-	"\bposition\x18\x02 \x01(\x05R\bposition\"N\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\" \n" +
 	"\n" +
 	"GetTaskRes\x12\x12\n" +
-	"\x04task\x18\x01 \x01(\tR\x04task\x12\x14\n" +
-	"\x05level\x18\x02 \x01(\tR\x05level\x12\x16\n" +
-	"\x06answer\x18\x03 \x01(\tR\x06answer\">\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\">\n" +
 	"\n" +
 	"DelTaskReq\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +

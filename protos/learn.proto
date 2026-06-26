@@ -17,9 +17,9 @@ message GetTaskReq {
   int32 position = 2;
 }
 message GetTaskRes {
-  string task = 1;
-  string level = 2;
-  string answer = 3;
+  string data = 1;
+  // contains task, level and answer
+  // returns json object (many tasks)
 }
 
 message DelTaskReq {
@@ -42,8 +42,9 @@ message GetWordReq {
 }
 message GetWordRes {
   string data = 1;
-  // words with explanations, level,
-  // first letter and serial number in json (many data)
+  // contains word,explanations, level,
+  // first letter and serial number
+  // returns json object (many data)
 }
 
 message DelWordReq {
