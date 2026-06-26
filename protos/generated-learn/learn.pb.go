@@ -23,7 +23,7 @@ const (
 
 type NewTaskReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	JsonData      string                 `protobuf:"bytes,1,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"` // full page
+	JsonData      string                 `protobuf:"bytes,1,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"` // full pages
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,8 +67,6 @@ func (x *NewTaskReq) GetJsonData() string {
 
 type NewTaskRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`                       // task level
-	TaskUuid      string                 `protobuf:"bytes,2,opt,name=task_uuid,json=taskUuid,proto3" json:"task_uuid,omitempty"` // created uuid
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -101,20 +99,6 @@ func (x *NewTaskRes) ProtoReflect() protoreflect.Message {
 // Deprecated: Use NewTaskRes.ProtoReflect.Descriptor instead.
 func (*NewTaskRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *NewTaskRes) GetLevel() string {
-	if x != nil {
-		return x.Level
-	}
-	return ""
-}
-
-func (x *NewTaskRes) GetTaskUuid() string {
-	if x != nil {
-		return x.TaskUuid
-	}
-	return ""
 }
 
 type GetTaskReq struct {
@@ -572,11 +556,9 @@ const file_learn_proto_rawDesc = "" +
 	"\vlearn.proto\x12\x05learn\")\n" +
 	"\n" +
 	"NewTaskReq\x12\x1b\n" +
-	"\tjson_data\x18\x01 \x01(\tR\bjsonData\"?\n" +
+	"\tjson_data\x18\x01 \x01(\tR\bjsonData\"\f\n" +
 	"\n" +
-	"NewTaskRes\x12\x14\n" +
-	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1b\n" +
-	"\ttask_uuid\x18\x02 \x01(\tR\btaskUuid\")\n" +
+	"NewTaskRes\")\n" +
 	"\n" +
 	"GetTaskReq\x12\x1b\n" +
 	"\ttask_uuid\x18\x01 \x01(\tR\btaskUuid\"N\n" +

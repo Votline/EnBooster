@@ -6,12 +6,9 @@ option go_package = "generated-learn/;learnservice";
 // TASKS MESSAGES
 
 message NewTaskReq {
-  string json_data = 1; // full page
+  string json_data = 1; // full pages
 }
-message NewTaskRes {
-  string level = 1; // task level
-  string task_uuid = 2; // created uuid
-}
+message NewTaskRes {}
 
 message GetTaskReq {
   string task_uuid = 1;
