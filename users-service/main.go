@@ -87,7 +87,7 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 	s.log.Info("Successfully got user",
 		zap.Int("best task", int(ud.BestTask)),
 		zap.Int("worst task", int(ud.WorstTask)),
-		zap.Int("steak", int(ud.Streak)))
+		zap.Int("streak", int(ud.Streak)))
 
 	return &pb.GetRes{
 		BestTask:  ud.BestTask,
