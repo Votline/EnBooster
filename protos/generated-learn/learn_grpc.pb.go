@@ -19,12 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LearnService_NewTask_FullMethodName = "/learn.LearnService/NewTask"
-	LearnService_GetTask_FullMethodName = "/learn.LearnService/GetTask"
-	LearnService_DelTask_FullMethodName = "/learn.LearnService/DelTask"
-	LearnService_NewWord_FullMethodName = "/learn.LearnService/NewWord"
-	LearnService_GetWord_FullMethodName = "/learn.LearnService/GetWord"
-	LearnService_DelWord_FullMethodName = "/learn.LearnService/DelWord"
+	LearnService_NewTask_FullMethodName  = "/learn.LearnService/NewTask"
+	LearnService_GetTask_FullMethodName  = "/learn.LearnService/GetTask"
+	LearnService_DelTask_FullMethodName  = "/learn.LearnService/DelTask"
+	LearnService_NewWords_FullMethodName = "/learn.LearnService/NewWords"
+	LearnService_GetWord_FullMethodName  = "/learn.LearnService/GetWord"
+	LearnService_DelWord_FullMethodName  = "/learn.LearnService/DelWord"
 )
 
 // LearnServiceClient is the client API for LearnService service.
@@ -34,7 +34,7 @@ type LearnServiceClient interface {
 	NewTask(ctx context.Context, in *NewTaskReq, opts ...grpc.CallOption) (*NewTaskRes, error)
 	GetTask(ctx context.Context, in *GetTaskReq, opts ...grpc.CallOption) (*GetTaskRes, error)
 	DelTask(ctx context.Context, in *DelTaskReq, opts ...grpc.CallOption) (*DelTaskRes, error)
-	NewWord(ctx context.Context, in *NewWordReq, opts ...grpc.CallOption) (*NewWordRes, error)
+	NewWords(ctx context.Context, in *NewWordsReq, opts ...grpc.CallOption) (*NewWordsRes, error)
 	GetWord(ctx context.Context, in *GetWordReq, opts ...grpc.CallOption) (*GetWordRes, error)
 	DelWord(ctx context.Context, in *DelWordReq, opts ...grpc.CallOption) (*DelWordRes, error)
 }
@@ -77,10 +77,10 @@ func (c *learnServiceClient) DelTask(ctx context.Context, in *DelTaskReq, opts .
 	return out, nil
 }
 
-func (c *learnServiceClient) NewWord(ctx context.Context, in *NewWordReq, opts ...grpc.CallOption) (*NewWordRes, error) {
+func (c *learnServiceClient) NewWords(ctx context.Context, in *NewWordsReq, opts ...grpc.CallOption) (*NewWordsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NewWordRes)
-	err := c.cc.Invoke(ctx, LearnService_NewWord_FullMethodName, in, out, cOpts...)
+	out := new(NewWordsRes)
+	err := c.cc.Invoke(ctx, LearnService_NewWords_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ type LearnServiceServer interface {
 	NewTask(context.Context, *NewTaskReq) (*NewTaskRes, error)
 	GetTask(context.Context, *GetTaskReq) (*GetTaskRes, error)
 	DelTask(context.Context, *DelTaskReq) (*DelTaskRes, error)
-	NewWord(context.Context, *NewWordReq) (*NewWordRes, error)
+	NewWords(context.Context, *NewWordsReq) (*NewWordsRes, error)
 	GetWord(context.Context, *GetWordReq) (*GetWordRes, error)
 	DelWord(context.Context, *DelWordReq) (*DelWordRes, error)
 	mustEmbedUnimplementedLearnServiceServer()
@@ -136,8 +136,8 @@ func (UnimplementedLearnServiceServer) GetTask(context.Context, *GetTaskReq) (*G
 func (UnimplementedLearnServiceServer) DelTask(context.Context, *DelTaskReq) (*DelTaskRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DelTask not implemented")
 }
-func (UnimplementedLearnServiceServer) NewWord(context.Context, *NewWordReq) (*NewWordRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method NewWord not implemented")
+func (UnimplementedLearnServiceServer) NewWords(context.Context, *NewWordsReq) (*NewWordsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method NewWords not implemented")
 }
 func (UnimplementedLearnServiceServer) GetWord(context.Context, *GetWordReq) (*GetWordRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWord not implemented")
@@ -220,20 +220,20 @@ func _LearnService_DelTask_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LearnService_NewWord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewWordReq)
+func _LearnService_NewWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewWordsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LearnServiceServer).NewWord(ctx, in)
+		return srv.(LearnServiceServer).NewWords(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LearnService_NewWord_FullMethodName,
+		FullMethod: LearnService_NewWords_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LearnServiceServer).NewWord(ctx, req.(*NewWordReq))
+		return srv.(LearnServiceServer).NewWords(ctx, req.(*NewWordsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -294,8 +294,8 @@ var LearnService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LearnService_DelTask_Handler,
 		},
 		{
-			MethodName: "NewWord",
-			Handler:    _LearnService_NewWord_Handler,
+			MethodName: "NewWords",
+			Handler:    _LearnService_NewWords_Handler,
 		},
 		{
 			MethodName: "GetWord",

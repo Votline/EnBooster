@@ -3,14 +3,14 @@ syntax = "proto3";
 package learn;
 option go_package = "generated-learn/;learnservice";
 
+// TASKS MESSAGES
+
 message NewTaskReq {
-  string task_data = 1;
+  string json_data = 1; // full page
 }
 message NewTaskRes {
-  string task = 1;
-  string level = 2;
-  int32 task_id = 3;
-  string task_uuid = 4;
+  string level = 1; // task level
+  string task_uuid = 2; // created uuid
 }
 
 message GetTaskReq {
@@ -19,7 +19,7 @@ message GetTaskReq {
 message GetTaskRes {
   string task = 1;
   string level = 2;
-  int32 task_id = 3;
+  string answer = 3;
 }
 
 message DelTaskReq {
@@ -27,18 +27,15 @@ message DelTaskReq {
 }
 message DelTaskRes {}
 
-message NewWordReq {
-  string word = 1;
+// WORDS MESSAGES
+
+message NewWordsReq {
+  string json_words = 1; // many words in json format
 }
-message NewWordRes {
-  string word = 1;
-  string level = 2;
-  string first_letter = 3;
-  string word_uuid = 4;
-}
+message NewWordsRes {}
 
 message GetWordReq {
-  string word_uuid = 1;
+  string word = 1;
 }
 message GetWordRes {
   string word = 1;
@@ -47,7 +44,7 @@ message GetWordRes {
 }
 
 message DelWordReq {
-  string word_uuid = 1;
+  string word = 1;
 }
 message DelWordRes {}
 
@@ -56,7 +53,7 @@ service LearnService {
   rpc GetTask (GetTaskReq) returns (GetTaskRes);
   rpc DelTask (DelTaskReq) returns (DelTaskRes);
 
-  rpc NewWord (NewWordReq) returns (NewWordRes);
+  rpc NewWords (NewWordsReq) returns (NewWordsRes);
   rpc GetWord (GetWordReq) returns (GetWordRes);
   rpc DelWord (DelWordReq) returns (DelWordRes);
 }
