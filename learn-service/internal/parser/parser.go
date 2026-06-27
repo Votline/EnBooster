@@ -20,7 +20,7 @@ type Task struct {
 // Word is a single word from json words data.
 type Word struct {
 	Word        string `json:"word" db:"word"`
-	Explanation string `json:"explain" db:"explain"`
+	Explain     string `json:"explain" db:"explain"`
 	Level       string `json:"level" db:"level"`
 	FirstLetter string `json:"first_letter" db:"first_letter"`
 	Serial      int32  `json:"serial" db:"serial"`
@@ -39,8 +39,8 @@ func ParseTask(data string, tasks *[]Task) error {
 	return nil
 }
 
-// ParseWord parses json data to words struct.
-func ParseWord(data string, words *[]Word) error {
+// ParseWords parses json data to words struct.
+func ParseWords(data string, words *[]Word) error {
 	const op = "parser.ParseWord"
 
 	dataBytes := unsafe.Slice(unsafe.StringData(data), len(data))

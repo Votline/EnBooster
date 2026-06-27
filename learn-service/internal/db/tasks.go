@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"learn/internal/parser"
+
+	sq "github.com/Masterminds/squirrel"
 )
 
 // NewTaskBulk insert many tasks to database.
@@ -21,7 +23,7 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task) (int32, error
 
 	maxQuery, maxArgs, maxErr := d.bd.Select("COALESCE(MAX(position), 0)").
 		From("tasks").
-		Where("level = ?", curLvl).
+		Where(sq.Eq{"level": curLvl}).
 		ToSql()
 	if maxErr != nil {
 		return 0, fmt.Errorf("%s: create max query: %w", op, maxErr)
@@ -65,11 +67,11 @@ func (d *DB) GetTask(ctx context.Context, level string, pos int32, tasks *[]pars
 	query := d.bd.Select("task, level, answer, position").From("tasks")
 
 	if level != "" {
-		query = query.Where("level = ?", level)
+		query = query.Where(sq.Eq{"level": level})
 	}
 
 	if pos > 0 {
-		query = query.Where("position = ?", pos)
+		query = query.Where(sq.Eq{"position": pos})
 	}
 
 	sql, args, err := query.ToSql()
@@ -79,6 +81,24 @@ func (d *DB) GetTask(ctx context.Context, level string, pos int32, tasks *[]pars
 
 	if err := d.db.SelectContext(ctx, tasks, sql, args...); err != nil {
 		return fmt.Errorf("%s: exec get task query: %w", op, err)
+	}
+
+	return nil
+}
+
+func (d *DB) DelTask(ctx context.Context, level string, pos int32) error {
+	const op = "db.DelTask"
+
+	query, args, err := d.bd.Delete("tasks").
+		Where(sq.Eq{"level": level}).
+		Where(sq.Eq{"position": pos}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: create del task query: %w", op, err)
+	}
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: exec del task query: %w", op, err)
 	}
 
 	return nil

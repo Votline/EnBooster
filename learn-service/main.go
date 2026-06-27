@@ -122,23 +122,78 @@ func (s *learnservice) GetTask(ctx context.Context, req *pb.GetTaskReq) (*pb.Get
 func (s *learnservice) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelTaskRes, error) {
 	const op = "learnservice.DelTask"
 
+	lvl := req.GetLevel()
+	pos := req.GetPosition()
+
+	if err := s.db.DelTask(ctx, lvl, pos); err != nil {
+		return nil, fmt.Errorf("%s: del task: %w", op, err)
+	}
+
 	return nil, nil
 }
 
-func (s *learnservice) NewWord(ctx context.Context, req *pb.NewWordsReq) (*pb.NewWordsRes, error) {
-	const op = "learnservice.NewWord"
+func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.NewWordsRes, error) {
+	const op = "learnservice.NewWords"
 
-	return nil, nil
+	data := req.GetJsonData()
+	if data == "" {
+		return nil, fmt.Errorf("%s: empty data", op)
+	}
+
+	wordsPtr := wordsPool.Get().(*[]parser.Word)
+	*wordsPtr = (*wordsPtr)[:0]
+	defer wordsPool.Put(wordsPtr)
+
+	if err := parser.ParseWords(data, wordsPtr); err != nil {
+		return nil, fmt.Errorf("%s: parse json data: %w", op, err)
+	}
+
+	rowsAffected, err := s.db.NewWordsBulk(ctx, *wordsPtr)
+	if err != nil {
+		return nil, fmt.Errorf("%s: insert words: %w", op, err)
+	}
+
+	if rowsAffected == 0 {
+		return nil, fmt.Errorf("%s: no rows affected", op)
+	}
+
+	return &pb.NewWordsRes{Inserted: rowsAffected}, nil
 }
 
 func (s *learnservice) GetWord(ctx context.Context, req *pb.GetWordReq) (*pb.GetWordRes, error) {
 	const op = "learnservice.GetWord"
 
-	return nil, nil
+	searchData := req.GetSearchData()
+	if searchData == "" {
+		return nil, fmt.Errorf("%s: empty search data", op)
+	}
+
+	wordsPtr := wordsPool.Get().(*[]parser.Word)
+	*wordsPtr = (*wordsPtr)[:0]
+	defer wordsPool.Put(wordsPtr)
+
+	if err := s.db.GetWords(ctx, searchData, wordsPtr); err != nil {
+		return nil, fmt.Errorf("%s: get words: %w", op, err)
+	}
+
+	wordsBytes, err := json.Marshal(*wordsPtr)
+	if err != nil {
+		return nil, fmt.Errorf("%s: marshal words: %w", op, err)
+	}
+	wordsStr := unsafe.String(unsafe.SliceData(wordsBytes), len(wordsBytes))
+
+	return &pb.GetWordRes{Data: wordsStr}, nil
 }
 
 func (s *learnservice) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.DelWordRes, error) {
 	const op = "learnservice.DelWord"
+
+	word := req.GetWord()
+	serial := req.GetSerial()
+
+	if err := s.db.DelWords(ctx, word, serial); err != nil {
+		return nil, fmt.Errorf("%s: del words: %w", op, err)
+	}
 
 	return nil, nil
 }

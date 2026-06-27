@@ -1,6 +1,7 @@
 [setup]
 Target:localhost:50051
 Endpoint:users.UsersService/Ignore
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:0
 Type:grpc
 SetVariables:`
@@ -23,7 +24,8 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:1
 Type:grpc
 Timeout:5s
-Response:connection error: desc = "error reading server preface: EOF"
+Certs:../gateway/ssl/ca.crt
+Response:{}
 [\reg]
 
 [get]
@@ -37,7 +39,8 @@ Data:`
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:2
 Type:grpc
-Response:connection error: desc = "error reading server preface: EOF"
+Certs:../gateway/ssl/ca.crt
+Response:{}
 [\get]
 
 [del]
@@ -51,6 +54,7 @@ Data:`
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:3
 Type:grpc
-Response:connection error: desc = "error reading server preface: EOF"
+Certs:../gateway/ssl/ca.crt
+Response:{}
 [\del]
 

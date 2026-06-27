@@ -18,6 +18,7 @@ ProtoPath:../protos/learn.proto
 ID:1
 Type:grpc
 Timeout:5s
+Certs:ignore
 Response:{"inserted":1}
 [\new_tasks]
 
@@ -62,7 +63,7 @@ Data:`
 ProtoPath:../protos/learn.proto
 ID:4
 Type:grpc
-Response:method NewWords not implemented
+Response:{"inserted":1}
 [\new_words]
 
 [get_word_by_str]
@@ -76,7 +77,7 @@ Data:`
 ProtoPath:../protos/learn.proto
 ID:5
 Type:grpc
-Response:{}
+Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":1},{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":2}]"}
 [\get_word_by_str]
 
 [del_task]
