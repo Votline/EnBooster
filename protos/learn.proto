@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package learn;
+option go_package = "generated-learn/;learnservice";
+
+// TASKS MESSAGES
+
+message NewTaskReq {
+  string json_data = 1; // full pages
+}
+message NewTaskRes {
+  int32 inserted = 1;
+}
+
+message GetTaskReq {
+  string level = 1;
+  int32 position = 2;
+}
+message GetTaskRes {
+  string data = 1;
+  // contains task, level and answer
+  // returns json object (many tasks)
+}
+
+message DelTaskReq {
+  string level = 1;
+  int32 position = 2;
+}
+message DelTaskRes {}
+
+// WORDS MESSAGES
+
+message NewWordsReq {
+  string json_data = 1; // many words with explanations in json format
+}
+message NewWordsRes {
+  int32 inserted = 1;
+}
+
+message GetWordReq {
+  string search_data = 1; // word or serial number
+}
+message GetWordRes {
+  string data = 1;
+  // contains word,explanations, level,
+  // first letter and serial number
+  // returns json object (many data)
+}
+
+message DelWordReq {
+  string word = 1; // 1 word
+  int32 serial = 2; // 1 serial number
+}
+message DelWordRes {}
+
+service LearnService {
+  rpc NewTask (NewTaskReq) returns (NewTaskRes);
+  rpc GetTask (GetTaskReq) returns (GetTaskRes);
+  rpc DelTask (DelTaskReq) returns (DelTaskRes);
+
+  rpc NewWords (NewWordsReq) returns (NewWordsRes);
+  rpc GetWord (GetWordReq) returns (GetWordRes);
+  rpc DelWord (DelWordReq) returns (DelWordRes);
+}

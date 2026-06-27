@@ -20,6 +20,18 @@ services:
       postgres:
         condition: service_healthy
 
+  learn-service:
+    build:
+      context: .
+      dockerfile: learn-service/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "${LEARN_PORT}:${LEARN_PORT}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     image: postgres:17
     ports:
@@ -28,15 +40,16 @@ services:
       - .env
     volumes:
       - ./users-service/init.sql:/docker-entrypoint-initdb.d/1-users.sql:ro
+      - ./learn-service/init.sql:/docker-entrypoint-initdb.d/2-learn.sql:ro
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c 'SELECT 1 FROM users LIMIT 1;'"]
       interval: 2s
       timeout: 10s
       retries: 10
-      start_period: 3s
+      start_period: 5s
 
 
