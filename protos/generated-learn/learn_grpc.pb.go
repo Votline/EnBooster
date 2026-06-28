@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LearnService_NewTask_FullMethodName  = "/learn.LearnService/NewTask"
-	LearnService_GetTask_FullMethodName  = "/learn.LearnService/GetTask"
+	LearnService_NewTasks_FullMethodName = "/learn.LearnService/NewTasks"
+	LearnService_GetTasks_FullMethodName = "/learn.LearnService/GetTasks"
 	LearnService_DelTask_FullMethodName  = "/learn.LearnService/DelTask"
 	LearnService_NewWords_FullMethodName = "/learn.LearnService/NewWords"
-	LearnService_GetWord_FullMethodName  = "/learn.LearnService/GetWord"
+	LearnService_GetWords_FullMethodName = "/learn.LearnService/GetWords"
 	LearnService_DelWord_FullMethodName  = "/learn.LearnService/DelWord"
 )
 
@@ -31,11 +31,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LearnServiceClient interface {
-	NewTask(ctx context.Context, in *NewTaskReq, opts ...grpc.CallOption) (*NewTaskRes, error)
-	GetTask(ctx context.Context, in *GetTaskReq, opts ...grpc.CallOption) (*GetTaskRes, error)
+	NewTasks(ctx context.Context, in *NewTasksReq, opts ...grpc.CallOption) (*NewTasksRes, error)
+	GetTasks(ctx context.Context, in *GetTasksReq, opts ...grpc.CallOption) (*GetTasksRes, error)
 	DelTask(ctx context.Context, in *DelTaskReq, opts ...grpc.CallOption) (*DelTaskRes, error)
 	NewWords(ctx context.Context, in *NewWordsReq, opts ...grpc.CallOption) (*NewWordsRes, error)
-	GetWord(ctx context.Context, in *GetWordReq, opts ...grpc.CallOption) (*GetWordRes, error)
+	GetWords(ctx context.Context, in *GetWordsReq, opts ...grpc.CallOption) (*GetWordsRes, error)
 	DelWord(ctx context.Context, in *DelWordReq, opts ...grpc.CallOption) (*DelWordRes, error)
 }
 
@@ -47,20 +47,20 @@ func NewLearnServiceClient(cc grpc.ClientConnInterface) LearnServiceClient {
 	return &learnServiceClient{cc}
 }
 
-func (c *learnServiceClient) NewTask(ctx context.Context, in *NewTaskReq, opts ...grpc.CallOption) (*NewTaskRes, error) {
+func (c *learnServiceClient) NewTasks(ctx context.Context, in *NewTasksReq, opts ...grpc.CallOption) (*NewTasksRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(NewTaskRes)
-	err := c.cc.Invoke(ctx, LearnService_NewTask_FullMethodName, in, out, cOpts...)
+	out := new(NewTasksRes)
+	err := c.cc.Invoke(ctx, LearnService_NewTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *learnServiceClient) GetTask(ctx context.Context, in *GetTaskReq, opts ...grpc.CallOption) (*GetTaskRes, error) {
+func (c *learnServiceClient) GetTasks(ctx context.Context, in *GetTasksReq, opts ...grpc.CallOption) (*GetTasksRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTaskRes)
-	err := c.cc.Invoke(ctx, LearnService_GetTask_FullMethodName, in, out, cOpts...)
+	out := new(GetTasksRes)
+	err := c.cc.Invoke(ctx, LearnService_GetTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +87,10 @@ func (c *learnServiceClient) NewWords(ctx context.Context, in *NewWordsReq, opts
 	return out, nil
 }
 
-func (c *learnServiceClient) GetWord(ctx context.Context, in *GetWordReq, opts ...grpc.CallOption) (*GetWordRes, error) {
+func (c *learnServiceClient) GetWords(ctx context.Context, in *GetWordsReq, opts ...grpc.CallOption) (*GetWordsRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetWordRes)
-	err := c.cc.Invoke(ctx, LearnService_GetWord_FullMethodName, in, out, cOpts...)
+	out := new(GetWordsRes)
+	err := c.cc.Invoke(ctx, LearnService_GetWords_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,11 +111,11 @@ func (c *learnServiceClient) DelWord(ctx context.Context, in *DelWordReq, opts .
 // All implementations must embed UnimplementedLearnServiceServer
 // for forward compatibility.
 type LearnServiceServer interface {
-	NewTask(context.Context, *NewTaskReq) (*NewTaskRes, error)
-	GetTask(context.Context, *GetTaskReq) (*GetTaskRes, error)
+	NewTasks(context.Context, *NewTasksReq) (*NewTasksRes, error)
+	GetTasks(context.Context, *GetTasksReq) (*GetTasksRes, error)
 	DelTask(context.Context, *DelTaskReq) (*DelTaskRes, error)
 	NewWords(context.Context, *NewWordsReq) (*NewWordsRes, error)
-	GetWord(context.Context, *GetWordReq) (*GetWordRes, error)
+	GetWords(context.Context, *GetWordsReq) (*GetWordsRes, error)
 	DelWord(context.Context, *DelWordReq) (*DelWordRes, error)
 	mustEmbedUnimplementedLearnServiceServer()
 }
@@ -127,11 +127,11 @@ type LearnServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedLearnServiceServer struct{}
 
-func (UnimplementedLearnServiceServer) NewTask(context.Context, *NewTaskReq) (*NewTaskRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method NewTask not implemented")
+func (UnimplementedLearnServiceServer) NewTasks(context.Context, *NewTasksReq) (*NewTasksRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method NewTasks not implemented")
 }
-func (UnimplementedLearnServiceServer) GetTask(context.Context, *GetTaskReq) (*GetTaskRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetTask not implemented")
+func (UnimplementedLearnServiceServer) GetTasks(context.Context, *GetTasksReq) (*GetTasksRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTasks not implemented")
 }
 func (UnimplementedLearnServiceServer) DelTask(context.Context, *DelTaskReq) (*DelTaskRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DelTask not implemented")
@@ -139,8 +139,8 @@ func (UnimplementedLearnServiceServer) DelTask(context.Context, *DelTaskReq) (*D
 func (UnimplementedLearnServiceServer) NewWords(context.Context, *NewWordsReq) (*NewWordsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method NewWords not implemented")
 }
-func (UnimplementedLearnServiceServer) GetWord(context.Context, *GetWordReq) (*GetWordRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetWord not implemented")
+func (UnimplementedLearnServiceServer) GetWords(context.Context, *GetWordsReq) (*GetWordsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWords not implemented")
 }
 func (UnimplementedLearnServiceServer) DelWord(context.Context, *DelWordReq) (*DelWordRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DelWord not implemented")
@@ -166,38 +166,38 @@ func RegisterLearnServiceServer(s grpc.ServiceRegistrar, srv LearnServiceServer)
 	s.RegisterService(&LearnService_ServiceDesc, srv)
 }
 
-func _LearnService_NewTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewTaskReq)
+func _LearnService_NewTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewTasksReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LearnServiceServer).NewTask(ctx, in)
+		return srv.(LearnServiceServer).NewTasks(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LearnService_NewTask_FullMethodName,
+		FullMethod: LearnService_NewTasks_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LearnServiceServer).NewTask(ctx, req.(*NewTaskReq))
+		return srv.(LearnServiceServer).NewTasks(ctx, req.(*NewTasksReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LearnService_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTaskReq)
+func _LearnService_GetTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTasksReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LearnServiceServer).GetTask(ctx, in)
+		return srv.(LearnServiceServer).GetTasks(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LearnService_GetTask_FullMethodName,
+		FullMethod: LearnService_GetTasks_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LearnServiceServer).GetTask(ctx, req.(*GetTaskReq))
+		return srv.(LearnServiceServer).GetTasks(ctx, req.(*GetTasksReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -238,20 +238,20 @@ func _LearnService_NewWords_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _LearnService_GetWord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetWordReq)
+func _LearnService_GetWords_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWordsReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LearnServiceServer).GetWord(ctx, in)
+		return srv.(LearnServiceServer).GetWords(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: LearnService_GetWord_FullMethodName,
+		FullMethod: LearnService_GetWords_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LearnServiceServer).GetWord(ctx, req.(*GetWordReq))
+		return srv.(LearnServiceServer).GetWords(ctx, req.(*GetWordsReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -282,12 +282,12 @@ var LearnService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*LearnServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "NewTask",
-			Handler:    _LearnService_NewTask_Handler,
+			MethodName: "NewTasks",
+			Handler:    _LearnService_NewTasks_Handler,
 		},
 		{
-			MethodName: "GetTask",
-			Handler:    _LearnService_GetTask_Handler,
+			MethodName: "GetTasks",
+			Handler:    _LearnService_GetTasks_Handler,
 		},
 		{
 			MethodName: "DelTask",
@@ -298,8 +298,8 @@ var LearnService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LearnService_NewWords_Handler,
 		},
 		{
-			MethodName: "GetWord",
-			Handler:    _LearnService_GetWord_Handler,
+			MethodName: "GetWords",
+			Handler:    _LearnService_GetWords_Handler,
 		},
 		{
 			MethodName: "DelWord",
