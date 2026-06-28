@@ -20,9 +20,11 @@ type DB struct {
 }
 
 type User struct {
-	BestTask  int32 `db:"best_task"`
-	WorstTask int32 `db:"worst_task"`
-	Streak    int64 `db:"streak"`
+	Level     string `db:"level"`
+	TaskID    int32  `db:"task_id"`
+	BestTask  int32  `db:"best_task"`
+	WorstTask int32  `db:"worst_task"`
+	Streak    int64  `db:"streak"`
 }
 
 // NewDB creates new database connection.
@@ -53,7 +55,7 @@ func (d *DB) Close() error {
 }
 
 // RegUser add user to database.
-func (d *DB) RegUser(uuid string, ctx context.Context) error {
+func (d *DB) RegUser(uuid int64, ctx context.Context) error {
 	const op = "db.RegUser"
 
 	query, args, err := d.bd.Insert("users").
@@ -70,19 +72,19 @@ func (d *DB) RegUser(uuid string, ctx context.Context) error {
 		return fmt.Errorf("%s: insert user: %w", op, err)
 	}
 
-	d.log.Info("User succesfully registered", zap.String("uuid", uuid))
+	d.log.Info("User succesfully registered", zap.Int64("uuid", uuid))
 
 	return nil
 }
 
 // GetUser get user from database.
 // Returns all user fields if user exists
-func (d *DB) GetUser(uuid string, ctx context.Context) (*User, error) {
+func (d *DB) GetUser(uuid int64, ctx context.Context) (*User, error) {
 	const op = "db.GetUser"
 
-	d.log.Info("GetUser", zap.String("uuid", uuid))
+	d.log.Info("GetUser", zap.Int64("uuid", uuid))
 
-	query, args, err := d.bd.Select("best_task", "worst_task", "streak").
+	query, args, err := d.bd.Select("level", "task_id", "best_task", "worst_task", "streak").
 		From("users").
 		Where(sq.Eq{"uuid": uuid}).
 		ToSql()

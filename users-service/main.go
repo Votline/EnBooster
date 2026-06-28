@@ -57,17 +57,17 @@ func main() {
 func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, error) {
 	const op = "usersserver.RegUser"
 	uuid := req.GetUuid()
-	if uuid == "" {
+	if uuid == 0 {
 		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
 
-	s.log.Info("RegUser", zap.String("uuid", uuid))
+	s.log.Info("RegUser", zap.Int64("uuid", uuid))
 
 	if err := s.db.RegUser(uuid, ctx); err != nil {
 		return nil, fmt.Errorf("%s: db insert user: %w", op, err)
 	}
 
-	s.log.Info("Successfully registered user", zap.String("uuid", uuid))
+	s.log.Info("Successfully registered user", zap.Int64("uuid", uuid))
 
 	return nil, nil
 }
@@ -77,12 +77,12 @@ func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, 
 func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, error) {
 	const op = "usersserver.GetUser"
 	uuid := req.GetUuid()
-	if uuid == "" {
+	if uuid == 0 {
 		s.log.Error("GetUser", zap.Error(fmt.Errorf("%s: empty uuid", op)))
 		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
 
-	s.log.Info("GetUser", zap.String("uuid", uuid))
+	s.log.Info("GetUser", zap.Int64("uuid", uuid))
 
 	ud, err := s.db.GetUser(uuid, ctx)
 	if err != nil {
@@ -93,12 +93,16 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 	s.log.Info("Successfully got user",
 		zap.Int("best task", int(ud.BestTask)),
 		zap.Int("worst task", int(ud.WorstTask)),
-		zap.Int("streak", int(ud.Streak)))
+		zap.Int("streak", int(ud.Streak)),
+		zap.Int("task id", int(ud.TaskID)),
+		zap.String("level", ud.Level))
 
 	return &pb.GetRes{
 		BestTask:  ud.BestTask,
 		WorstTask: ud.WorstTask,
 		Streak:    ud.Streak,
+		TaskId:    ud.TaskID,
+		Level:     ud.Level,
 	}, nil
 }
 
