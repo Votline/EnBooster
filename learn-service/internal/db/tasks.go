@@ -60,8 +60,8 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task) (int32, error
 	return int32(rowsAffected), nil
 }
 
-// GetTask returns tasks by level and position.
-func (d *DB) GetTask(ctx context.Context, level string, pos int32, tasks *[]parser.Task) error {
+// GetTasks returns tasks by level and position.
+func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]parser.Task) error {
 	const op = "db.GetTask"
 
 	query := d.bd.Select("task, level, answer, position").From("tasks")
