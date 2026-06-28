@@ -3,7 +3,7 @@ module enbstr
 go 1.26.3
 
 require (
-	github.com/Votline/EnBooster/protos v0.0.7
+	github.com/Votline/EnBooster/protos v0.0.8
 	github.com/go-redis/redis/v8 v8.11.5
 	go.uber.org/zap v1.28.0
 	google.golang.org/grpc v1.81.1

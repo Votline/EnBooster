@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
 	best_task INT NOT NULL DEFAULT 0,
 	worst_task INT NOT NULL DEFAULT 0,
 	streak BIGINT NOT NULL DEFAULT 0,
-	level TEXT NOT NULL,
-	task_id INT NOT NULL
+	level TEXT NOT NULL DEFAULT 'A1',
+	task_id INT NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_id ON users(uuid);

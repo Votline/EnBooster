@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os"
 
-	"enbstr/internal/services"
-
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -24,7 +22,7 @@ type UsersService struct {
 	client pb.UsersServiceClient
 }
 
-func NewUS(log *zap.Logger) (services.Service, error) {
+func NewUS(log *zap.Logger) (*UsersService, error) {
 	const op = "users.NewUS"
 
 	log.Info("Creating users service",
@@ -74,7 +72,7 @@ func (us *UsersService) RegisterRoutes(bot *tele.Bot) error {
 			return err
 		}
 
-		return c.Send(fmt.Sprintf("Your data:\nUUID: %s\nBest task: %d\nWorst task: %d\nStreak: %d",
+		return c.Send(fmt.Sprintf("Your data:\nUUID: %d\nBest task: %d\nWorst task: %d\nStreak: %d",
 			ud.UUID, ud.BestTask, ud.WorstTask, ud.Streak))
 	})
 

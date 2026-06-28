@@ -79,7 +79,7 @@ func (s *learnservice) NewTasks(ctx context.Context, req *pb.NewTasksReq) (*pb.N
 		return nil, fmt.Errorf("%s: empty data", op)
 	}
 
-	s.log.Debug("New task",
+	s.log.Info("New task",
 		zap.String("op", op))
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
@@ -99,7 +99,7 @@ func (s *learnservice) NewTasks(ctx context.Context, req *pb.NewTasksReq) (*pb.N
 		return nil, fmt.Errorf("%s: no rows affected", op)
 	}
 
-	s.log.Debug("Succesfully added task",
+	s.log.Info("Succesfully added task",
 		zap.String("op", op))
 
 	return &pb.NewTasksRes{Inserted: rowsAffected}, nil
@@ -114,7 +114,7 @@ func (s *learnservice) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.G
 	}
 	pos := req.GetPosition()
 
-	s.log.Debug("Get task",
+	s.log.Info("Get task",
 		zap.String("op", op))
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
@@ -131,7 +131,7 @@ func (s *learnservice) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.G
 	}
 	tasksStr := unsafe.String(unsafe.SliceData(tasksBytes), len(tasksBytes))
 
-	s.log.Debug("Succesfully get task",
+	s.log.Info("Succesfully get task",
 		zap.String("op", op))
 
 	return &pb.GetTasksRes{Data: tasksStr}, nil
@@ -140,7 +140,7 @@ func (s *learnservice) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.G
 func (s *learnservice) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelTaskRes, error) {
 	const op = "learnservice.DelTask"
 
-	s.log.Debug("Delete task",
+	s.log.Info("Delete task",
 		zap.String("op", op))
 
 	lvl := req.GetLevel()
@@ -150,7 +150,7 @@ func (s *learnservice) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.Del
 		return nil, fmt.Errorf("%s: del task: %w", op, err)
 	}
 
-	s.log.Debug("Succesfully delete task",
+	s.log.Info("Succesfully delete task",
 		zap.String("op", op))
 
 	return nil, nil
@@ -164,7 +164,7 @@ func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.N
 		return nil, fmt.Errorf("%s: empty data", op)
 	}
 
-	s.log.Debug("New words",
+	s.log.Info("New words",
 		zap.String("op", op))
 
 	wordsPtr := wordsPool.Get().(*[]parser.Word)
@@ -184,7 +184,7 @@ func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.N
 		return nil, fmt.Errorf("%s: no rows affected", op)
 	}
 
-	s.log.Debug("Succesfully added words",
+	s.log.Info("Succesfully added words",
 		zap.String("op", op))
 
 	return &pb.NewWordsRes{Inserted: rowsAffected}, nil
@@ -198,7 +198,7 @@ func (s *learnservice) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.G
 		return nil, fmt.Errorf("%s: empty search data", op)
 	}
 
-	s.log.Debug("Get words",
+	s.log.Info("Get words",
 		zap.String("op", op))
 
 	wordsPtr := wordsPool.Get().(*[]parser.Word)
@@ -215,7 +215,7 @@ func (s *learnservice) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.G
 	}
 	wordsStr := unsafe.String(unsafe.SliceData(wordsBytes), len(wordsBytes))
 
-	s.log.Debug("Succesfully get words",
+	s.log.Info("Succesfully get words",
 		zap.String("op", op))
 
 	return &pb.GetWordsRes{Data: wordsStr}, nil
@@ -224,7 +224,7 @@ func (s *learnservice) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.G
 func (s *learnservice) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.DelWordRes, error) {
 	const op = "learnservice.DelWord"
 
-	s.log.Debug("Delete word",
+	s.log.Info("Delete word",
 		zap.String("op", op))
 
 	word := req.GetWord()
@@ -234,7 +234,7 @@ func (s *learnservice) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.Del
 		return nil, fmt.Errorf("%s: del words: %w", op, err)
 	}
 
-	s.log.Debug("Succesfully deleted word",
+	s.log.Info("Succesfully deleted word",
 		zap.String("op", op))
 
 	return nil, nil

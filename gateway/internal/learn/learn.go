@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 
-	"enbstr/internal/services"
 	"enbstr/internal/statemanager"
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
@@ -26,7 +25,7 @@ type LearnService struct {
 	states *statemanager.StateManager
 }
 
-func NewLS(states *statemanager.StateManager, log *zap.Logger) (services.Service, error) {
+func NewLS(states *statemanager.StateManager, log *zap.Logger) (*LearnService, error) {
 	const op = "learn.NewLS"
 
 	log.Info("Creating learn service",
@@ -67,10 +66,6 @@ func (ls *LearnService) Close() error {
 
 func (ls *LearnService) RegisterRoutes(bot *tele.Bot) error {
 	const op = "learn.RegisterRoutes"
-
-	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
-		return ls.GetTasks(c)
-	})
 
 	return nil
 }
