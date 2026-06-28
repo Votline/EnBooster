@@ -7,6 +7,8 @@ services:
       - .env
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    depends_on:
+      - redis_sm
 
   users-service:
     build:
@@ -52,4 +54,12 @@ services:
       retries: 10
       start_period: 5s
 
-
+  redis_sm:
+    image: redis:alpine
+    ports:
+      - "${REDIS_SM_PORT}:${REDIS_SM_PORT}"
+    command:
+      - redis-server
+      - "--requirepass"
+      - "${REDIS_SM_PASSWORD}"
+      - "--loglevel warning"

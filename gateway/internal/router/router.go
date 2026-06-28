@@ -11,7 +11,11 @@ import (
 )
 
 func Setup(bot *tele.Bot, log *zap.Logger) {
-	states := statemanager.NewSM()
+	states, err := statemanager.NewSM()
+	if err != nil {
+		log.Fatal("Failed to create state manager", zap.Error(err))
+	}
+	log.Info("Successfully connected redis")
 
 	setupServices(bot, states, log)
 }
