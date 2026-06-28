@@ -5,58 +5,93 @@ package learn
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
 	"unsafe"
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
-	tele "gopkg.in/telebot.v3"
+	"go.uber.org/zap"
 )
 
-func (ls *LearnService) NewWords(tctx tele.Context) error {
-	const op = "learn.NewWords"
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	jsonData := tctx.Message().Text
-
-	res, err := ls.client.NewWords(ctx, &pb.NewWordsReq{
-		JsonData: jsonData,
-	})
-	if err != nil {
-		return fmt.Errorf("%s: new word: %w", op, err)
-	}
-
-	return tctx.Send(fmt.Sprintf("Insterted: %d", res.Inserted))
+type Word struct {
+	Word        string `json:"word"`
+	Level       string `json:"level"`
+	Explain     string `json:"explain"`
+	FirstLetter string `json:"first_letter"`
 }
 
-func (ls *LearnService) GetWords(tctx tele.Context) error {
-	const op = "learn.GetWords"
+func (ls *LearnService) NewWords(msg, reqTrace string) (int32, error) {
+	const op = "learn.NewWords"
+
+	ls.log.Debug("New words request",
+		zap.String("op", op),
+		zap.Int("msg len", len(msg)),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	searchData := tctx.Message().Text
+	res, err := ls.client.NewWords(ctx, &pb.NewWordsReq{
+		JsonData:     msg,
+		RequestTrace: reqTrace,
+	})
+	if err != nil {
+		return -1, fmt.Errorf("%s: new word: %w", op, err)
+	}
+
+	ls.log.Debug("New words response",
+		zap.String("op", op),
+		zap.Int32("inserted", res.Inserted),
+		zap.String("reqTrace", reqTrace))
+
+	return res.Inserted, nil
+}
+
+func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error {
+	const op = "learn.GetWords"
+
+	ls.log.Debug("Get words request",
+		zap.String("op", op),
+		zap.Int("searchData len", len(searchData)),
+		zap.String("reqTrace", reqTrace))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
 	res, err := ls.client.GetWords(ctx, &pb.GetWordsReq{
-		SearchData: searchData,
+		SearchData:   searchData,
+		RequestTrace: reqTrace,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: get words: %w", op, err)
 	}
 
-	return tctx.Send(fmt.Sprintf("Search data: %s\nWords: %v", searchData, res.Data))
+	dataBytes := unsafe.Slice(unsafe.StringData(res.Data), len(res.Data))
+	if err := json.Unmarshal(dataBytes, buf); err != nil {
+		return fmt.Errorf("%s: unmarshal words: %w", op, err)
+	}
+
+	ls.log.Debug("Get words response",
+		zap.String("op", op),
+		zap.Int("words len", len(*buf)),
+		zap.String("reqTrace", reqTrace))
+
+	return nil
 }
 
-func (ls *LearnService) DeleteWords(tctx tele.Context) error {
-	const op = "learn.DeleteWords"
+func (ls *LearnService) DeleteWord(msg, reqTrace string) error {
+	const op = "learn.DeleteWord"
+
+	ls.log.Debug("Delete word request",
+		zap.String("op", op),
+		zap.Int("msg len", len(msg)),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	msg := tctx.Message().Text
 	msgBytes := unsafe.Slice(unsafe.StringData(msg), len(msg))
 	word, serial, has := bytes.Cut(msgBytes, []byte(" "))
 	if !has {
@@ -70,11 +105,16 @@ func (ls *LearnService) DeleteWords(tctx tele.Context) error {
 	}
 
 	if _, err := ls.client.DelWord(ctx, &pb.DelWordReq{
-		Word:   wordStr,
-		Serial: int32(serialInt),
+		Word:         wordStr,
+		Serial:       int32(serialInt),
+		RequestTrace: reqTrace,
 	}); err != nil {
 		return fmt.Errorf("%s: delete word: %w", op, err)
 	}
 
-	return tctx.Send(fmt.Sprintf("Deleted word: %s\nDeleted serial: %d", wordStr, serialInt))
+	ls.log.Debug("Delete word successfully",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	return nil
 }

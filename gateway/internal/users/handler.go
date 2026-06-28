@@ -5,11 +5,10 @@ package users
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
-	tele "gopkg.in/telebot.v3"
+	"go.uber.org/zap"
 )
 
 type UserData struct {
@@ -21,33 +20,46 @@ type UserData struct {
 	TaskID    int32  `json:"task_id"`
 }
 
-func (us *UsersService) Register(tctx tele.Context) error {
+func (us *UsersService) Register(uuid int64, reqTrace string) error {
 	const op = "users.Register"
+
+	us.log.Debug("Register user request",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	uuid := tctx.Sender().ID
-
 	if _, err := us.client.RegUser(ctx, &pb.RegReq{
-		Uuid: uuid,
+		Uuid:         uuid,
+		RequestTrace: reqTrace,
 	}); err != nil {
 		return fmt.Errorf("%s: register user: %w", op, err)
 	}
 
+	us.log.Debug("Register user successfully",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
+
 	return nil
 }
 
-func (us *UsersService) GetData(tctx tele.Context) (UserData, error) {
+func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 	const op = "users.GetData"
+
+	us.log.Debug("Get user data request",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	uuid := tctx.Sender().ID
-
 	resp, err := us.client.GetUser(ctx, &pb.GetReq{
-		Uuid: uuid,
+		Uuid:         uuid,
+		RequestTrace: reqTrace,
 	})
 	if err != nil {
 		return UserData{}, fmt.Errorf("%s: get user data: %w", op, err)
@@ -62,23 +74,36 @@ func (us *UsersService) GetData(tctx tele.Context) (UserData, error) {
 		TaskID:    resp.TaskId,
 	}
 
+	us.log.Debug("Get user data successfully",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
+
 	return userData, nil
 }
 
-func (us *UsersService) Delete(tctx tele.Context) error {
-	const op = "users.Delete"
+func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
+	const op = "users.DelUser"
+
+	us.log.Debug("Delete user request",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	uuid := tctx.Sender().ID
-	uuidStr := strconv.Itoa(int(uuid))
-
 	if _, err := us.client.DelUser(ctx, &pb.DelReq{
-		Uuid: uuidStr,
+		Uuid:         uuid,
+		RequestTrace: reqTrace,
 	}); err != nil {
 		return fmt.Errorf("%s: delete user: %w", op, err)
 	}
+
+	us.log.Debug("Delete user successfully",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
 
 	return nil
 }

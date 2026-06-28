@@ -35,7 +35,7 @@ func main() {
 func createLogger() (*zap.Logger, error) {
 	const op = "main.createLogger"
 
-	logger, err := zap.NewProduction()
+	logger, err := zap.NewDevelopment()
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to create logger: %w", op, err)
 	}

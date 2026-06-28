@@ -9,6 +9,7 @@ import (
 	"os"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -60,14 +61,18 @@ func (us *UsersService) RegisterRoutes(bot *tele.Bot) error {
 	const op = "users.RegisterRoutes"
 
 	bot.Handle("/start", func(c tele.Context) error {
-		if err := us.Register(c); err != nil {
+		reqTrace := uuid.NewString()
+		uuid := c.Message().Sender.ID
+		if err := us.Register(uuid, reqTrace); err != nil {
 			return err
 		}
 		return c.Send("Welcome to EnBooster!")
 	})
 
 	bot.Handle("Профиль 👤", func(c tele.Context) error {
-		ud, err := us.GetData(c)
+		reqTrace := uuid.NewString()
+		uuid := c.Message().Sender.ID
+		ud, err := us.GetData(uuid, reqTrace)
 		if err != nil {
 			return err
 		}

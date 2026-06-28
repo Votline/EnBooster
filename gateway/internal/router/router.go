@@ -55,6 +55,6 @@ func setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Lo
 			return fmt.Errorf("get tasks: %w", err)
 		}
 
-		return c.Send(fmt.Sprintf("Список заданий:\n%s", *tasksPtr))
+		return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
 	})
 }

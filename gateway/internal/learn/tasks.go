@@ -11,6 +11,7 @@ import (
 	"unsafe"
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
+	"go.uber.org/zap"
 )
 
 type Task struct {
@@ -20,31 +21,49 @@ type Task struct {
 	Position int32  `json:"position"`
 }
 
-func (ls *LearnService) NewTasks(msg string) (int32, error) {
+func (ls *LearnService) NewTasks(msg, reqTrace string) (int32, error) {
 	const op = "learn.NewTasks"
+
+	ls.log.Debug("New tasks request",
+		zap.String("op", op),
+		zap.Int("msg len", len(msg)),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	res, err := ls.client.NewTasks(ctx, &pb.NewTasksReq{
-		JsonData: msg,
+		JsonData:     msg,
+		RequestTrace: reqTrace,
 	})
 	if err != nil {
 		return -1, fmt.Errorf("%s: new task: %w", op, err)
 	}
 
+	ls.log.Debug("New tasks response",
+		zap.String("op", op),
+		zap.Int32("inserted", res.Inserted),
+		zap.String("reqTrace", reqTrace))
+
 	return res.Inserted, nil
 }
 
-func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task) error {
+func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, reqTrace string) error {
 	const op = "learn.GetTasks"
+
+	ls.log.Debug("Get tasks request",
+		zap.String("op", op),
+		zap.String("level", level),
+		zap.Int32("pos", pos),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	tasks, err := ls.client.GetTasks(ctx, &pb.GetTasksReq{
-		Level:    level,
-		Position: pos,
+		Level:        level,
+		Position:     pos,
+		RequestTrace: reqTrace,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
@@ -57,11 +76,21 @@ func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task) err
 		return fmt.Errorf("%s: unmarshal tasks: %w", op, err)
 	}
 
+	ls.log.Debug("Get tasks response",
+		zap.String("op", op),
+		zap.Int("tasks len", len(*tasksList)),
+		zap.String("reqTrace", reqTrace))
+
 	return nil
 }
 
-func (ls *LearnService) DeleteTasks(msg string) error {
-	const op = "learn.DeleteTasks"
+func (ls *LearnService) DeleteTask(msg, reqTrace string) error {
+	const op = "learn.DeleteTask"
+
+	ls.log.Debug("Delete task request",
+		zap.String("op", op),
+		zap.Int("msg len", len(msg)),
+		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -80,11 +109,16 @@ func (ls *LearnService) DeleteTasks(msg string) error {
 	}
 
 	if _, err := ls.client.DelTask(ctx, &pb.DelTaskReq{
-		Level:    levelStr,
-		Position: int32(posInt),
+		Level:        levelStr,
+		Position:     int32(posInt),
+		RequestTrace: reqTrace,
 	}); err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
+
+	ls.log.Debug("Delete task successfully",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
 
 	return nil
 }
