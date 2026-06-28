@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/Votline/EnBooster/protos v0.0.2 // indirect
+	github.com/Votline/EnBooster/protos v0.0.7 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect

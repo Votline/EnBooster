@@ -15,6 +15,7 @@ import (
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"go.uber.org/zap"
 )
@@ -44,6 +45,11 @@ func main() {
 	log, _ := zap.NewProduction()
 	defer log.Sync()
 
+	creds, err := credentials.NewServerTLSFromFile("ssl/server.crt", "ssl/server.key")
+	if err != nil {
+		log.Fatal("failed to create credentials", zap.Error(err))
+	}
+
 	lis, err := net.Listen("tcp", ":"+os.Getenv("LEARN_PORT"))
 	if err != nil {
 		log.Fatal("failed to listen", zap.Error(err))
@@ -55,7 +61,7 @@ func main() {
 	}
 
 	s := learnservice{log: log, db: db}
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterLearnServiceServer(srv, &s)
 	log.Info("server started")
 
@@ -72,6 +78,9 @@ func (s *learnservice) NewTask(ctx context.Context, req *pb.NewTaskReq) (*pb.New
 	if data == "" {
 		return nil, fmt.Errorf("%s: empty data", op)
 	}
+
+	s.log.Debug("New task",
+		zap.String("op", op))
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
 	*tasksPtr = (*tasksPtr)[:0]
@@ -90,6 +99,9 @@ func (s *learnservice) NewTask(ctx context.Context, req *pb.NewTaskReq) (*pb.New
 		return nil, fmt.Errorf("%s: no rows affected", op)
 	}
 
+	s.log.Debug("Succesfully added task",
+		zap.String("op", op))
+
 	return &pb.NewTaskRes{Inserted: rowsAffected}, nil
 }
 
@@ -101,6 +113,9 @@ func (s *learnservice) GetTask(ctx context.Context, req *pb.GetTaskReq) (*pb.Get
 		return nil, fmt.Errorf("%s: empty level", op)
 	}
 	pos := req.GetPosition()
+
+	s.log.Debug("Get task",
+		zap.String("op", op))
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
 	*tasksPtr = (*tasksPtr)[:0]
@@ -116,11 +131,17 @@ func (s *learnservice) GetTask(ctx context.Context, req *pb.GetTaskReq) (*pb.Get
 	}
 	tasksStr := unsafe.String(unsafe.SliceData(tasksBytes), len(tasksBytes))
 
+	s.log.Debug("Succesfully get task",
+		zap.String("op", op))
+
 	return &pb.GetTaskRes{Data: tasksStr}, nil
 }
 
 func (s *learnservice) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelTaskRes, error) {
 	const op = "learnservice.DelTask"
+
+	s.log.Debug("Delete task",
+		zap.String("op", op))
 
 	lvl := req.GetLevel()
 	pos := req.GetPosition()
@@ -128,6 +149,9 @@ func (s *learnservice) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.Del
 	if err := s.db.DelTask(ctx, lvl, pos); err != nil {
 		return nil, fmt.Errorf("%s: del task: %w", op, err)
 	}
+
+	s.log.Debug("Succesfully delete task",
+		zap.String("op", op))
 
 	return nil, nil
 }
@@ -139,6 +163,9 @@ func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.N
 	if data == "" {
 		return nil, fmt.Errorf("%s: empty data", op)
 	}
+
+	s.log.Debug("New words",
+		zap.String("op", op))
 
 	wordsPtr := wordsPool.Get().(*[]parser.Word)
 	*wordsPtr = (*wordsPtr)[:0]
@@ -157,6 +184,9 @@ func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.N
 		return nil, fmt.Errorf("%s: no rows affected", op)
 	}
 
+	s.log.Debug("Succesfully added words",
+		zap.String("op", op))
+
 	return &pb.NewWordsRes{Inserted: rowsAffected}, nil
 }
 
@@ -167,6 +197,9 @@ func (s *learnservice) GetWord(ctx context.Context, req *pb.GetWordReq) (*pb.Get
 	if searchData == "" {
 		return nil, fmt.Errorf("%s: empty search data", op)
 	}
+
+	s.log.Debug("Get words",
+		zap.String("op", op))
 
 	wordsPtr := wordsPool.Get().(*[]parser.Word)
 	*wordsPtr = (*wordsPtr)[:0]
@@ -182,11 +215,17 @@ func (s *learnservice) GetWord(ctx context.Context, req *pb.GetWordReq) (*pb.Get
 	}
 	wordsStr := unsafe.String(unsafe.SliceData(wordsBytes), len(wordsBytes))
 
+	s.log.Debug("Succesfully get words",
+		zap.String("op", op))
+
 	return &pb.GetWordRes{Data: wordsStr}, nil
 }
 
 func (s *learnservice) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.DelWordRes, error) {
 	const op = "learnservice.DelWord"
+
+	s.log.Debug("Delete word",
+		zap.String("op", op))
 
 	word := req.GetWord()
 	serial := req.GetSerial()
@@ -194,6 +233,9 @@ func (s *learnservice) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.Del
 	if err := s.db.DelWords(ctx, word, serial); err != nil {
 		return nil, fmt.Errorf("%s: del words: %w", op, err)
 	}
+
+	s.log.Debug("Succesfully deleted word",
+		zap.String("op", op))
 
 	return nil, nil
 }

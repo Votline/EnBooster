@@ -2,6 +2,7 @@
 package router
 
 import (
+	"enbstr/internal/learn"
 	"enbstr/internal/ui"
 	"enbstr/internal/users"
 
@@ -10,24 +11,10 @@ import (
 )
 
 func Setup(bot *tele.Bot, log *zap.Logger) {
-	usrsrv, err := users.NewUS(log)
-	if err != nil {
-		log.Fatal("Failed to create users service", zap.Error(err))
-	}
-	usrsrv.RegisterRoutes(bot)
+	setupServices(bot, log)
 
 	menu := ui.ReplyMenu([]string{
 		"Начать учёбу 📚", "Помощь 🤔️", "Профиль 👤",
-	})
-
-	inline := ui.InlineMenu([]ui.InlineBtn{
-		{Text: "<", Data: "action_prev"},
-		{Text: ">", Data: "action_next"},
-		{Text: "exit", Data: "action_exit"},
-	})
-
-	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
-		return c.Send("Start lerning message", menu, inline)
 	})
 
 	bot.Handle("Помощь 🤔️", func(c tele.Context) error {
@@ -49,4 +36,18 @@ func Setup(bot *tele.Bot, log *zap.Logger) {
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		return c.Send("Unknown command", menu)
 	})
+}
+
+func setupServices(bot *tele.Bot, log *zap.Logger) {
+	usrsrv, err := users.NewUS(log)
+	if err != nil {
+		log.Fatal("Failed to create users service", zap.Error(err))
+	}
+	usrsrv.RegisterRoutes(bot)
+
+	lrnsrv, err := learn.NewLS(log)
+	if err != nil {
+		log.Fatal("Failed to create learn service", zap.Error(err))
+	}
+	lrnsrv.RegisterRoutes(bot)
 }

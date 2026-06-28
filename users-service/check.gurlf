@@ -24,7 +24,7 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:1
 Type:grpc
 Timeout:5s
-Certs:../gateway/ssl/ca.crt
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 Response:{}
 [\reg]
 
@@ -39,7 +39,7 @@ Data:`
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:2
 Type:grpc
-Certs:../gateway/ssl/ca.crt
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 Response:{}
 [\get]
 
@@ -54,7 +54,7 @@ Data:`
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:3
 Type:grpc
-Certs:../gateway/ssl/ca.crt
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 Response:{}
 [\del]
 
