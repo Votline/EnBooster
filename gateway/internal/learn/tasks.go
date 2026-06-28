@@ -37,29 +37,19 @@ func (ls *LearnService) GetTasks(tctx tele.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	msg := tctx.Message().Text
-	msgBytes := unsafe.Slice(unsafe.StringData(msg), len(msg))
-	level, pos, has := bytes.Cut(msgBytes, []byte(" "))
-	if !has {
-		return fmt.Errorf("%s: cut message: invalid message structure", op)
-	}
-
-	levelStr := unsafe.String(unsafe.SliceData(level), len(level))
-	posStr := unsafe.String(unsafe.SliceData(pos), len(pos))
-	posInt, err := strconv.Atoi(posStr)
-	if err != nil {
-		return fmt.Errorf("%s: atoi position: invalid position", op)
-	}
+	userState := ls.states.GetState(tctx.Chat().ID)
+	level := userState.Level
+	pos := userState.Pos
 
 	tasks, err := ls.client.GetTask(ctx, &pb.GetTaskReq{
-		Level:    levelStr,
-		Position: int32(posInt),
+		Level:    level,
+		Position: pos,
 	})
 	if err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
-	return tctx.Send(fmt.Sprintf("Level: %s\nPosition: %d\nTasks: %v", level, posInt, tasks))
+	return tctx.Send(fmt.Sprintf("Level: %s\nPosition: %d\nTasks: %v", level, pos, tasks))
 }
 
 func (ls *LearnService) DeleteTasks(tctx tele.Context) error {
