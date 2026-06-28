@@ -23,7 +23,7 @@ const (
 
 type RegReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -58,11 +58,11 @@ func (*RegReq) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RegReq) GetUuid() string {
+func (x *RegReq) GetUuid() int64 {
 	if x != nil {
 		return x.Uuid
 	}
-	return ""
+	return 0
 }
 
 type RegRes struct {
@@ -103,7 +103,7 @@ func (*RegRes) Descriptor() ([]byte, []int) {
 
 type GetReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,11 +138,11 @@ func (*GetReq) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetReq) GetUuid() string {
+func (x *GetReq) GetUuid() int64 {
 	if x != nil {
 		return x.Uuid
 	}
-	return ""
+	return 0
 }
 
 type GetRes struct {
@@ -150,6 +150,8 @@ type GetRes struct {
 	BestTask      int32                  `protobuf:"varint,1,opt,name=best_task,json=bestTask,proto3" json:"best_task,omitempty"`
 	WorstTask     int32                  `protobuf:"varint,2,opt,name=worst_task,json=worstTask,proto3" json:"worst_task,omitempty"`
 	Streak        int64                  `protobuf:"varint,3,opt,name=streak,proto3" json:"streak,omitempty"`
+	Level         string                 `protobuf:"bytes,4,opt,name=level,proto3" json:"level,omitempty"`
+	TaskId        int32                  `protobuf:"varint,5,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -201,6 +203,20 @@ func (x *GetRes) GetWorstTask() int32 {
 func (x *GetRes) GetStreak() int64 {
 	if x != nil {
 		return x.Streak
+	}
+	return 0
+}
+
+func (x *GetRes) GetLevel() string {
+	if x != nil {
+		return x.Level
+	}
+	return ""
+}
+
+func (x *GetRes) GetTaskId() int32 {
+	if x != nil {
+		return x.TaskId
 	}
 	return 0
 }
@@ -291,15 +307,17 @@ const file_users_proto_rawDesc = "" +
 	"\n" +
 	"\vusers.proto\x12\x05users\"\x1c\n" +
 	"\x06RegReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\b\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\"\b\n" +
 	"\x06RegRes\"\x1c\n" +
 	"\x06GetReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\\\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\"\x8b\x01\n" +
 	"\x06GetRes\x12\x1b\n" +
 	"\tbest_task\x18\x01 \x01(\x05R\bbestTask\x12\x1d\n" +
 	"\n" +
 	"worst_task\x18\x02 \x01(\x05R\tworstTask\x12\x16\n" +
-	"\x06streak\x18\x03 \x01(\x03R\x06streak\"\x1c\n" +
+	"\x06streak\x18\x03 \x01(\x03R\x06streak\x12\x14\n" +
+	"\x05level\x18\x04 \x01(\tR\x05level\x12\x17\n" +
+	"\atask_id\x18\x05 \x01(\x05R\x06taskId\"\x1c\n" +
 	"\x06DelReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\b\n" +
 	"\x06DelRes2\x89\x01\n" +

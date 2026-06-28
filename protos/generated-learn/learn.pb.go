@@ -21,27 +21,27 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type NewTaskReq struct {
+type NewTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	JsonData      string                 `protobuf:"bytes,1,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"` // full pages
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NewTaskReq) Reset() {
-	*x = NewTaskReq{}
+func (x *NewTasksReq) Reset() {
+	*x = NewTasksReq{}
 	mi := &file_learn_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NewTaskReq) String() string {
+func (x *NewTasksReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NewTaskReq) ProtoMessage() {}
+func (*NewTasksReq) ProtoMessage() {}
 
-func (x *NewTaskReq) ProtoReflect() protoreflect.Message {
+func (x *NewTasksReq) ProtoReflect() protoreflect.Message {
 	mi := &file_learn_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -53,39 +53,39 @@ func (x *NewTaskReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NewTaskReq.ProtoReflect.Descriptor instead.
-func (*NewTaskReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use NewTasksReq.ProtoReflect.Descriptor instead.
+func (*NewTasksReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *NewTaskReq) GetJsonData() string {
+func (x *NewTasksReq) GetJsonData() string {
 	if x != nil {
 		return x.JsonData
 	}
 	return ""
 }
 
-type NewTaskRes struct {
+type NewTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Inserted      int32                  `protobuf:"varint,1,opt,name=inserted,proto3" json:"inserted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *NewTaskRes) Reset() {
-	*x = NewTaskRes{}
+func (x *NewTasksRes) Reset() {
+	*x = NewTasksRes{}
 	mi := &file_learn_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *NewTaskRes) String() string {
+func (x *NewTasksRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NewTaskRes) ProtoMessage() {}
+func (*NewTasksRes) ProtoMessage() {}
 
-func (x *NewTaskRes) ProtoReflect() protoreflect.Message {
+func (x *NewTasksRes) ProtoReflect() protoreflect.Message {
 	mi := &file_learn_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -97,19 +97,19 @@ func (x *NewTaskRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NewTaskRes.ProtoReflect.Descriptor instead.
-func (*NewTaskRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use NewTasksRes.ProtoReflect.Descriptor instead.
+func (*NewTasksRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *NewTaskRes) GetInserted() int32 {
+func (x *NewTasksRes) GetInserted() int32 {
 	if x != nil {
 		return x.Inserted
 	}
 	return 0
 }
 
-type GetTaskReq struct {
+type GetTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
 	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
@@ -117,20 +117,20 @@ type GetTaskReq struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetTaskReq) Reset() {
-	*x = GetTaskReq{}
+func (x *GetTasksReq) Reset() {
+	*x = GetTasksReq{}
 	mi := &file_learn_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetTaskReq) String() string {
+func (x *GetTasksReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetTaskReq) ProtoMessage() {}
+func (*GetTasksReq) ProtoMessage() {}
 
-func (x *GetTaskReq) ProtoReflect() protoreflect.Message {
+func (x *GetTasksReq) ProtoReflect() protoreflect.Message {
 	mi := &file_learn_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -142,46 +142,46 @@ func (x *GetTaskReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetTaskReq.ProtoReflect.Descriptor instead.
-func (*GetTaskReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetTasksReq.ProtoReflect.Descriptor instead.
+func (*GetTasksReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetTaskReq) GetLevel() string {
+func (x *GetTasksReq) GetLevel() string {
 	if x != nil {
 		return x.Level
 	}
 	return ""
 }
 
-func (x *GetTaskReq) GetPosition() int32 {
+func (x *GetTasksReq) GetPosition() int32 {
 	if x != nil {
 		return x.Position
 	}
 	return 0
 }
 
-type GetTaskRes struct {
+type GetTasksRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetTaskRes) Reset() {
-	*x = GetTaskRes{}
+func (x *GetTasksRes) Reset() {
+	*x = GetTasksRes{}
 	mi := &file_learn_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetTaskRes) String() string {
+func (x *GetTasksRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetTaskRes) ProtoMessage() {}
+func (*GetTasksRes) ProtoMessage() {}
 
-func (x *GetTaskRes) ProtoReflect() protoreflect.Message {
+func (x *GetTasksRes) ProtoReflect() protoreflect.Message {
 	mi := &file_learn_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -193,12 +193,12 @@ func (x *GetTaskRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetTaskRes.ProtoReflect.Descriptor instead.
-func (*GetTaskRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetTasksRes.ProtoReflect.Descriptor instead.
+func (*GetTasksRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetTaskRes) GetData() string {
+func (x *GetTasksRes) GetData() string {
 	if x != nil {
 		return x.Data
 	}
@@ -381,27 +381,27 @@ func (x *NewWordsRes) GetInserted() int32 {
 	return 0
 }
 
-type GetWordReq struct {
+type GetWordsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SearchData    string                 `protobuf:"bytes,1,opt,name=search_data,json=searchData,proto3" json:"search_data,omitempty"` // word or serial number
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetWordReq) Reset() {
-	*x = GetWordReq{}
+func (x *GetWordsReq) Reset() {
+	*x = GetWordsReq{}
 	mi := &file_learn_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetWordReq) String() string {
+func (x *GetWordsReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetWordReq) ProtoMessage() {}
+func (*GetWordsReq) ProtoMessage() {}
 
-func (x *GetWordReq) ProtoReflect() protoreflect.Message {
+func (x *GetWordsReq) ProtoReflect() protoreflect.Message {
 	mi := &file_learn_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -413,39 +413,39 @@ func (x *GetWordReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetWordReq.ProtoReflect.Descriptor instead.
-func (*GetWordReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetWordsReq.ProtoReflect.Descriptor instead.
+func (*GetWordsReq) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetWordReq) GetSearchData() string {
+func (x *GetWordsReq) GetSearchData() string {
 	if x != nil {
 		return x.SearchData
 	}
 	return ""
 }
 
-type GetWordRes struct {
+type GetWordsRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetWordRes) Reset() {
-	*x = GetWordRes{}
+func (x *GetWordsRes) Reset() {
+	*x = GetWordsRes{}
 	mi := &file_learn_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetWordRes) String() string {
+func (x *GetWordsRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetWordRes) ProtoMessage() {}
+func (*GetWordsRes) ProtoMessage() {}
 
-func (x *GetWordRes) ProtoReflect() protoreflect.Message {
+func (x *GetWordsRes) ProtoReflect() protoreflect.Message {
 	mi := &file_learn_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -457,12 +457,12 @@ func (x *GetWordRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetWordRes.ProtoReflect.Descriptor instead.
-func (*GetWordRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetWordsRes.ProtoReflect.Descriptor instead.
+func (*GetWordsRes) Descriptor() ([]byte, []int) {
 	return file_learn_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GetWordRes) GetData() string {
+func (x *GetWordsRes) GetData() string {
 	if x != nil {
 		return x.Data
 	}
@@ -561,19 +561,15 @@ var File_learn_proto protoreflect.FileDescriptor
 
 const file_learn_proto_rawDesc = "" +
 	"\n" +
-	"\vlearn.proto\x12\x05learn\")\n" +
-	"\n" +
-	"NewTaskReq\x12\x1b\n" +
-	"\tjson_data\x18\x01 \x01(\tR\bjsonData\"(\n" +
-	"\n" +
-	"NewTaskRes\x12\x1a\n" +
-	"\binserted\x18\x01 \x01(\x05R\binserted\">\n" +
-	"\n" +
-	"GetTaskReq\x12\x14\n" +
+	"\vlearn.proto\x12\x05learn\"*\n" +
+	"\vNewTasksReq\x12\x1b\n" +
+	"\tjson_data\x18\x01 \x01(\tR\bjsonData\")\n" +
+	"\vNewTasksRes\x12\x1a\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\"?\n" +
+	"\vGetTasksReq\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
-	"\bposition\x18\x02 \x01(\x05R\bposition\" \n" +
-	"\n" +
-	"GetTaskRes\x12\x12\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\"!\n" +
+	"\vGetTasksRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\">\n" +
 	"\n" +
 	"DelTaskReq\x12\x14\n" +
@@ -584,26 +580,24 @@ const file_learn_proto_rawDesc = "" +
 	"\vNewWordsReq\x12\x1b\n" +
 	"\tjson_data\x18\x01 \x01(\tR\bjsonData\")\n" +
 	"\vNewWordsRes\x12\x1a\n" +
-	"\binserted\x18\x01 \x01(\x05R\binserted\"-\n" +
-	"\n" +
-	"GetWordReq\x12\x1f\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\".\n" +
+	"\vGetWordsReq\x12\x1f\n" +
 	"\vsearch_data\x18\x01 \x01(\tR\n" +
-	"searchData\" \n" +
-	"\n" +
-	"GetWordRes\x12\x12\n" +
+	"searchData\"!\n" +
+	"\vGetWordsRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\"8\n" +
 	"\n" +
 	"DelWordReq\x12\x12\n" +
 	"\x04word\x18\x01 \x01(\tR\x04word\x12\x16\n" +
 	"\x06serial\x18\x02 \x01(\x05R\x06serial\"\f\n" +
 	"\n" +
-	"DelWordRes2\xb7\x02\n" +
-	"\fLearnService\x12/\n" +
-	"\aNewTask\x12\x11.learn.NewTaskReq\x1a\x11.learn.NewTaskRes\x12/\n" +
-	"\aGetTask\x12\x11.learn.GetTaskReq\x1a\x11.learn.GetTaskRes\x12/\n" +
+	"DelWordRes2\xc0\x02\n" +
+	"\fLearnService\x122\n" +
+	"\bNewTasks\x12\x12.learn.NewTasksReq\x1a\x12.learn.NewTasksRes\x122\n" +
+	"\bGetTasks\x12\x12.learn.GetTasksReq\x1a\x12.learn.GetTasksRes\x12/\n" +
 	"\aDelTask\x12\x11.learn.DelTaskReq\x1a\x11.learn.DelTaskRes\x122\n" +
-	"\bNewWords\x12\x12.learn.NewWordsReq\x1a\x12.learn.NewWordsRes\x12/\n" +
-	"\aGetWord\x12\x11.learn.GetWordReq\x1a\x11.learn.GetWordRes\x12/\n" +
+	"\bNewWords\x12\x12.learn.NewWordsReq\x1a\x12.learn.NewWordsRes\x122\n" +
+	"\bGetWords\x12\x12.learn.GetWordsReq\x1a\x12.learn.GetWordsRes\x12/\n" +
 	"\aDelWord\x12\x11.learn.DelWordReq\x1a\x11.learn.DelWordResB\x1fZ\x1dgenerated-learn/;learnserviceb\x06proto3"
 
 var (
@@ -620,31 +614,31 @@ func file_learn_proto_rawDescGZIP() []byte {
 
 var file_learn_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_learn_proto_goTypes = []any{
-	(*NewTaskReq)(nil),  // 0: learn.NewTaskReq
-	(*NewTaskRes)(nil),  // 1: learn.NewTaskRes
-	(*GetTaskReq)(nil),  // 2: learn.GetTaskReq
-	(*GetTaskRes)(nil),  // 3: learn.GetTaskRes
+	(*NewTasksReq)(nil), // 0: learn.NewTasksReq
+	(*NewTasksRes)(nil), // 1: learn.NewTasksRes
+	(*GetTasksReq)(nil), // 2: learn.GetTasksReq
+	(*GetTasksRes)(nil), // 3: learn.GetTasksRes
 	(*DelTaskReq)(nil),  // 4: learn.DelTaskReq
 	(*DelTaskRes)(nil),  // 5: learn.DelTaskRes
 	(*NewWordsReq)(nil), // 6: learn.NewWordsReq
 	(*NewWordsRes)(nil), // 7: learn.NewWordsRes
-	(*GetWordReq)(nil),  // 8: learn.GetWordReq
-	(*GetWordRes)(nil),  // 9: learn.GetWordRes
+	(*GetWordsReq)(nil), // 8: learn.GetWordsReq
+	(*GetWordsRes)(nil), // 9: learn.GetWordsRes
 	(*DelWordReq)(nil),  // 10: learn.DelWordReq
 	(*DelWordRes)(nil),  // 11: learn.DelWordRes
 }
 var file_learn_proto_depIdxs = []int32{
-	0,  // 0: learn.LearnService.NewTask:input_type -> learn.NewTaskReq
-	2,  // 1: learn.LearnService.GetTask:input_type -> learn.GetTaskReq
+	0,  // 0: learn.LearnService.NewTasks:input_type -> learn.NewTasksReq
+	2,  // 1: learn.LearnService.GetTasks:input_type -> learn.GetTasksReq
 	4,  // 2: learn.LearnService.DelTask:input_type -> learn.DelTaskReq
 	6,  // 3: learn.LearnService.NewWords:input_type -> learn.NewWordsReq
-	8,  // 4: learn.LearnService.GetWord:input_type -> learn.GetWordReq
+	8,  // 4: learn.LearnService.GetWords:input_type -> learn.GetWordsReq
 	10, // 5: learn.LearnService.DelWord:input_type -> learn.DelWordReq
-	1,  // 6: learn.LearnService.NewTask:output_type -> learn.NewTaskRes
-	3,  // 7: learn.LearnService.GetTask:output_type -> learn.GetTaskRes
+	1,  // 6: learn.LearnService.NewTasks:output_type -> learn.NewTasksRes
+	3,  // 7: learn.LearnService.GetTasks:output_type -> learn.GetTasksRes
 	5,  // 8: learn.LearnService.DelTask:output_type -> learn.DelTaskRes
 	7,  // 9: learn.LearnService.NewWords:output_type -> learn.NewWordsRes
-	9,  // 10: learn.LearnService.GetWord:output_type -> learn.GetWordRes
+	9,  // 10: learn.LearnService.GetWords:output_type -> learn.GetWordsRes
 	11, // 11: learn.LearnService.DelWord:output_type -> learn.DelWordRes
 	6,  // [6:12] is the sub-list for method output_type
 	0,  // [0:6] is the sub-list for method input_type

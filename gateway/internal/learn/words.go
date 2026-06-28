@@ -40,7 +40,7 @@ func (ls *LearnService) GetWords(tctx tele.Context) error {
 
 	searchData := tctx.Message().Text
 
-	res, err := ls.client.GetWord(ctx, &pb.GetWordReq{
+	res, err := ls.client.GetWords(ctx, &pb.GetWordsReq{
 		SearchData: searchData,
 	})
 	if err != nil {

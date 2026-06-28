@@ -4,17 +4,19 @@ package users;
 option go_package="generated-users/;usersservice";
 
 message RegReq {
-  string uuid = 1;
+  int64 uuid = 1;
 }
 message RegRes {}
 
 message GetReq {
-  string uuid = 1;
+  int64 uuid = 1;
 }
 message GetRes {
   int32 best_task = 1;
   int32 worst_task = 2;
   int64 streak = 3;
+  string level = 4;
+  int32 task_id = 5;
 }
 
 message DelReq {

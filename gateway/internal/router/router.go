@@ -2,6 +2,9 @@
 package router
 
 import (
+	"fmt"
+	"sync"
+
 	"enbstr/internal/learn"
 	"enbstr/internal/statemanager"
 	"enbstr/internal/users"
@@ -9,6 +12,13 @@ import (
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
+
+var tasksList = sync.Pool{
+	New: func() any {
+		l := make([]learn.Task, 0)
+		return &l
+	},
+}
 
 func Setup(bot *tele.Bot, log *zap.Logger) {
 	states, err := statemanager.NewSM()
@@ -32,4 +42,19 @@ func setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Lo
 		log.Fatal("Failed to create learn service", zap.Error(err))
 	}
 	lrnsrv.RegisterRoutes(bot)
+
+	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
+		data, err := usrsrv.GetData(c)
+		if err != nil {
+			return fmt.Errorf("get user data: %w", err)
+		}
+		tasksPtr := tasksList.Get().(*[]learn.Task)
+		defer tasksList.Put(tasksPtr)
+
+		if err := lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr); err != nil {
+			return fmt.Errorf("get tasks: %w", err)
+		}
+
+		return c.Send(fmt.Sprintf("Список заданий:\n%s", *tasksPtr))
+	})
 }

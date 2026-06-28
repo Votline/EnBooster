@@ -14,7 +14,7 @@ type Task struct {
 	TaskData string `json:"task" db:"task"`
 	Level    string `json:"level" db:"level"`
 	Answer   string `json:"answer" db:"answer"`
-	Position int    `json:"position" db:"position"`
+	Position int32  `json:"position" db:"position"`
 }
 
 // Word is a single word from json words data.

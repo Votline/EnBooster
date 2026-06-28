@@ -13,10 +13,12 @@ import (
 )
 
 type UserData struct {
-	UUID      string `json:"uuid"`
+	UUID      int64  `json:"uuid"`
 	BestTask  int32  `json:"best_task"`
 	WorstTask int32  `json:"worst_task"`
 	Streak    int64  `json:"streak"`
+	Level     string `json:"level"`
+	TaskID    int32  `json:"task_id"`
 }
 
 func (us *UsersService) Register(tctx tele.Context) error {
@@ -26,10 +28,9 @@ func (us *UsersService) Register(tctx tele.Context) error {
 	defer cancel()
 
 	uuid := tctx.Sender().ID
-	uuidStr := strconv.Itoa(int(uuid))
 
 	if _, err := us.client.RegUser(ctx, &pb.RegReq{
-		Uuid: uuidStr,
+		Uuid: uuid,
 	}); err != nil {
 		return fmt.Errorf("%s: register user: %w", op, err)
 	}
@@ -44,20 +45,21 @@ func (us *UsersService) GetData(tctx tele.Context) (UserData, error) {
 	defer cancel()
 
 	uuid := tctx.Sender().ID
-	uuidStr := strconv.Itoa(int(uuid))
 
 	resp, err := us.client.GetUser(ctx, &pb.GetReq{
-		Uuid: uuidStr,
+		Uuid: uuid,
 	})
 	if err != nil {
 		return UserData{}, fmt.Errorf("%s: get user data: %w", op, err)
 	}
 
 	userData := UserData{
-		UUID:      uuidStr,
+		UUID:      uuid,
 		BestTask:  resp.BestTask,
 		WorstTask: resp.WorstTask,
 		Streak:    resp.Streak,
+		Level:     resp.Level,
+		TaskID:    resp.TaskId,
 	}
 
 	return userData, nil
