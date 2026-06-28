@@ -24,6 +24,7 @@ const (
 type NewTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	JsonData      string                 `protobuf:"bytes,1,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"` // full pages
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -61,6 +62,13 @@ func (*NewTasksReq) Descriptor() ([]byte, []int) {
 func (x *NewTasksReq) GetJsonData() string {
 	if x != nil {
 		return x.JsonData
+	}
+	return ""
+}
+
+func (x *NewTasksReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
 	}
 	return ""
 }
@@ -113,6 +121,7 @@ type GetTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
 	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -159,6 +168,13 @@ func (x *GetTasksReq) GetPosition() int32 {
 		return x.Position
 	}
 	return 0
+}
+
+func (x *GetTasksReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
 }
 
 type GetTasksRes struct {
@@ -209,6 +225,7 @@ type DelTaskReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
 	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -257,6 +274,13 @@ func (x *DelTaskReq) GetPosition() int32 {
 	return 0
 }
 
+func (x *DelTaskReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
+}
+
 type DelTaskRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -296,6 +320,7 @@ func (*DelTaskRes) Descriptor() ([]byte, []int) {
 type NewWordsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	JsonData      string                 `protobuf:"bytes,1,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"` // many words with explanations in json format
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -333,6 +358,13 @@ func (*NewWordsReq) Descriptor() ([]byte, []int) {
 func (x *NewWordsReq) GetJsonData() string {
 	if x != nil {
 		return x.JsonData
+	}
+	return ""
+}
+
+func (x *NewWordsReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
 	}
 	return ""
 }
@@ -384,6 +416,7 @@ func (x *NewWordsRes) GetInserted() int32 {
 type GetWordsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SearchData    string                 `protobuf:"bytes,1,opt,name=search_data,json=searchData,proto3" json:"search_data,omitempty"` // word or serial number
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -421,6 +454,13 @@ func (*GetWordsReq) Descriptor() ([]byte, []int) {
 func (x *GetWordsReq) GetSearchData() string {
 	if x != nil {
 		return x.SearchData
+	}
+	return ""
+}
+
+func (x *GetWordsReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
 	}
 	return ""
 }
@@ -473,6 +513,7 @@ type DelWordReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Word          string                 `protobuf:"bytes,1,opt,name=word,proto3" json:"word,omitempty"`      // 1 word
 	Serial        int32                  `protobuf:"varint,2,opt,name=serial,proto3" json:"serial,omitempty"` // 1 serial number
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -521,6 +562,13 @@ func (x *DelWordReq) GetSerial() int32 {
 	return 0
 }
 
+func (x *DelWordReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
+}
+
 type DelWordRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -561,35 +609,41 @@ var File_learn_proto protoreflect.FileDescriptor
 
 const file_learn_proto_rawDesc = "" +
 	"\n" +
-	"\vlearn.proto\x12\x05learn\"*\n" +
+	"\vlearn.proto\x12\x05learn\"O\n" +
 	"\vNewTasksReq\x12\x1b\n" +
-	"\tjson_data\x18\x01 \x01(\tR\bjsonData\")\n" +
+	"\tjson_data\x18\x01 \x01(\tR\bjsonData\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\")\n" +
 	"\vNewTasksRes\x12\x1a\n" +
-	"\binserted\x18\x01 \x01(\x05R\binserted\"?\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\"d\n" +
 	"\vGetTasksReq\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
-	"\bposition\x18\x02 \x01(\x05R\bposition\"!\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"!\n" +
 	"\vGetTasksRes\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\">\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"c\n" +
 	"\n" +
 	"DelTaskReq\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
-	"\bposition\x18\x02 \x01(\x05R\bposition\"\f\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\f\n" +
 	"\n" +
-	"DelTaskRes\"*\n" +
+	"DelTaskRes\"O\n" +
 	"\vNewWordsReq\x12\x1b\n" +
-	"\tjson_data\x18\x01 \x01(\tR\bjsonData\")\n" +
+	"\tjson_data\x18\x01 \x01(\tR\bjsonData\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\")\n" +
 	"\vNewWordsRes\x12\x1a\n" +
-	"\binserted\x18\x01 \x01(\x05R\binserted\".\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\"S\n" +
 	"\vGetWordsReq\x12\x1f\n" +
 	"\vsearch_data\x18\x01 \x01(\tR\n" +
-	"searchData\"!\n" +
+	"searchData\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"!\n" +
 	"\vGetWordsRes\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\"8\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"]\n" +
 	"\n" +
 	"DelWordReq\x12\x12\n" +
 	"\x04word\x18\x01 \x01(\tR\x04word\x12\x16\n" +
-	"\x06serial\x18\x02 \x01(\x05R\x06serial\"\f\n" +
+	"\x06serial\x18\x02 \x01(\x05R\x06serial\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\f\n" +
 	"\n" +
 	"DelWordRes2\xc0\x02\n" +
 	"\fLearnService\x122\n" +

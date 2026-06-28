@@ -5,11 +5,13 @@ option go_package="generated-users/;usersservice";
 
 message RegReq {
   int64 uuid = 1;
+  string request_trace = 2;
 }
 message RegRes {}
 
 message GetReq {
   int64 uuid = 1;
+  string request_trace = 2;
 }
 message GetRes {
   int32 best_task = 1;
@@ -21,6 +23,7 @@ message GetRes {
 
 message DelReq {
   string uuid = 1;
+  string request_trace = 2;
 }
 message DelRes {}
 
