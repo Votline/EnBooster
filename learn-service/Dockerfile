@@ -13,4 +13,5 @@ FROM alpine:3.18
 WORKDIR /learnservice
 
 COPY --from=builder /build/learnservice/learnservice ./
+COPY --from=builder /build/learnservice/ssl ./ssl
 CMD ["./learnservice"]

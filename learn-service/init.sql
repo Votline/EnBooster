@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS words (
 	explain TEXT NOT NULL,
 	level VARCHAR(32) NOT NULL,
 	first_letter VARCHAR(1) NOT NULL,
-	serial SERIAL PRIMARY KEY,
+	serial SERIAL PRIMARY KEY
 );

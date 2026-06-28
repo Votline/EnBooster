@@ -14,7 +14,8 @@ Data:`
         "json_data": "[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\"}]"
     }
 `
-ProtoPath:../protos/learn.proto
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 ID:1
 Type:grpc
 Timeout:5s
@@ -31,7 +32,8 @@ Data:`
         "position": 0
     }
 `
-ProtoPath:../protos/learn.proto
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 ID:2
 Type:grpc
 Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
@@ -46,7 +48,8 @@ Data:`
         "position": 1
     }
 `
-ProtoPath:../protos/learn.proto
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 ID:3
 Type:grpc
 Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
@@ -60,7 +63,8 @@ Data:`
         "json_data": "[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\"}]"
     }
 `
-ProtoPath:../protos/learn.proto
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 ID:4
 Type:grpc
 Response:{"inserted":1}
@@ -74,7 +78,8 @@ Data:`
         "search_data": "Run"
     }
 `
-ProtoPath:../protos/learn.proto
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 ID:5
 Type:grpc
 Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":1},{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":2}]"}
@@ -89,7 +94,8 @@ Data:`
         "position": 1
     }
 `
-ProtoPath:../protos/learn.proto
+ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 ID:6
 Type:grpc
 Response:{}
