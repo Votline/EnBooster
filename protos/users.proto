@@ -22,7 +22,7 @@ message GetRes {
 }
 
 message DelReq {
-  string uuid = 1;
+  int64 uuid = 1;
   string request_trace = 2;
 }
 message DelRes {}
