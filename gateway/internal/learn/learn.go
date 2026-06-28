@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"enbstr/internal/services"
+	"enbstr/internal/statemanager"
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
 	"go.uber.org/zap"
@@ -22,9 +23,10 @@ type LearnService struct {
 	log    *zap.Logger
 	conn   *grpc.ClientConn
 	client pb.LearnServiceClient
+	states *statemanager.StateManager
 }
 
-func NewLS(log *zap.Logger) (services.Service, error) {
+func NewLS(states *statemanager.StateManager, log *zap.Logger) (services.Service, error) {
 	const op = "learn.NewLS"
 
 	log.Info("Creating learn service",
@@ -55,6 +57,7 @@ func NewLS(log *zap.Logger) (services.Service, error) {
 		log:    log,
 		conn:   conn,
 		client: pb.NewLearnServiceClient(conn),
+		states: states,
 	}, nil
 }
 
