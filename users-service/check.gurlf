@@ -17,7 +17,8 @@ Target:localhost:50051
 Endpoint:users.UsersService/RegUser
 Data:`
 	{
-		"uuid": "{VARIABLE key=currentUUID}"
+		"uuid": "{VARIABLE key=currentUUID}",
+		"RequestTrace": "{RANDOM oneof=uuid}"
 	}
 `
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
@@ -33,7 +34,8 @@ Target:localhost:50051
 Endpoint:users.UsersService/GetUser
 Data:`
 	{
-		"uuid": "{VARIABLE key=currentUUID}"
+		"uuid": "{VARIABLE key=currentUUID}",
+		"RequestTrace": "{RANDOM oneof=uuid}"
 	}
 `
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
@@ -48,7 +50,8 @@ Target:localhost:50051
 Endpoint:users.UsersService/DelUser
 Data:`
 	{
-		"uuid": "{VARIABLE key=currentUUID}"
+		"uuid": "{VARIABLE key=currentUUID}",
+		"RequestTrace": "{RANDOM oneof=uuid}"
 	}
 `
 ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
