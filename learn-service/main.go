@@ -20,8 +20,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// learnservice provides grpc learn service methods.
-type learnservice struct {
+// learnserver provides grpc learn service methods.
+type learnserver struct {
 	db  *db.DB
 	log *zap.Logger
 	pb.UnimplementedLearnServiceServer
@@ -42,7 +42,7 @@ var wordsPool = sync.Pool{
 }
 
 func main() {
-	log, _ := zap.NewProduction()
+	log, _ := zap.NewDevelopment()
 	defer log.Sync()
 
 	creds, err := credentials.NewServerTLSFromFile("ssl/server.crt", "ssl/server.key")
@@ -60,10 +60,11 @@ func main() {
 		log.Fatal("failed to create db", zap.Error(err))
 	}
 
-	s := learnservice{log: log, db: db}
+	s := learnserver{log: log, db: db}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterLearnServiceServer(srv, &s)
-	log.Info("server started")
+
+	log.Debug("Learn service successfully started")
 
 	if err := srv.Serve(lis); err != nil {
 		log.Fatal("failed to serve", zap.Error(err))
@@ -71,15 +72,18 @@ func main() {
 }
 
 // NewTask inserts new tasks into database.
-func (s *learnservice) NewTasks(ctx context.Context, req *pb.NewTasksReq) (*pb.NewTasksRes, error) {
-	const op = "learnservice.NewTasks"
+func (s *learnserver) NewTasks(ctx context.Context, req *pb.NewTasksReq) (*pb.NewTasksRes, error) {
+	const op = "learnserver.NewTasks"
 
 	data := req.GetJsonData()
 	if data == "" {
 		return nil, fmt.Errorf("%s: empty data", op)
 	}
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("New task",
+	s.log.Debug("New Tasks request",
+		zap.Int("data len", len(data)),
+		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
@@ -90,7 +94,7 @@ func (s *learnservice) NewTasks(ctx context.Context, req *pb.NewTasksReq) (*pb.N
 		return nil, fmt.Errorf("%s: parse json data: %w", op, err)
 	}
 
-	rowsAffected, err := s.db.NewTaskBulk(ctx, *tasksPtr)
+	rowsAffected, err := s.db.NewTaskBulk(ctx, *tasksPtr, reqTrace)
 	if err != nil {
 		return nil, fmt.Errorf("%s: insert tasks: %w", op, err)
 	}
@@ -99,29 +103,34 @@ func (s *learnservice) NewTasks(ctx context.Context, req *pb.NewTasksReq) (*pb.N
 		return nil, fmt.Errorf("%s: no rows affected", op)
 	}
 
-	s.log.Info("Succesfully added task",
-		zap.String("op", op))
+	s.log.Debug("Succesfully added task",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return &pb.NewTasksRes{Inserted: rowsAffected}, nil
 }
 
-func (s *learnservice) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.GetTasksRes, error) {
-	const op = "learnservice.GetTasks"
+func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.GetTasksRes, error) {
+	const op = "learnserver.GetTasks"
 
 	level := req.GetLevel()
 	if level == "" {
 		return nil, fmt.Errorf("%s: empty level", op)
 	}
 	pos := req.GetPosition()
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("Get task",
-		zap.String("op", op))
+	s.log.Debug("Get Tasks request",
+		zap.String("level", level),
+		zap.Int32("position", pos),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
 	*tasksPtr = (*tasksPtr)[:0]
 	defer tasksPool.Put(tasksPtr)
 
-	if err := s.db.GetTasks(ctx, level, pos, tasksPtr); err != nil {
+	if err := s.db.GetTasks(ctx, level, pos, tasksPtr, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: get tasks: %w", op, err)
 	}
 
@@ -131,41 +140,50 @@ func (s *learnservice) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.G
 	}
 	tasksStr := unsafe.String(unsafe.SliceData(tasksBytes), len(tasksBytes))
 
-	s.log.Info("Succesfully get task",
-		zap.String("op", op))
+	s.log.Debug("Succesfully get task",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return &pb.GetTasksRes{Data: tasksStr}, nil
 }
 
-func (s *learnservice) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelTaskRes, error) {
-	const op = "learnservice.DelTask"
-
-	s.log.Info("Delete task",
-		zap.String("op", op))
+func (s *learnserver) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelTaskRes, error) {
+	const op = "learnserver.DelTask"
 
 	lvl := req.GetLevel()
 	pos := req.GetPosition()
+	reqTrace := req.GetRequestTrace()
 
-	if err := s.db.DelTask(ctx, lvl, pos); err != nil {
+	s.log.Debug("Delete task",
+		zap.String("level", lvl),
+		zap.Int32("position", pos),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	if err := s.db.DelTask(ctx, lvl, pos, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: del task: %w", op, err)
 	}
 
-	s.log.Info("Succesfully delete task",
-		zap.String("op", op))
+	s.log.Debug("Succesfully delete task",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return nil, nil
 }
 
-func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.NewWordsRes, error) {
-	const op = "learnservice.NewWords"
+func (s *learnserver) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.NewWordsRes, error) {
+	const op = "learnserver.NewWords"
 
 	data := req.GetJsonData()
 	if data == "" {
 		return nil, fmt.Errorf("%s: empty data", op)
 	}
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("New words",
-		zap.String("op", op))
+	s.log.Debug("New words request",
+		zap.Int("data len", len(data)),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	wordsPtr := wordsPool.Get().(*[]parser.Word)
 	*wordsPtr = (*wordsPtr)[:0]
@@ -175,7 +193,7 @@ func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.N
 		return nil, fmt.Errorf("%s: parse json data: %w", op, err)
 	}
 
-	rowsAffected, err := s.db.NewWordsBulk(ctx, *wordsPtr)
+	rowsAffected, err := s.db.NewWordsBulk(ctx, *wordsPtr, reqTrace)
 	if err != nil {
 		return nil, fmt.Errorf("%s: insert words: %w", op, err)
 	}
@@ -184,28 +202,32 @@ func (s *learnservice) NewWords(ctx context.Context, req *pb.NewWordsReq) (*pb.N
 		return nil, fmt.Errorf("%s: no rows affected", op)
 	}
 
-	s.log.Info("Succesfully added words",
-		zap.String("op", op))
+	s.log.Debug("Succesfully added words",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return &pb.NewWordsRes{Inserted: rowsAffected}, nil
 }
 
-func (s *learnservice) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.GetWordsRes, error) {
-	const op = "learnservice.GetWords"
+func (s *learnserver) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.GetWordsRes, error) {
+	const op = "learnserver.GetWords"
 
 	searchData := req.GetSearchData()
 	if searchData == "" {
 		return nil, fmt.Errorf("%s: empty search data", op)
 	}
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("Get words",
-		zap.String("op", op))
+	s.log.Debug("Get words request",
+		zap.Int("search_data len", len(searchData)),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	wordsPtr := wordsPool.Get().(*[]parser.Word)
 	*wordsPtr = (*wordsPtr)[:0]
 	defer wordsPool.Put(wordsPtr)
 
-	if err := s.db.GetWords(ctx, searchData, wordsPtr); err != nil {
+	if err := s.db.GetWords(ctx, searchData, wordsPtr, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: get words: %w", op, err)
 	}
 
@@ -215,27 +237,33 @@ func (s *learnservice) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.G
 	}
 	wordsStr := unsafe.String(unsafe.SliceData(wordsBytes), len(wordsBytes))
 
-	s.log.Info("Succesfully get words",
-		zap.String("op", op))
+	s.log.Debug("Succesfully get words",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return &pb.GetWordsRes{Data: wordsStr}, nil
 }
 
-func (s *learnservice) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.DelWordRes, error) {
-	const op = "learnservice.DelWord"
-
-	s.log.Info("Delete word",
-		zap.String("op", op))
+func (s *learnserver) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.DelWordRes, error) {
+	const op = "learnserver.DelWord"
 
 	word := req.GetWord()
 	serial := req.GetSerial()
+	reqTrace := req.GetRequestTrace()
 
-	if err := s.db.DelWords(ctx, word, serial); err != nil {
+	s.log.Debug("Delete word",
+		zap.String("word", word),
+		zap.Int32("serial", serial),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	if err := s.db.DelWords(ctx, word, serial, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: del words: %w", op, err)
 	}
 
-	s.log.Info("Succesfully deleted word",
-		zap.String("op", op))
+	s.log.Debug("Succesfully deleted word",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return nil, nil
 }
