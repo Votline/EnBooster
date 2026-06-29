@@ -23,7 +23,7 @@ type usersserver struct {
 }
 
 func main() {
-	log, _ := zap.NewProduction()
+	log, _ := zap.NewDevelopment()
 	defer log.Sync()
 
 	creds, err := credentials.NewServerTLSFromFile("ssl/server.crt", "ssl/server.key")
@@ -46,7 +46,7 @@ func main() {
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterUsersServiceServer(srv, &s)
 
-	log.Info("Users service succesfully started")
+	log.Debug("Users service successfully started")
 
 	if err := srv.Serve(lis); err != nil {
 		log.Fatal("failed to serve: ", zap.Error(err))
@@ -60,16 +60,23 @@ func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, 
 	if uuid == 0 {
 		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("RegUser", zap.Int64("uuid", uuid))
+	s.log.Debug("RegUser request",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
 
-	if err := s.db.RegUser(uuid, ctx); err != nil {
+	if err := s.db.RegUser(uuid, ctx, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: db insert user: %w", op, err)
 	}
 
-	s.log.Info("Successfully registered user", zap.Int64("uuid", uuid))
+	s.log.Info("Successfully registered user",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
 
-	return nil, nil
+	return &pb.RegRes{}, nil
 }
 
 // GetUser get user from database with uuid from request.
@@ -81,21 +88,22 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 		s.log.Error("GetUser", zap.Error(fmt.Errorf("%s: empty uuid", op)))
 		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("GetUser", zap.Int64("uuid", uuid))
+	s.log.Debug("GetUser request",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
 
-	ud, err := s.db.GetUser(uuid, ctx)
+	ud, err := s.db.GetUser(uuid, ctx, reqTrace)
 	if err != nil {
-		s.log.Error("GetUser", zap.Error(err))
 		return nil, fmt.Errorf("%s: db get user: %w", op, err)
 	}
 
 	s.log.Info("Successfully got user",
-		zap.Int("best task", int(ud.BestTask)),
-		zap.Int("worst task", int(ud.WorstTask)),
-		zap.Int("streak", int(ud.Streak)),
-		zap.Int("task id", int(ud.TaskID)),
-		zap.String("level", ud.Level))
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
 
 	return &pb.GetRes{
 		BestTask:  ud.BestTask,
@@ -110,17 +118,24 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 func (s *usersserver) DelUser(ctx context.Context, req *pb.DelReq) (*pb.DelRes, error) {
 	const op = "usersserver.DelUser"
 	uuid := req.GetUuid()
-	if uuid == "" {
+	if uuid == 0 {
 		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
+	reqTrace := req.GetRequestTrace()
 
-	s.log.Info("DelUser", zap.String("uuid", uuid))
+	s.log.Debug("DelUser request",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
 
-	if err := s.db.DelUser(uuid, ctx); err != nil {
+	if err := s.db.DelUser(uuid, ctx, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: db delete user: %w", op, err)
 	}
 
-	s.log.Info("Successfully deleted user", zap.String("uuid", uuid))
+	s.log.Info("Successfully deleted user",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
 
-	return nil, nil
+	return &pb.DelRes{}, nil
 }

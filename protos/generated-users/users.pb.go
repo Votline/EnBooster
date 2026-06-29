@@ -24,6 +24,7 @@ const (
 type RegReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -65,6 +66,13 @@ func (x *RegReq) GetUuid() int64 {
 	return 0
 }
 
+func (x *RegReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
+}
+
 type RegRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -104,6 +112,7 @@ func (*RegRes) Descriptor() ([]byte, []int) {
 type GetReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -143,6 +152,13 @@ func (x *GetReq) GetUuid() int64 {
 		return x.Uuid
 	}
 	return 0
+}
+
+func (x *GetReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
 }
 
 type GetRes struct {
@@ -223,7 +239,8 @@ func (x *GetRes) GetTaskId() int32 {
 
 type DelReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -258,9 +275,16 @@ func (*DelReq) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *DelReq) GetUuid() string {
+func (x *DelReq) GetUuid() int64 {
 	if x != nil {
 		return x.Uuid
+	}
+	return 0
+}
+
+func (x *DelReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
 	}
 	return ""
 }
@@ -305,21 +329,24 @@ var File_users_proto protoreflect.FileDescriptor
 
 const file_users_proto_rawDesc = "" +
 	"\n" +
-	"\vusers.proto\x12\x05users\"\x1c\n" +
+	"\vusers.proto\x12\x05users\"A\n" +
 	"\x06RegReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\"\b\n" +
-	"\x06RegRes\"\x1c\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
+	"\x06RegRes\"A\n" +
 	"\x06GetReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\"\x8b\x01\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x8b\x01\n" +
 	"\x06GetRes\x12\x1b\n" +
 	"\tbest_task\x18\x01 \x01(\x05R\bbestTask\x12\x1d\n" +
 	"\n" +
 	"worst_task\x18\x02 \x01(\x05R\tworstTask\x12\x16\n" +
 	"\x06streak\x18\x03 \x01(\x03R\x06streak\x12\x14\n" +
 	"\x05level\x18\x04 \x01(\tR\x05level\x12\x17\n" +
-	"\atask_id\x18\x05 \x01(\x05R\x06taskId\"\x1c\n" +
+	"\atask_id\x18\x05 \x01(\x05R\x06taskId\"A\n" +
 	"\x06DelReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"\b\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
 	"\x06DelRes2\x89\x01\n" +
 	"\fUsersService\x12'\n" +
 	"\aRegUser\x12\r.users.RegReq\x1a\r.users.RegRes\x12'\n" +

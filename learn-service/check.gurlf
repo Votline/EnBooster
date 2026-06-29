@@ -1,6 +1,6 @@
 [setup]
 Target:localhost:50052
-Endpoint:learn.LearnService/NewTask
+Endpoint:learn.LearnService/NewTasks
 ID:0
 Type:grpc
 Response:
@@ -8,14 +8,14 @@ Response:
 
 [new_tasks]
 Target:localhost:50052
-Endpoint:learn.LearnService/NewTask
+Endpoint:learn.LearnService/NewTasks
 Data:`
     {
-        "json_data": "[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\"}]"
+        "json_data": "[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\"}]",
+        "request_trace": "{RANDOM oneof=uuid}"
     }
 `
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:1
 Type:grpc
 Timeout:5s
@@ -25,65 +25,37 @@ Response:{"inserted":1}
 
 [get_all_tasks_by_level]
 Target:localhost:50052
-Endpoint:learn.LearnService/GetTask
+Endpoint:learn.LearnService/GetTasks
 Data:`
     {
         "level": "Intermediate",
-        "position": 0
+        "position": 0,
+        "request_trace": "{RANDOM oneof=uuid}"
     }
 `
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:2
 Type:grpc
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
 [\get_all_tasks_by_level]
 
 [get_one_task_by_pos]
 Target:localhost:50052
-Endpoint:learn.LearnService/GetTask
+Endpoint:learn.LearnService/GetTasks
 Data:`
     {
         "level": "Intermediate",
-        "position": 1
+        "position": 1,
+        "request_trace": "{RANDOM oneof=uuid}"
     }
 `
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:3
 Type:grpc
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
 [\get_one_task_by_pos]
-
-[new_words]
-Target:localhost:50052
-Endpoint:learn.LearnService/NewWords
-Data:`
-    {
-        "json_data": "[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\"}]"
-    }
-`
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-ID:4
-Type:grpc
-Response:{"inserted":1}
-[\new_words]
-
-[get_word_by_str]
-Target:localhost:50052
-Endpoint:learn.LearnService/GetWord
-Data:`
-    {
-        "search_data": "Run"
-    }
-`
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-ID:5
-Type:grpc
-Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":1},{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":2}]"}
-[\get_word_by_str]
 
 [del_task]
 Target:localhost:50052
@@ -91,13 +63,63 @@ Endpoint:learn.LearnService/DelTask
 Data:`
     {
         "level": "Intermediate",
-        "position": 1
+        "position": 1,
+        "request_trace": "{RANDOM oneof=uuid}"
     }
 `
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/learn.proto}
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-ID:6
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
+ID:4
 Type:grpc
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
 Response:{}
 [\del_task]
+
+[new_words]
+Target:localhost:50052
+Endpoint:learn.LearnService/NewWords
+Data:`
+    {
+        "json_data": "[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\"}]",
+        "request_trace": "{RANDOM oneof=uuid}"
+    }
+`
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
+ID:5
+Type:grpc
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
+Response:{"inserted":1}
+[\new_words]
+
+[get_word_by_str]
+Target:localhost:50052
+Endpoint:learn.LearnService/GetWords
+Data:`
+    {
+        "search_data": "Run",
+        "request_trace": "{RANDOM oneof=uuid}"
+    }
+`
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
+ID:6
+Type:grpc
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
+Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":2},{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":3}]"}
+[\get_word_by_str]
+
+[del_word]
+Target:localhost:50052
+Endpoint:learn.LearnService/DelWord
+Data:`
+    {
+        "word": "Run",
+        "serial": 1,
+        "request_trace": "{RANDOM oneof=uuid}"
+    }
+`
+ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
+ID:7
+Type:grpc
+Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
+Response:{}
+[\del_word]
 

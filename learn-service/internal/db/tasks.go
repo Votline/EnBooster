@@ -8,10 +8,11 @@ import (
 	"learn/internal/parser"
 
 	sq "github.com/Masterminds/squirrel"
+	"go.uber.org/zap"
 )
 
 // NewTaskBulk insert many tasks to database.
-func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task) (int32, error) {
+func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task, reqTrace string) (int32, error) {
 	const op = "db.NewTaskBulk"
 
 	if len(tasks) == 0 {
@@ -29,6 +30,11 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task) (int32, error
 		return 0, fmt.Errorf("%s: create max query: %w", op, maxErr)
 	}
 
+	d.log.Debug("Get max position",
+		zap.String("level", curLvl),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	if err := d.db.QueryRowContext(ctx, maxQuery, maxArgs...).Scan(&curMaxPos); err != nil {
 		return 0, fmt.Errorf("%s: exec get max position: %w", op, err)
 	}
@@ -41,6 +47,11 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task) (int32, error
 		insertBuilder = insertBuilder.
 			Values(task.TaskData, task.Level, task.Answer, curMaxPos)
 	}
+
+	d.log.Debug("Insert tasks",
+		zap.Int("tasks len", len(tasks)),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	query, args, err := insertBuilder.ToSql()
 	if err != nil {
@@ -57,11 +68,16 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task) (int32, error
 		return 0, fmt.Errorf("%s: get rows affected: %w", op, err)
 	}
 
+	d.log.Debug("Successfully inserted tasks",
+		zap.Int64("rows_affected", rowsAffected),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	return int32(rowsAffected), nil
 }
 
 // GetTasks returns tasks by level and position.
-func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]parser.Task) error {
+func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]parser.Task, reqTrace string) error {
 	const op = "db.GetTask"
 
 	query := d.bd.Select("task, level, answer, position").From("tasks")
@@ -79,14 +95,23 @@ func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]par
 		return fmt.Errorf("%s: create get task query: %w", op, err)
 	}
 
+	d.log.Debug("Get tasks",
+		zap.String("query", sql),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	if err := d.db.SelectContext(ctx, tasks, sql, args...); err != nil {
 		return fmt.Errorf("%s: exec get task query: %w", op, err)
 	}
 
+	d.log.Debug("Successfully get tasks",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	return nil
 }
 
-func (d *DB) DelTask(ctx context.Context, level string, pos int32) error {
+func (d *DB) DelTask(ctx context.Context, level string, pos int32, reqTrace string) error {
 	const op = "db.DelTask"
 
 	query, args, err := d.bd.Delete("tasks").
@@ -97,9 +122,19 @@ func (d *DB) DelTask(ctx context.Context, level string, pos int32) error {
 		return fmt.Errorf("%s: create del task query: %w", op, err)
 	}
 
+	d.log.Debug("Delete task",
+		zap.String("level", level),
+		zap.Int32("position", pos),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("%s: exec del task query: %w", op, err)
 	}
+
+	d.log.Debug("Successfully deleted task",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return nil
 }

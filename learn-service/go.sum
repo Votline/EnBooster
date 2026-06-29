@@ -13,6 +13,8 @@ github.com/Votline/EnBooster/protos v0.0.7 h1:PNG2Y/sGkUrCeJ3TdEaWcIKATTu/gZsnB7
 github.com/Votline/EnBooster/protos v0.0.7/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/Votline/EnBooster/protos v0.0.8 h1:GDwxFu4ajY/iLLcPqcGwbb8tcDO7zpPPYF5jrGgBmCw=
 github.com/Votline/EnBooster/protos v0.0.8/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
+github.com/Votline/EnBooster/protos v1.0.1 h1:DFLBU1WB1jH9x18zG2PdLHGSTapQ3w7MMjmIx+NkMx4=
+github.com/Votline/EnBooster/protos v1.0.1/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
 github.com/jmoiron/sqlx v1.4.0 h1:1PLqN7S1UYp5t4SrVVnt4nUVNemrDAtxlulVe+Qgm3o=

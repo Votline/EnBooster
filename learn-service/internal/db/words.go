@@ -9,10 +9,11 @@ import (
 	"learn/internal/parser"
 
 	sq "github.com/Masterminds/squirrel"
+	"go.uber.org/zap"
 )
 
 // NewWordsBulk insert many words to database.
-func (d *DB) NewWordsBulk(ctx context.Context, words []parser.Word) (int32, error) {
+func (d *DB) NewWordsBulk(ctx context.Context, words []parser.Word, reqTrace string) (int32, error) {
 	const op = "db.NewWordsBulk"
 
 	if len(words) == 0 {
@@ -26,6 +27,11 @@ func (d *DB) NewWordsBulk(ctx context.Context, words []parser.Word) (int32, erro
 		insertBuilder = insertBuilder.
 			Values(word.Word, word.Explain, word.Level, word.FirstLetter)
 	}
+
+	d.log.Debug("Insert words",
+		zap.Int("words len", len(words)),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	query, args, err := insertBuilder.ToSql()
 	if err != nil {
@@ -42,11 +48,16 @@ func (d *DB) NewWordsBulk(ctx context.Context, words []parser.Word) (int32, erro
 		return 0, fmt.Errorf("%s: get rows affected: %w", op, err)
 	}
 
+	d.log.Debug("Successfully inserted words",
+		zap.Int64("rows_affected", rowsAffected),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	return int32(rowsAffected), nil
 }
 
 // GetWords update 'words' slice with words by level and serial.
-func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Word) error {
+func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Word, reqTrace string) error {
 	const op = "db.GetWords"
 
 	query := d.bd.Select("word, explain, level, first_letter, serial").
@@ -64,15 +75,24 @@ func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Wo
 		return fmt.Errorf("%s: create get words query: %w", op, err)
 	}
 
+	d.log.Debug("Get words",
+		zap.String("query", sql),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	if err := d.db.SelectContext(ctx, words, sql, args...); err != nil {
 		return fmt.Errorf("%s: exec get words query: %w", op, err)
 	}
+
+	d.log.Debug("Successfully get words",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return nil
 }
 
 // DelWords delete by word and serial.
-func (d *DB) DelWords(ctx context.Context, level string, serial int32) error {
+func (d *DB) DelWords(ctx context.Context, level string, serial int32, reqTrace string) error {
 	const op = "db.DelWords"
 
 	query, args, err := d.bd.Delete("words").
@@ -83,9 +103,18 @@ func (d *DB) DelWords(ctx context.Context, level string, serial int32) error {
 		return fmt.Errorf("%s: create del words query: %w", op, err)
 	}
 
+	d.log.Debug("Delete words",
+		zap.String("query", query),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
 	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("%s: exec del words query: %w", op, err)
 	}
+
+	d.log.Debug("Successfully deleted words",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
 
 	return nil
 }
