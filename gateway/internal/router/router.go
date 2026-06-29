@@ -9,6 +9,7 @@ import (
 	"enbstr/internal/statemanager"
 	"enbstr/internal/users"
 
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
@@ -44,14 +45,17 @@ func setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Lo
 	lrnsrv.RegisterRoutes(bot)
 
 	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
-		data, err := usrsrv.GetData(c)
+		reqTrace := uuid.NewString()
+
+		data, err := usrsrv.GetData(c.Sender().ID, reqTrace)
 		if err != nil {
 			return fmt.Errorf("get user data: %w", err)
 		}
+
 		tasksPtr := tasksList.Get().(*[]learn.Task)
 		defer tasksList.Put(tasksPtr)
 
-		if err := lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr); err != nil {
+		if err := lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
 			return fmt.Errorf("get tasks: %w", err)
 		}
 

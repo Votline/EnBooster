@@ -76,7 +76,7 @@ func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, 
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
-	return nil, nil
+	return &pb.RegRes{}, nil
 }
 
 // GetUser get user from database with uuid from request.
@@ -137,5 +137,5 @@ func (s *usersserver) DelUser(ctx context.Context, req *pb.DelReq) (*pb.DelRes, 
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
-	return nil, nil
+	return &pb.DelRes{}, nil
 }
