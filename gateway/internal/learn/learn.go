@@ -8,9 +8,11 @@ import (
 	"fmt"
 	"os"
 
+	"enbstr/internal/cbreaker"
 	"enbstr/internal/statemanager"
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
+	"github.com/sony/gobreaker/v2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -21,6 +23,7 @@ type LearnService struct {
 	name   string
 	log    *zap.Logger
 	conn   *grpc.ClientConn
+	cb     *gobreaker.CircuitBreaker[any]
 	client pb.LearnServiceClient
 	states *statemanager.StateManager
 }
@@ -55,8 +58,9 @@ func NewLS(states *statemanager.StateManager, log *zap.Logger) (*LearnService, e
 		name:   "learn",
 		log:    log,
 		conn:   conn,
-		client: pb.NewLearnServiceClient(conn),
 		states: states,
+		cb:     cbreaker.NewCB("learn", log),
+		client: pb.NewLearnServiceClient(conn),
 	}, nil
 }
 

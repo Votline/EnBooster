@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"os"
 
+	"enbstr/internal/cbreaker"
+
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"github.com/google/uuid"
+	"github.com/sony/gobreaker/v2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -19,6 +22,7 @@ import (
 type UsersService struct {
 	name   string
 	log    *zap.Logger
+	cb     *gobreaker.CircuitBreaker[any]
 	conn   *grpc.ClientConn
 	client pb.UsersServiceClient
 }
@@ -53,6 +57,7 @@ func NewUS(log *zap.Logger) (*UsersService, error) {
 		name:   "users",
 		log:    log,
 		conn:   conn,
+		cb:     cbreaker.NewCB("users", log),
 		client: pb.NewUsersServiceClient(conn),
 	}, nil
 }

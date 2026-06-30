@@ -10,6 +10,8 @@ import (
 	"time"
 	"unsafe"
 
+	"enbstr/internal/services"
+
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
 	"go.uber.org/zap"
 )
@@ -32,12 +34,14 @@ func (ls *LearnService) NewTasks(msg, reqTrace string) (int32, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	res, err := ls.client.NewTasks(ctx, &pb.NewTasksReq{
-		JsonData:     msg,
-		RequestTrace: reqTrace,
+	res, err := services.CallRPC(ls.cb, func() (*pb.NewTasksRes, error) {
+		return ls.client.NewTasks(ctx, &pb.NewTasksReq{
+			JsonData:     msg,
+			RequestTrace: reqTrace,
+		})
 	})
 	if err != nil {
-		return -1, fmt.Errorf("%s: new task: %w", op, err)
+		return 0, fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	ls.log.Debug("New tasks response",
@@ -60,10 +64,12 @@ func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, req
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	tasks, err := ls.client.GetTasks(ctx, &pb.GetTasksReq{
-		Level:        level,
-		Position:     pos,
-		RequestTrace: reqTrace,
+	tasks, err := services.CallRPC(ls.cb, func() (*pb.GetTasksRes, error) {
+		return ls.client.GetTasks(ctx, &pb.GetTasksReq{
+			Level:        level,
+			Position:     pos,
+			RequestTrace: reqTrace,
+		})
 	})
 	if err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
@@ -108,10 +114,12 @@ func (ls *LearnService) DeleteTask(msg, reqTrace string) error {
 		return fmt.Errorf("%s: atoi position: invalid position", op)
 	}
 
-	if _, err := ls.client.DelTask(ctx, &pb.DelTaskReq{
-		Level:        levelStr,
-		Position:     int32(posInt),
-		RequestTrace: reqTrace,
+	if _, err := services.CallRPC(ls.cb, func() (*pb.DelTaskRes, error) {
+		return ls.client.DelTask(ctx, &pb.DelTaskReq{
+			Level:        levelStr,
+			Position:     int32(posInt),
+			RequestTrace: reqTrace,
+		})
 	}); err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
