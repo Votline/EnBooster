@@ -87,3 +87,7 @@ func (us *UsersService) RegisterRoutes(bot *tele.Bot) error {
 func (us *UsersService) Close() error {
 	return us.conn.Close()
 }
+
+func (us *UsersService) GetName() string {
+	return us.name
+}

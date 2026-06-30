@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"enbstr/internal/learn"
+	"enbstr/internal/services"
 	"enbstr/internal/statemanager"
 	"enbstr/internal/users"
 
@@ -14,6 +15,12 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+type Server struct {
+	b        *tele.Bot
+	log      *zap.Logger
+	closable []services.Closable
+}
+
 var tasksList = sync.Pool{
 	New: func() any {
 		l := make([]learn.Task, 0)
@@ -21,17 +28,25 @@ var tasksList = sync.Pool{
 	},
 }
 
-func Setup(bot *tele.Bot, log *zap.Logger) {
+func Setup(bot *tele.Bot, log *zap.Logger) *Server {
+	srv := &Server{
+		b:        bot,
+		log:      log,
+		closable: make([]services.Closable, 2),
+	}
+
 	states, err := statemanager.NewSM()
 	if err != nil {
 		log.Fatal("Failed to create state manager", zap.Error(err))
 	}
 	log.Info("Successfully connected redis")
 
-	setupServices(bot, states, log)
+	srv.setupServices(bot, states, log)
+
+	return srv
 }
 
-func setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Logger) {
+func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Logger) {
 	usrsrv, err := users.NewUS(log)
 	if err != nil {
 		log.Fatal("Failed to create users service", zap.Error(err))
@@ -61,4 +76,23 @@ func setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Lo
 
 		return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
 	})
+
+	srv.closable = append(srv.closable, usrsrv, lrnsrv)
+}
+
+func (srv *Server) Start() {
+	srv.b.Start()
+}
+
+func (srv *Server) Close() {
+	const op = "router.Close"
+
+	for _, c := range srv.closable {
+		c.Close()
+		srv.log.Info("Closed service",
+			zap.String("service", c.GetName()),
+			zap.String("op", op))
+	}
+	srv.b.Stop()
+	srv.log.Info("Bot stopped", zap.String("op", op))
 }
