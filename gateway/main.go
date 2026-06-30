@@ -4,6 +4,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"enbstr/internal/router"
@@ -24,11 +26,28 @@ func main() {
 		log.Fatal("Failed to create bot", zap.Error(err))
 	}
 
-	router.Setup(b, log)
+	srv := router.Setup(b, log)
 
 	log.Info("Bot is successfully created")
 
-	b.Start()
+	go func() {
+		srv.Start()
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+	gracefulShutdown(srv, log)
+}
+
+func gracefulShutdown(srv *router.Server, log *zap.Logger) {
+	const op = "gateway.gracefulShutdown"
+
+	log.Info("Shutting down server", zap.String("op", op))
+
+	srv.Close()
+
+	log.Info("Server shutdown successfully", zap.String("op", op))
 }
 
 // createLogger creates a production zap logger.

@@ -60,12 +60,16 @@ func NewLS(states *statemanager.StateManager, log *zap.Logger) (*LearnService, e
 	}, nil
 }
 
-func (ls *LearnService) Close() error {
-	return ls.conn.Close()
-}
-
 func (ls *LearnService) RegisterRoutes(bot *tele.Bot) error {
 	const op = "learn.RegisterRoutes"
 
 	return nil
+}
+
+func (ls *LearnService) Close() error {
+	return ls.conn.Close()
+}
+
+func (ls *LearnService) GetName() string {
+	return ls.name
 }
