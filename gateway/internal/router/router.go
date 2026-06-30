@@ -32,7 +32,7 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	srv := &Server{
 		b:        bot,
 		log:      log,
-		closable: make([]services.Closable, 2),
+		closable: make([]services.Closable, 0, 2),
 	}
 
 	states, err := statemanager.NewSM()
