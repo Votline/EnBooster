@@ -103,7 +103,7 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:6
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":2},{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":3}]"}
+Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":2}]"}
 [\get_word_by_str]
 
 [del_word]
