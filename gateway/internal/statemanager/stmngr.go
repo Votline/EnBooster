@@ -26,7 +26,7 @@ func NewSM() (*StateManager, error) {
 	const op = "statemanager.NewSM"
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_SM_HOST") + ":" + os.Getenv("REDIS_SM_PORT"),
+		Addr:     os.Getenv("REDIS_SM_ADDR"),
 		Password: os.Getenv("REDIS_SM_PASSWORD"),
 		DB:       0,
 	})

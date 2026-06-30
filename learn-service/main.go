@@ -14,6 +14,7 @@ import (
 
 	"learn/internal/db"
 	"learn/internal/parser"
+	"learn/internal/rdb"
 
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
 	"google.golang.org/grpc"
@@ -25,6 +26,7 @@ import (
 // learnserver provides grpc learn service methods.
 type learnserver struct {
 	db  *db.DB
+	rdb *rdb.RDB
 	log *zap.Logger
 	pb.UnimplementedLearnServiceServer
 }
@@ -62,7 +64,12 @@ func main() {
 		log.Fatal("failed to create db", zap.Error(err))
 	}
 
-	s := learnserver{log: log, db: db}
+	rdb, err := rdb.NewRDB()
+	if err != nil {
+		log.Fatal("failed to create rdb", zap.Error(err))
+	}
+
+	s := learnserver{log: log, db: db, rdb: rdb}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterLearnServiceServer(srv, &s)
 
@@ -147,11 +154,28 @@ func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.Ge
 	pos := req.GetPosition()
 	reqTrace := req.GetRequestTrace()
 
+	key := fmt.Sprintf("tasks:%s:%d", level, pos)
+
 	s.log.Debug("Get Tasks request",
-		zap.String("level", level),
-		zap.Int32("position", pos),
+		zap.String("key", key),
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
+
+	tasks, err := s.rdb.GetTasks(ctx, key)
+	if err != nil {
+		s.log.Error("Failed to get tasks from cache",
+			zap.String("key", key),
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace),
+			zap.Error(err))
+	}
+	if tasks != "" {
+		s.log.Debug("Succesfully get task from cache",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		return &pb.GetTasksRes{Data: tasks}, nil
+	}
 
 	tasksPtr := tasksPool.Get().(*[]parser.Task)
 	*tasksPtr = (*tasksPtr)[:0]
@@ -170,6 +194,13 @@ func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.Ge
 	s.log.Debug("Succesfully get task",
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
+
+	if err := s.rdb.CacheTasks(ctx, key, tasksStr); err != nil {
+		s.log.Error("Failed to cache tasks",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace),
+			zap.Error(err))
+	}
 
 	return &pb.GetTasksRes{Data: tasksStr}, nil
 }
