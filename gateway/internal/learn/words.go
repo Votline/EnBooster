@@ -11,6 +11,8 @@ import (
 	"time"
 	"unsafe"
 
+	"enbstr/internal/services"
+
 	pb "github.com/Votline/EnBooster/protos/generated-learn"
 	"go.uber.org/zap"
 )
@@ -33,12 +35,14 @@ func (ls *LearnService) NewWords(msg, reqTrace string) (int32, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	res, err := ls.client.NewWords(ctx, &pb.NewWordsReq{
-		JsonData:     msg,
-		RequestTrace: reqTrace,
+	res, err := services.CallRPC(ls.cb, func() (*pb.NewWordsRes, error) {
+		return ls.client.NewWords(ctx, &pb.NewWordsReq{
+			JsonData:     msg,
+			RequestTrace: reqTrace,
+		})
 	})
 	if err != nil {
-		return -1, fmt.Errorf("%s: new word: %w", op, err)
+		return 0, fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	ls.log.Debug("New words response",
@@ -60,12 +64,14 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	res, err := ls.client.GetWords(ctx, &pb.GetWordsReq{
-		SearchData:   searchData,
-		RequestTrace: reqTrace,
+	res, err := services.CallRPC(ls.cb, func() (*pb.GetWordsRes, error) {
+		return ls.client.GetWords(ctx, &pb.GetWordsReq{
+			SearchData:   searchData,
+			RequestTrace: reqTrace,
+		})
 	})
 	if err != nil {
-		return fmt.Errorf("%s: get words: %w", op, err)
+		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	dataBytes := unsafe.Slice(unsafe.StringData(res.Data), len(res.Data))
@@ -104,12 +110,14 @@ func (ls *LearnService) DeleteWord(msg, reqTrace string) error {
 		return fmt.Errorf("%s: atoi serial: invalid serial", op)
 	}
 
-	if _, err := ls.client.DelWord(ctx, &pb.DelWordReq{
-		Word:         wordStr,
-		Serial:       int32(serialInt),
-		RequestTrace: reqTrace,
+	if _, err := services.CallRPC(ls.cb, func() (*pb.DelWordRes, error) {
+		return ls.client.DelWord(ctx, &pb.DelWordReq{
+			Word:         wordStr,
+			Serial:       int32(serialInt),
+			RequestTrace: reqTrace,
+		})
 	}); err != nil {
-		return fmt.Errorf("%s: delete word: %w", op, err)
+		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	ls.log.Debug("Delete word successfully",

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"enbstr/internal/services"
+
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"go.uber.org/zap"
 )
@@ -31,11 +33,13 @@ func (us *UsersService) Register(uuid int64, reqTrace string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if _, err := us.client.RegUser(ctx, &pb.RegReq{
-		Uuid:         uuid,
-		RequestTrace: reqTrace,
+	if _, err := services.CallRPC(us.cb, func() (*pb.RegRes, error) {
+		return us.client.RegUser(ctx, &pb.RegReq{
+			Uuid:         uuid,
+			RequestTrace: reqTrace,
+		})
 	}); err != nil {
-		return fmt.Errorf("%s: register user: %w", op, err)
+		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	us.log.Debug("Register user successfully",
@@ -57,21 +61,23 @@ func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	resp, err := us.client.GetUser(ctx, &pb.GetReq{
-		Uuid:         uuid,
-		RequestTrace: reqTrace,
+	res, err := services.CallRPC(us.cb, func() (*pb.GetRes, error) {
+		return us.client.GetUser(ctx, &pb.GetReq{
+			Uuid:         uuid,
+			RequestTrace: reqTrace,
+		})
 	})
 	if err != nil {
-		return UserData{}, fmt.Errorf("%s: get user data: %w", op, err)
+		return UserData{}, fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	userData := UserData{
 		UUID:      uuid,
-		BestTask:  resp.BestTask,
-		WorstTask: resp.WorstTask,
-		Streak:    resp.Streak,
-		Level:     resp.Level,
-		TaskID:    resp.TaskId,
+		BestTask:  res.BestTask,
+		WorstTask: res.WorstTask,
+		Streak:    res.Streak,
+		Level:     res.Level,
+		TaskID:    res.TaskId,
 	}
 
 	us.log.Debug("Get user data successfully",
@@ -93,11 +99,13 @@ func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if _, err := us.client.DelUser(ctx, &pb.DelReq{
-		Uuid:         uuid,
-		RequestTrace: reqTrace,
+	if _, err := services.CallRPC(us.cb, func() (*pb.DelRes, error) {
+		return us.client.DelUser(ctx, &pb.DelReq{
+			Uuid:         uuid,
+			RequestTrace: reqTrace,
+		})
 	}); err != nil {
-		return fmt.Errorf("%s: delete user: %w", op, err)
+		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
 	us.log.Debug("Delete user successfully",
