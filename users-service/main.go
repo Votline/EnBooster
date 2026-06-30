@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"users/internal/db"
 
@@ -48,9 +50,34 @@ func main() {
 
 	log.Debug("Users service successfully started")
 
-	if err := srv.Serve(lis); err != nil {
-		log.Fatal("failed to serve: ", zap.Error(err))
+	go func() {
+		if err := srv.Serve(lis); err != nil {
+			log.Fatal("failed to serve: ", zap.Error(err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+	gracefulShutdown(&s, srv)
+}
+
+func gracefulShutdown(s *usersserver, srv *grpc.Server) {
+	const op = "usersserver.gracefulShutdown"
+
+	s.log.Info("Shutting down server", zap.String("op", op))
+
+	srv.Stop()
+	s.log.Info("Server stopped", zap.String("op", op))
+
+	if err := s.db.Close(); err != nil {
+		s.log.Error("Failed to close database",
+			zap.String("op", op),
+			zap.Error(err))
 	}
+	s.log.Info("Database closed", zap.String("op", op))
+
+	s.log.Info("Server shutdown successfully", zap.String("op", op))
 }
 
 // RegUser add user to database with uuid from request.
