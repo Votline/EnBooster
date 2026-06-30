@@ -41,3 +41,7 @@ func NewDB(log *zap.Logger) (*DB, error) {
 		bd:  sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}, nil
 }
+
+func (d *DB) Close() error {
+	return d.db.Close()
+}
