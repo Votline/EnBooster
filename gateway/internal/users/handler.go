@@ -30,7 +30,7 @@ func (us *UsersService) Register(uuid int64, reqTrace string) error {
 		zap.Int64("uuid", uuid),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
 	defer cancel()
 
 	if _, err := services.CallRPC(us.cb, func() (*pb.RegRes, error) {
@@ -58,7 +58,7 @@ func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 		zap.Int64("uuid", uuid),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
 	defer cancel()
 
 	res, err := services.CallRPC(us.cb, func() (*pb.GetRes, error) {
@@ -96,7 +96,7 @@ func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
 		zap.Int64("uuid", uuid),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
 	defer cancel()
 
 	if _, err := services.CallRPC(us.cb, func() (*pb.DelRes, error) {

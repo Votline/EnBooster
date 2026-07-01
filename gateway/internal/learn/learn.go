@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"time"
 
 	"enbstr/internal/cbreaker"
 	"enbstr/internal/statemanager"
@@ -20,15 +21,16 @@ import (
 )
 
 type LearnService struct {
-	name   string
-	log    *zap.Logger
-	conn   *grpc.ClientConn
-	cb     *gobreaker.CircuitBreaker[any]
-	client pb.LearnServiceClient
-	states *statemanager.StateManager
+	name       string
+	ctxTimeout time.Duration
+	log        *zap.Logger
+	conn       *grpc.ClientConn
+	cb         *gobreaker.CircuitBreaker[any]
+	client     pb.LearnServiceClient
+	states     *statemanager.StateManager
 }
 
-func NewLS(states *statemanager.StateManager, log *zap.Logger) (*LearnService, error) {
+func NewLS(states *statemanager.StateManager, ctxTimeout time.Duration, log *zap.Logger) (*LearnService, error) {
 	const op = "learn.NewLS"
 
 	log.Info("Creating learn service",
@@ -55,12 +57,13 @@ func NewLS(states *statemanager.StateManager, log *zap.Logger) (*LearnService, e
 	}
 
 	return &LearnService{
-		name:   "learn",
-		log:    log,
-		conn:   conn,
-		states: states,
-		cb:     cbreaker.NewCB("learn", log),
-		client: pb.NewLearnServiceClient(conn),
+		name:       "learn",
+		ctxTimeout: ctxTimeout,
+		log:        log,
+		conn:       conn,
+		states:     states,
+		cb:         cbreaker.NewCB("learn", log),
+		client:     pb.NewLearnServiceClient(conn),
 	}, nil
 }
 

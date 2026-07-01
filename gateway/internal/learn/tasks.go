@@ -31,7 +31,7 @@ func (ls *LearnService) NewTasks(msg, reqTrace string) (int32, error) {
 		zap.Int("msg len", len(msg)),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
 	defer cancel()
 
 	res, err := services.CallRPC(ls.cb, func() (*pb.NewTasksRes, error) {
@@ -61,7 +61,7 @@ func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, req
 		zap.Int32("pos", pos),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
 	defer cancel()
 
 	tasks, err := services.CallRPC(ls.cb, func() (*pb.GetTasksRes, error) {
@@ -98,7 +98,7 @@ func (ls *LearnService) DeleteTask(msg, reqTrace string) error {
 		zap.Int("msg len", len(msg)),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
 	defer cancel()
 
 	msgBytes := unsafe.Slice(unsafe.StringData(msg), len(msg))

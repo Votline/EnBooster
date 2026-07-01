@@ -9,13 +9,17 @@ import (
 	"time"
 	"unsafe"
 
+	"learn/internal/db"
+
 	"github.com/go-redis/redis/v8"
 	"golang.org/x/sync/singleflight"
 )
 
 type RDB struct {
-	rdb     *redis.Client
-	sfGroup singleflight.Group
+	rdb      *redis.Client
+	sfGroup  singleflight.Group
+	countTTL int
+	taskTTL  time.Duration
 }
 
 func NewRDB() (*RDB, error) {
@@ -27,14 +31,26 @@ func NewRDB() (*RDB, error) {
 		DB:       0,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	pingTimeout := db.GetEnvInt("RedisPingTimeout", 10)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(pingTimeout)*time.Second)
 	defer cancel()
 
 	if _, err := rdb.Ping(ctx).Result(); err != nil {
 		return nil, fmt.Errorf("%s: redis ping: %w", op, err)
 	}
 
-	return &RDB{rdb: rdb}, nil
+	countTTL := db.GetEnvInt("CountTTL", 1800)
+	taskTTL := db.GetEnvInt("TaskTTL", 30)
+
+	r := &RDB{
+		rdb:      rdb,
+		sfGroup:  singleflight.Group{},
+		countTTL: countTTL,
+		taskTTL:  time.Duration(taskTTL),
+	}
+
+	return r, nil
 }
 
 func (r *RDB) Close() error {
@@ -58,7 +74,7 @@ func (r *RDB) CacheTasks(ctx context.Context, bufCount, bufCache *[]byte, value 
 	BuildKey("tasks:cache:", bufCache)
 	cacheKey := unsafe.String(unsafe.SliceData(*bufCache), len(*bufCache))
 
-	count, err := incrAndExpire.Run(ctx, r.rdb, []string{countKey}, 1800).Int64()
+	count, err := incrAndExpire.Run(ctx, r.rdb, []string{countKey}, r.countTTL).Int64()
 	if err != nil {
 		return fmt.Errorf("%s: redis incr and expire: %w", op, err)
 	}
@@ -67,7 +83,7 @@ func (r *RDB) CacheTasks(ctx context.Context, bufCount, bufCache *[]byte, value 
 		return nil
 	}
 
-	if err := r.rdb.Set(ctx, cacheKey, value, 30*time.Minute).Err(); err != nil {
+	if err := r.rdb.Set(ctx, cacheKey, value, r.taskTTL*time.Minute).Err(); err != nil {
 		return fmt.Errorf("%s: redis set: %w", op, err)
 	}
 

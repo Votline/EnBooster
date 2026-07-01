@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"time"
 
 	"enbstr/internal/cbreaker"
 
@@ -20,14 +21,15 @@ import (
 )
 
 type UsersService struct {
-	name   string
-	log    *zap.Logger
-	cb     *gobreaker.CircuitBreaker[any]
-	conn   *grpc.ClientConn
-	client pb.UsersServiceClient
+	name       string
+	ctxTimeout time.Duration
+	log        *zap.Logger
+	cb         *gobreaker.CircuitBreaker[any]
+	conn       *grpc.ClientConn
+	client     pb.UsersServiceClient
 }
 
-func NewUS(log *zap.Logger) (*UsersService, error) {
+func NewUS(ctxTimeout time.Duration, log *zap.Logger) (*UsersService, error) {
 	const op = "users.NewUS"
 
 	log.Info("Creating users service",
@@ -54,11 +56,12 @@ func NewUS(log *zap.Logger) (*UsersService, error) {
 	}
 
 	return &UsersService{
-		name:   "users",
-		log:    log,
-		conn:   conn,
-		cb:     cbreaker.NewCB("users", log),
-		client: pb.NewUsersServiceClient(conn),
+		name:       "users",
+		ctxTimeout: ctxTimeout,
+		log:        log,
+		conn:       conn,
+		cb:         cbreaker.NewCB("users", log),
+		client:     pb.NewUsersServiceClient(conn),
 	}, nil
 }
 

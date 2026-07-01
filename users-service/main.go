@@ -98,7 +98,7 @@ func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, 
 		return nil, fmt.Errorf("%s: db insert user: %w", op, err)
 	}
 
-	s.log.Info("Successfully registered user",
+	s.log.Debug("Successfully registered user",
 		zap.Int64("uuid", uuid),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
@@ -127,7 +127,7 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 		return nil, fmt.Errorf("%s: db get user: %w", op, err)
 	}
 
-	s.log.Info("Successfully got user",
+	s.log.Debug("Successfully got user",
 		zap.Int64("uuid", uuid),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
@@ -159,7 +159,7 @@ func (s *usersserver) DelUser(ctx context.Context, req *pb.DelReq) (*pb.DelRes, 
 		return nil, fmt.Errorf("%s: db delete user: %w", op, err)
 	}
 
-	s.log.Info("Successfully deleted user",
+	s.log.Debug("Successfully deleted user",
 		zap.Int64("uuid", uuid),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))

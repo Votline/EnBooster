@@ -18,11 +18,13 @@ const (
 )
 
 type StateManager struct {
-	rdb *redis.Client
+	rdb        *redis.Client
+	ctxTimeout time.Duration
+	stateTTL   time.Duration
 }
 
 // NewSM connects to redis and returns a new StateManager
-func NewSM() (*StateManager, error) {
+func NewSM(ctxTimeout time.Duration, stateTTL, pingTimeout time.Duration) (*StateManager, error) {
 	const op = "statemanager.NewSM"
 
 	rdb := redis.NewClient(&redis.Options{
@@ -31,7 +33,7 @@ func NewSM() (*StateManager, error) {
 		DB:       0,
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout*time.Second)
 	defer cancel()
 
 	_, err := rdb.Ping(ctx).Result()
@@ -40,7 +42,9 @@ func NewSM() (*StateManager, error) {
 	}
 
 	return &StateManager{
-		rdb: rdb,
+		rdb:        rdb,
+		ctxTimeout: ctxTimeout,
+		stateTTL:   stateTTL,
 	}, nil
 }
 
@@ -53,7 +57,7 @@ func (sm *StateManager) Close() error {
 func (sm *StateManager) GetState(uuid int64) (int8, error) {
 	const op = "statemanager.GetState"
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
 	defer cancel()
 
 	key := "users:state" + strconv.FormatInt(uuid, 10)
@@ -75,12 +79,12 @@ func (sm *StateManager) GetState(uuid int64) (int8, error) {
 func (sm *StateManager) SetState(uuid int64, state int8) error {
 	const op = "statemanager.SetState"
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
 	defer cancel()
 
 	key := "users:state" + strconv.FormatInt(uuid, 10)
 
-	if _, err := sm.rdb.Set(ctx, key, state, 30*time.Minute).Result(); err != nil {
+	if _, err := sm.rdb.Set(ctx, key, state, sm.stateTTL*time.Minute).Result(); err != nil {
 		return fmt.Errorf("%s: failed to set state: %w", op, err)
 	}
 
