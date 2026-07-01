@@ -45,6 +45,13 @@ var wordsPool = sync.Pool{
 	},
 }
 
+var keyPool = sync.Pool{
+	New: func() any {
+		k := make([]byte, 0, 64)
+		return &k
+	},
+}
+
 func main() {
 	log, _ := zap.NewDevelopment()
 	defer log.Sync()
@@ -154,17 +161,27 @@ func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.Ge
 	pos := req.GetPosition()
 	reqTrace := req.GetRequestTrace()
 
-	key := fmt.Sprintf("tasks:%s:%d", level, pos)
+	key := fmt.Sprintf("%s:%d", level, pos)
+
+	cacheKey := keyPool.Get().(*[]byte)
+	*cacheKey = (*cacheKey)[:0]
+	defer keyPool.Put(cacheKey)
+	rdb.BuildKey(key, cacheKey)
+
+	countKey := keyPool.Get().(*[]byte)
+	*countKey = (*countKey)[:0]
+	defer keyPool.Put(countKey)
+	rdb.BuildKey(key, countKey)
 
 	s.log.Debug("Get Tasks request",
-		zap.String("key", key),
+		zap.String("level", level),
+		zap.Int32("position", pos),
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
 
-	tasks, err := s.rdb.GetTasks(ctx, key)
+	tasks, err := s.rdb.GetTasks(ctx, cacheKey, key)
 	if err != nil {
 		s.log.Error("Failed to get tasks from cache",
-			zap.String("key", key),
 			zap.String("op", op),
 			zap.String("request_trace", reqTrace),
 			zap.Error(err))
@@ -195,11 +212,15 @@ func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.Ge
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
 
-	if err := s.rdb.CacheTasks(ctx, key, tasksStr); err != nil {
+	if err := s.rdb.CacheTasks(ctx, cacheKey, countKey, tasksStr); err != nil {
 		s.log.Error("Failed to cache tasks",
 			zap.String("op", op),
 			zap.String("request_trace", reqTrace),
 			zap.Error(err))
+	} else {
+		s.log.Debug("Succesfully cached tasks",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
 	}
 
 	return &pb.GetTasksRes{Data: tasksStr}, nil
@@ -212,6 +233,18 @@ func (s *learnserver) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelT
 	pos := req.GetPosition()
 	reqTrace := req.GetRequestTrace()
 
+	key := fmt.Sprintf("%s:%d", lvl, pos)
+
+	cacheKey := keyPool.Get().(*[]byte)
+	*cacheKey = (*cacheKey)[:0]
+	defer keyPool.Put(cacheKey)
+	rdb.BuildKey(key, cacheKey)
+
+	countKey := keyPool.Get().(*[]byte)
+	*countKey = (*countKey)[:0]
+	defer keyPool.Put(countKey)
+	rdb.BuildKey(key, countKey)
+
 	s.log.Debug("Delete task",
 		zap.String("level", lvl),
 		zap.Int32("position", pos),
@@ -220,6 +253,17 @@ func (s *learnserver) DelTask(ctx context.Context, req *pb.DelTaskReq) (*pb.DelT
 
 	if err := s.db.DelTask(ctx, lvl, pos, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: del task: %w", op, err)
+	}
+
+	if err := s.rdb.DelTask(ctx, cacheKey, countKey); err != nil {
+		s.log.Error("Failed to delete task from cache",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace),
+			zap.Error(err))
+	} else {
+		s.log.Debug("Succesfully deleted task from cache",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
 	}
 
 	s.log.Debug("Succesfully delete task",
