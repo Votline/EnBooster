@@ -3,7 +3,10 @@ package router
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"sync"
+	"time"
 
 	"enbstr/internal/learn"
 	"enbstr/internal/services"
@@ -28,6 +31,18 @@ var tasksList = sync.Pool{
 	},
 }
 
+func GetEnvInt(key string, defaultVal int) int {
+	valStr := os.Getenv(key)
+	if valStr == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return defaultVal
+	}
+	return val
+}
+
 func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	srv := &Server{
 		b:        bot,
@@ -35,25 +50,30 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 		closable: make([]services.Closable, 0, 2),
 	}
 
-	states, err := statemanager.NewSM()
+	redisCtxTimeout := GetEnvInt("RedisCtxTimeout", 10)
+	stateTTL := GetEnvInt("StateTTL", 30)
+	pingTimeout := GetEnvInt("RedisPingTimeout", 10)
+	ctxTimeout := GetEnvInt("CtxTimeout", 10)
+
+	states, err := statemanager.NewSM(time.Duration(redisCtxTimeout), time.Duration(stateTTL), time.Duration(pingTimeout))
 	if err != nil {
 		log.Fatal("Failed to create state manager", zap.Error(err))
 	}
 	log.Info("Successfully connected redis")
 
-	srv.setupServices(bot, states, log)
+	srv.setupServices(bot, states, time.Duration(ctxTimeout), log)
 
 	return srv
 }
 
-func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManager, log *zap.Logger) {
-	usrsrv, err := users.NewUS(log)
+func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManager, ctxTimeout time.Duration, log *zap.Logger) {
+	usrsrv, err := users.NewUS(ctxTimeout, log)
 	if err != nil {
 		log.Fatal("Failed to create users service", zap.Error(err))
 	}
 	usrsrv.RegisterRoutes(bot)
 
-	lrnsrv, err := learn.NewLS(states, log)
+	lrnsrv, err := learn.NewLS(states, ctxTimeout, log)
 	if err != nil {
 		log.Fatal("Failed to create learn service", zap.Error(err))
 	}

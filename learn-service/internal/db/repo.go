@@ -5,6 +5,7 @@ package db
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -19,6 +20,18 @@ type DB struct {
 	bd  sq.StatementBuilderType
 }
 
+func GetEnvInt(key string, defaultVal int) int {
+	valStr := os.Getenv(key)
+	if valStr == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return defaultVal
+	}
+	return val
+}
+
 // NewDB creates new database connection.
 func NewDB(log *zap.Logger) (*DB, error) {
 	const op = "db.tasks.NewTasksDB"
@@ -28,10 +41,10 @@ func NewDB(log *zap.Logger) (*DB, error) {
 		return nil, fmt.Errorf("%s: sqlx connect: %w", op, err)
 	}
 
-	db.SetMaxOpenConns(15)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	db.SetConnMaxIdleTime(5 * time.Minute)
+	db.SetMaxOpenConns(GetEnvInt("MaxOpenConns", 15))
+	db.SetMaxIdleConns(GetEnvInt("MaxIdleConns", 10))
+	db.SetConnMaxLifetime(time.Duration(GetEnvInt("ConnMaxLifetime", 15)) * time.Minute)
+	db.SetConnMaxIdleTime(time.Duration(GetEnvInt("ConnMaxIdleTime", 10)) * time.Minute)
 
 	log.Debug("DB learn sucesfully connected")
 

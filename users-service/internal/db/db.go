@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -27,6 +28,18 @@ type User struct {
 	Streak    int64  `db:"streak"`
 }
 
+func getEnvInt(key string, defaultVal int) int {
+	valStr := os.Getenv(key)
+	if valStr == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return defaultVal
+	}
+	return val
+}
+
 // NewDB creates new database connection.
 func NewDB(log *zap.Logger) (*DB, error) {
 	const op = "db.New"
@@ -36,10 +49,10 @@ func NewDB(log *zap.Logger) (*DB, error) {
 		return nil, fmt.Errorf("%s: sqlx connect: %w", op, err)
 	}
 
-	db.SetMaxOpenConns(15)
-	db.SetMaxIdleConns(10)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	db.SetConnMaxIdleTime(5 * time.Minute)
+	db.SetMaxOpenConns(getEnvInt("MaxOpenConns", 15))
+	db.SetMaxIdleConns(getEnvInt("MaxIdleConns", 10))
+	db.SetConnMaxLifetime(time.Duration(getEnvInt("MaxLifetime", 15)) * time.Minute)
+	db.SetConnMaxIdleTime(time.Duration(getEnvInt("MaxIdleTime", 10)) * time.Minute)
 
 	log.Debug("DB users succesfully connected")
 

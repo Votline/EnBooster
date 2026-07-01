@@ -5,6 +5,7 @@ services:
       dockerfile: gateway/Dockerfile
     env_file:
       - .env
+      - ./gateway/.env_vars
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     depends_on:
@@ -16,6 +17,7 @@ services:
       dockerfile: users-service/Dockerfile
     env_file:
       - .env
+      - ./users-service/.env_vars
     ports:
       - "${USERS_PORT}:${USERS_PORT}"
     depends_on:
@@ -28,6 +30,7 @@ services:
       dockerfile: learn-service/Dockerfile
     env_file:
       - .env
+      - ./learn-service/.env_vars
     ports:
       - "${LEARN_PORT}:${LEARN_PORT}"
     depends_on:

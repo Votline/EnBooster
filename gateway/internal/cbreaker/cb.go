@@ -1,24 +1,43 @@
-// Pckage cbreaker cb.go contains methods for
+// Package cbreaker cb.go contains methods for
 // create circuit breaker
 package cbreaker
 
 import (
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/sony/gobreaker/v2"
 	"go.uber.org/zap"
 )
 
+func getEnvInt(key string, defaultVal int) int {
+	valStr := os.Getenv(key)
+	if valStr == "" {
+		return defaultVal
+	}
+	val, err := strconv.Atoi(valStr)
+	if err != nil {
+		return defaultVal
+	}
+	return val
+}
+
 func NewCB(name string, log *zap.Logger) *gobreaker.CircuitBreaker[any] {
 	const op = "cbreaker.NewCB"
 
+	maxRequests := uint32(getEnvInt("CBMaxRequests", 5))
+	timeout := time.Duration(getEnvInt("CBTimeout", 20))
+	interval := time.Duration(getEnvInt("CBInterval", 30))
+	failCnt := uint32(getEnvInt("CBFailCnt", 5))
+
 	st := gobreaker.Settings{
 		Name:        name,
-		MaxRequests: 5,
-		Timeout:     20 * time.Second,
-		Interval:    30 * time.Second,
+		MaxRequests: maxRequests,
+		Timeout:     timeout * time.Second,
+		Interval:    interval * time.Second,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures >= 5
+			return counts.ConsecutiveFailures >= failCnt
 		},
 		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
 			log.Info("Circuit breaker state changed",

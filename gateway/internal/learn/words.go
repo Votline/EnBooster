@@ -32,7 +32,7 @@ func (ls *LearnService) NewWords(msg, reqTrace string) (int32, error) {
 		zap.Int("msg len", len(msg)),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
 	defer cancel()
 
 	res, err := services.CallRPC(ls.cb, func() (*pb.NewWordsRes, error) {
@@ -61,7 +61,7 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error
 		zap.Int("searchData len", len(searchData)),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
 	defer cancel()
 
 	res, err := services.CallRPC(ls.cb, func() (*pb.GetWordsRes, error) {
@@ -95,7 +95,7 @@ func (ls *LearnService) DeleteWord(msg, reqTrace string) error {
 		zap.Int("msg len", len(msg)),
 		zap.String("reqTrace", reqTrace))
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
 	defer cancel()
 
 	msgBytes := unsafe.Slice(unsafe.StringData(msg), len(msg))
