@@ -163,11 +163,7 @@ func (x *GetReq) GetRequestTrace() string {
 
 type GetRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	BestTask      int32                  `protobuf:"varint,1,opt,name=best_task,json=bestTask,proto3" json:"best_task,omitempty"`
-	WorstTask     int32                  `protobuf:"varint,2,opt,name=worst_task,json=worstTask,proto3" json:"worst_task,omitempty"`
-	Streak        int64                  `protobuf:"varint,3,opt,name=streak,proto3" json:"streak,omitempty"`
-	Level         string                 `protobuf:"bytes,4,opt,name=level,proto3" json:"level,omitempty"`
-	TaskId        int32                  `protobuf:"varint,5,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // json
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,39 +198,99 @@ func (*GetRes) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetRes) GetBestTask() int32 {
+func (x *GetRes) GetData() string {
 	if x != nil {
-		return x.BestTask
-	}
-	return 0
-}
-
-func (x *GetRes) GetWorstTask() int32 {
-	if x != nil {
-		return x.WorstTask
-	}
-	return 0
-}
-
-func (x *GetRes) GetStreak() int64 {
-	if x != nil {
-		return x.Streak
-	}
-	return 0
-}
-
-func (x *GetRes) GetLevel() string {
-	if x != nil {
-		return x.Level
+		return x.Data
 	}
 	return ""
 }
 
-func (x *GetRes) GetTaskId() int32 {
+type UpdReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // json
+	ReqTrace      string                 `protobuf:"bytes,2,opt,name=reqTrace,proto3" json:"reqTrace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdReq) Reset() {
+	*x = UpdReq{}
+	mi := &file_users_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdReq) ProtoMessage() {}
+
+func (x *UpdReq) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[4]
 	if x != nil {
-		return x.TaskId
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
 	}
-	return 0
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdReq.ProtoReflect.Descriptor instead.
+func (*UpdReq) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpdReq) GetData() string {
+	if x != nil {
+		return x.Data
+	}
+	return ""
+}
+
+func (x *UpdReq) GetReqTrace() string {
+	if x != nil {
+		return x.ReqTrace
+	}
+	return ""
+}
+
+type UpdRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdRes) Reset() {
+	*x = UpdRes{}
+	mi := &file_users_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdRes) ProtoMessage() {}
+
+func (x *UpdRes) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdRes.ProtoReflect.Descriptor instead.
+func (*UpdRes) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{5}
 }
 
 type DelReq struct {
@@ -247,7 +303,7 @@ type DelReq struct {
 
 func (x *DelReq) Reset() {
 	*x = DelReq{}
-	mi := &file_users_proto_msgTypes[4]
+	mi := &file_users_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -259,7 +315,7 @@ func (x *DelReq) String() string {
 func (*DelReq) ProtoMessage() {}
 
 func (x *DelReq) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[4]
+	mi := &file_users_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -272,7 +328,7 @@ func (x *DelReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DelReq.ProtoReflect.Descriptor instead.
 func (*DelReq) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{4}
+	return file_users_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *DelReq) GetUuid() int64 {
@@ -297,7 +353,7 @@ type DelRes struct {
 
 func (x *DelRes) Reset() {
 	*x = DelRes{}
-	mi := &file_users_proto_msgTypes[5]
+	mi := &file_users_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -309,7 +365,7 @@ func (x *DelRes) String() string {
 func (*DelRes) ProtoMessage() {}
 
 func (x *DelRes) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[5]
+	mi := &file_users_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -322,7 +378,7 @@ func (x *DelRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DelRes.ProtoReflect.Descriptor instead.
 func (*DelRes) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{5}
+	return file_users_proto_rawDescGZIP(), []int{7}
 }
 
 var File_users_proto protoreflect.FileDescriptor
@@ -336,21 +392,21 @@ const file_users_proto_rawDesc = "" +
 	"\x06RegRes\"A\n" +
 	"\x06GetReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
-	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x8b\x01\n" +
-	"\x06GetRes\x12\x1b\n" +
-	"\tbest_task\x18\x01 \x01(\x05R\bbestTask\x12\x1d\n" +
-	"\n" +
-	"worst_task\x18\x02 \x01(\x05R\tworstTask\x12\x16\n" +
-	"\x06streak\x18\x03 \x01(\x03R\x06streak\x12\x14\n" +
-	"\x05level\x18\x04 \x01(\tR\x05level\x12\x17\n" +
-	"\atask_id\x18\x05 \x01(\x05R\x06taskId\"A\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x1c\n" +
+	"\x06GetRes\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"8\n" +
+	"\x06UpdReq\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\x12\x1a\n" +
+	"\breqTrace\x18\x02 \x01(\tR\breqTrace\"\b\n" +
+	"\x06UpdRes\"A\n" +
 	"\x06DelReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
-	"\x06DelRes2\x89\x01\n" +
+	"\x06DelRes2\xb2\x01\n" +
 	"\fUsersService\x12'\n" +
 	"\aRegUser\x12\r.users.RegReq\x1a\r.users.RegRes\x12'\n" +
 	"\aGetUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12'\n" +
+	"\aUpdUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12'\n" +
 	"\aDelUser\x12\r.users.DelReq\x1a\r.users.DelResB\x1fZ\x1dgenerated-users/;usersserviceb\x06proto3"
 
 var (
@@ -365,24 +421,28 @@ func file_users_proto_rawDescGZIP() []byte {
 	return file_users_proto_rawDescData
 }
 
-var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_users_proto_goTypes = []any{
 	(*RegReq)(nil), // 0: users.RegReq
 	(*RegRes)(nil), // 1: users.RegRes
 	(*GetReq)(nil), // 2: users.GetReq
 	(*GetRes)(nil), // 3: users.GetRes
-	(*DelReq)(nil), // 4: users.DelReq
-	(*DelRes)(nil), // 5: users.DelRes
+	(*UpdReq)(nil), // 4: users.UpdReq
+	(*UpdRes)(nil), // 5: users.UpdRes
+	(*DelReq)(nil), // 6: users.DelReq
+	(*DelRes)(nil), // 7: users.DelRes
 }
 var file_users_proto_depIdxs = []int32{
 	0, // 0: users.UsersService.RegUser:input_type -> users.RegReq
 	2, // 1: users.UsersService.GetUser:input_type -> users.GetReq
-	4, // 2: users.UsersService.DelUser:input_type -> users.DelReq
-	1, // 3: users.UsersService.RegUser:output_type -> users.RegRes
-	3, // 4: users.UsersService.GetUser:output_type -> users.GetRes
-	5, // 5: users.UsersService.DelUser:output_type -> users.DelRes
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	2, // 2: users.UsersService.UpdUser:input_type -> users.GetReq
+	6, // 3: users.UsersService.DelUser:input_type -> users.DelReq
+	1, // 4: users.UsersService.RegUser:output_type -> users.RegRes
+	3, // 5: users.UsersService.GetUser:output_type -> users.GetRes
+	3, // 6: users.UsersService.UpdUser:output_type -> users.GetRes
+	7, // 7: users.UsersService.DelUser:output_type -> users.DelRes
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -399,7 +459,7 @@ func file_users_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_proto_rawDesc), len(file_users_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
