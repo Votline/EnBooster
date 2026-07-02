@@ -14,8 +14,7 @@ message GetReq {
   string request_trace = 2;
 }
 message GetRes {
-  int64 uuid = 1;
-  string data = 2; // json
+  string data = 1; // json
 }
 
 message UpdReq {

@@ -163,8 +163,7 @@ func (x *GetReq) GetRequestTrace() string {
 
 type GetRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"` // json
+	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // json
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -197,13 +196,6 @@ func (x *GetRes) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetRes.ProtoReflect.Descriptor instead.
 func (*GetRes) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetRes) GetUuid() int64 {
-	if x != nil {
-		return x.Uuid
-	}
-	return 0
 }
 
 func (x *GetRes) GetData() string {
@@ -400,10 +392,9 @@ const file_users_proto_rawDesc = "" +
 	"\x06RegRes\"A\n" +
 	"\x06GetReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
-	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"0\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x1c\n" +
 	"\x06GetRes\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\tR\x04data\"A\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"A\n" +
 	"\x06UpdReq\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
