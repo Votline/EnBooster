@@ -163,7 +163,8 @@ func (x *GetReq) GetRequestTrace() string {
 
 type GetRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // json
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Data          string                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"` // json
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -196,6 +197,13 @@ func (x *GetRes) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetRes.ProtoReflect.Descriptor instead.
 func (*GetRes) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetRes) GetUuid() int64 {
+	if x != nil {
+		return x.Uuid
+	}
+	return 0
 }
 
 func (x *GetRes) GetData() string {
@@ -392,9 +400,10 @@ const file_users_proto_rawDesc = "" +
 	"\x06RegRes\"A\n" +
 	"\x06GetReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
-	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x1c\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"0\n" +
 	"\x06GetRes\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\"A\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x12\n" +
+	"\x04data\x18\x02 \x01(\tR\x04data\"A\n" +
 	"\x06UpdReq\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
@@ -406,7 +415,7 @@ const file_users_proto_rawDesc = "" +
 	"\fUsersService\x12'\n" +
 	"\aRegUser\x12\r.users.RegReq\x1a\r.users.RegRes\x12'\n" +
 	"\aGetUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12'\n" +
-	"\aUpdUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12'\n" +
+	"\aUpdUser\x12\r.users.UpdReq\x1a\r.users.UpdRes\x12'\n" +
 	"\aDelUser\x12\r.users.DelReq\x1a\r.users.DelResB\x1fZ\x1dgenerated-users/;usersserviceb\x06proto3"
 
 var (
@@ -435,11 +444,11 @@ var file_users_proto_goTypes = []any{
 var file_users_proto_depIdxs = []int32{
 	0, // 0: users.UsersService.RegUser:input_type -> users.RegReq
 	2, // 1: users.UsersService.GetUser:input_type -> users.GetReq
-	2, // 2: users.UsersService.UpdUser:input_type -> users.GetReq
+	4, // 2: users.UsersService.UpdUser:input_type -> users.UpdReq
 	6, // 3: users.UsersService.DelUser:input_type -> users.DelReq
 	1, // 4: users.UsersService.RegUser:output_type -> users.RegRes
 	3, // 5: users.UsersService.GetUser:output_type -> users.GetRes
-	3, // 6: users.UsersService.UpdUser:output_type -> users.GetRes
+	5, // 6: users.UsersService.UpdUser:output_type -> users.UpdRes
 	7, // 7: users.UsersService.DelUser:output_type -> users.DelRes
 	4, // [4:8] is the sub-list for method output_type
 	0, // [0:4] is the sub-list for method input_type

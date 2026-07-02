@@ -14,7 +14,8 @@ message GetReq {
   string request_trace = 2;
 }
 message GetRes {
-  string data = 1; // json
+  int64 uuid = 1;
+  string data = 2; // json
 }
 
 message UpdReq {
@@ -32,6 +33,6 @@ message DelRes {}
 service UsersService {
   rpc RegUser (RegReq) returns (RegRes);
   rpc GetUser (GetReq) returns (GetRes);
-  rpc UpdUser (GetReq) returns (GetRes);
+  rpc UpdUser (UpdReq) returns (UpdRes);
   rpc DelUser (DelReq) returns (DelRes);
 }

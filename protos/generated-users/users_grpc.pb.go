@@ -31,7 +31,7 @@ const (
 type UsersServiceClient interface {
 	RegUser(ctx context.Context, in *RegReq, opts ...grpc.CallOption) (*RegRes, error)
 	GetUser(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetRes, error)
-	UpdUser(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetRes, error)
+	UpdUser(ctx context.Context, in *UpdReq, opts ...grpc.CallOption) (*UpdRes, error)
 	DelUser(ctx context.Context, in *DelReq, opts ...grpc.CallOption) (*DelRes, error)
 }
 
@@ -63,9 +63,9 @@ func (c *usersServiceClient) GetUser(ctx context.Context, in *GetReq, opts ...gr
 	return out, nil
 }
 
-func (c *usersServiceClient) UpdUser(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetRes, error) {
+func (c *usersServiceClient) UpdUser(ctx context.Context, in *UpdReq, opts ...grpc.CallOption) (*UpdRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetRes)
+	out := new(UpdRes)
 	err := c.cc.Invoke(ctx, UsersService_UpdUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (c *usersServiceClient) DelUser(ctx context.Context, in *DelReq, opts ...gr
 type UsersServiceServer interface {
 	RegUser(context.Context, *RegReq) (*RegRes, error)
 	GetUser(context.Context, *GetReq) (*GetRes, error)
-	UpdUser(context.Context, *GetReq) (*GetRes, error)
+	UpdUser(context.Context, *UpdReq) (*UpdRes, error)
 	DelUser(context.Context, *DelReq) (*DelRes, error)
 	mustEmbedUnimplementedUsersServiceServer()
 }
@@ -107,7 +107,7 @@ func (UnimplementedUsersServiceServer) RegUser(context.Context, *RegReq) (*RegRe
 func (UnimplementedUsersServiceServer) GetUser(context.Context, *GetReq) (*GetRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetUser not implemented")
 }
-func (UnimplementedUsersServiceServer) UpdUser(context.Context, *GetReq) (*GetRes, error) {
+func (UnimplementedUsersServiceServer) UpdUser(context.Context, *UpdReq) (*UpdRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdUser not implemented")
 }
 func (UnimplementedUsersServiceServer) DelUser(context.Context, *DelReq) (*DelRes, error) {
@@ -171,7 +171,7 @@ func _UsersService_GetUser_Handler(srv interface{}, ctx context.Context, dec fun
 }
 
 func _UsersService_UpdUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetReq)
+	in := new(UpdReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -183,7 +183,7 @@ func _UsersService_UpdUser_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: UsersService_UpdUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UsersServiceServer).UpdUser(ctx, req.(*GetReq))
+		return srv.(UsersServiceServer).UpdUser(ctx, req.(*UpdReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
