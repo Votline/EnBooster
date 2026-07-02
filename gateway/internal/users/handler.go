@@ -4,8 +4,10 @@ package users
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
+	"unsafe"
 
 	"enbstr/internal/services"
 
@@ -71,13 +73,11 @@ func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 		return UserData{}, fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
-	userData := UserData{
-		UUID:      uuid,
-		BestTask:  res.BestTask,
-		WorstTask: res.WorstTask,
-		Streak:    res.Streak,
-		Level:     res.Level,
-		TaskID:    res.TaskId,
+	dataBytes := unsafe.Slice(unsafe.StringData(res.Data), len(res.Data))
+
+	var userData UserData
+	if err := json.Unmarshal(dataBytes, &userData); err != nil {
+		return UserData{}, fmt.Errorf("%s: unmarshal: %w", op, err)
 	}
 
 	us.log.Debug("Get user data successfully",
@@ -86,6 +86,40 @@ func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 		zap.String("reqTrace", reqTrace))
 
 	return userData, nil
+}
+
+func (us *UsersService) UpdateData(uuid int64, data UserData, reqTrace string) error {
+	const op = "users.UpdateData"
+
+	us.log.Debug("Update user data request",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
+
+	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
+	defer cancel()
+
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("%s: marshal: %w", op, err)
+	}
+	dataStr := unsafe.String(unsafe.SliceData(dataBytes), len(dataBytes))
+
+	if _, err := services.CallRPC(us.cb, func() (*pb.UpdRes, error) {
+		return us.client.UpdUser(ctx, &pb.UpdReq{
+			Data:         dataStr,
+			RequestTrace: reqTrace,
+		})
+	}); err != nil {
+		return fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	us.log.Debug("Update user data successfully",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
+
+	return nil
 }
 
 func (us *UsersService) DelUser(uuid int64, reqTrace string) error {

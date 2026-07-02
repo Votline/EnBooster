@@ -3,11 +3,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+	"unsafe"
 
 	"users/internal/db"
 
@@ -132,13 +134,48 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
+	ud.UUID = uuid
+
+	jsonData, err := json.Marshal(ud)
+	if err != nil {
+		return nil, fmt.Errorf("%s: marshal user: %w", op, err)
+	}
+	jsonStr := unsafe.String(unsafe.SliceData(jsonData), len(jsonData))
+
 	return &pb.GetRes{
-		BestTask:  ud.BestTask,
-		WorstTask: ud.WorstTask,
-		Streak:    ud.Streak,
-		TaskId:    ud.TaskID,
-		Level:     ud.Level,
+		Data: jsonStr,
 	}, nil
+}
+
+func (s *usersserver) UpdUser(ctx context.Context, req *pb.UpdReq) (*pb.UpdRes, error) {
+	const op = "usersserver.UpdUser"
+
+	data := req.GetData()
+	if data == "" {
+		return nil, fmt.Errorf("%s: empty data", op)
+	}
+	dataBytes := unsafe.Slice(unsafe.StringData(data), len(data))
+
+	reqTrace := req.GetRequestTrace()
+	s.log.Debug("UpdUser request",
+		zap.Int("data len", len(data)),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	var user db.User
+	if err := json.Unmarshal(dataBytes, &user); err != nil {
+		return nil, fmt.Errorf("%s: unmarshal data: %w", op, err)
+	}
+
+	if err := s.db.UpdUser(user, ctx, reqTrace); err != nil {
+		return nil, fmt.Errorf("%s: db update user: %w", op, err)
+	}
+
+	s.log.Debug("Successfully updated user",
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return &pb.UpdRes{}, nil
 }
 
 // DelUser delete user from database with uuid from request.

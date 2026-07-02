@@ -21,11 +21,12 @@ type DB struct {
 }
 
 type User struct {
-	Level     string `db:"level"`
-	TaskID    int32  `db:"task_id"`
-	BestTask  int32  `db:"best_task"`
-	WorstTask int32  `db:"worst_task"`
-	Streak    int64  `db:"streak"`
+	UUID      int64  `db:"uuid" json:"uuid"`
+	Level     string `db:"level" json:"level"`
+	TaskID    int32  `db:"task_id" json:"task_id"`
+	BestTask  int32  `db:"best_task" json:"best_task"`
+	WorstTask int32  `db:"worst_task" json:"worst_task"`
+	Streak    int64  `db:"streak" json:"streak"`
 }
 
 func getEnvInt(key string, defaultVal int) int {
@@ -127,6 +128,40 @@ func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, e
 		zap.String("op", op))
 
 	return &user, nil
+}
+
+func (d *DB) UpdUser(user User, ctx context.Context, reqTrace string) error {
+	const op = "db.UpdUser"
+
+	query, args, err := d.bd.Update("users").
+		SetMap(map[string]any{
+			"level":      user.Level,
+			"task_id":    user.TaskID,
+			"best_task":  user.BestTask,
+			"worst_task": user.WorstTask,
+			"streak":     user.Streak,
+		}).
+		Where(sq.Eq{"uuid": user.UUID}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: build update query: %w", op, err)
+	}
+
+	d.log.Debug("UpdUser query",
+		zap.String("query", query),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: update user: %w", op, err)
+	}
+
+	d.log.Debug("User succesfully updated",
+		zap.Int64("uuid", user.UUID),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return nil
 }
 
 // DelUser delete user from database
