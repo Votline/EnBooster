@@ -19,7 +19,7 @@ message GetRes {
 
 message UpdReq {
   string data = 1; // json
-  string reqTrace = 2;
+  string request_trace = 2;
 }
 message UpdRes {}
 

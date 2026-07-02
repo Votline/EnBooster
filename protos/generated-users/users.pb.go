@@ -208,7 +208,7 @@ func (x *GetRes) GetData() string {
 type UpdReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // json
-	ReqTrace      string                 `protobuf:"bytes,2,opt,name=reqTrace,proto3" json:"reqTrace,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -250,9 +250,9 @@ func (x *UpdReq) GetData() string {
 	return ""
 }
 
-func (x *UpdReq) GetReqTrace() string {
+func (x *UpdReq) GetRequestTrace() string {
 	if x != nil {
-		return x.ReqTrace
+		return x.RequestTrace
 	}
 	return ""
 }
@@ -394,10 +394,10 @@ const file_users_proto_rawDesc = "" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x1c\n" +
 	"\x06GetRes\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\"8\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"A\n" +
 	"\x06UpdReq\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\x12\x1a\n" +
-	"\breqTrace\x18\x02 \x01(\tR\breqTrace\"\b\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
 	"\x06UpdRes\"A\n" +
 	"\x06DelReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
