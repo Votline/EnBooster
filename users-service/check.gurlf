@@ -41,7 +41,7 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:2
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"{\"uuid\":0,\"level\":\"A1\",\"task_id\":0,\"best_task\":0,\"worst_task\":0,\"streak\":0}"}
+Response:{"data":"{\"uuid\":7791369047568418122,\"level\":\"A1\",\"task_id\":0,\"best_task\":0,\"worst_task\":0,\"streak\":0}"}
 [\get]
 
 [upd]
@@ -61,19 +61,10 @@ Response:{}
 [\upd]
 
 [get_rep]
-Target:localhost:50051
-Endpoint:users.UsersService/GetUser
-Data:`
-	{
-		"uuid": {VARIABLE key=currentUUID},
-		"request_trace": "{RANDOM oneof=uuid}"
-	}
-`
-ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
+TargetID:2
 ID:4
-Type:grpc
-Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"{\"uuid\":0,\"level\":\"B1\",\"task_id\":14,\"best_task\":21,\"worst_task\":1,\"streak\":1800}"}
+Type:repeat
+Response:{"data":"{\"uuid\":7791369047568418122,\"level\":\"B1\",\"task_id\":14,\"best_task\":21,\"worst_task\":1,\"streak\":1800}"}
 [\get_rep]
 
 [del]

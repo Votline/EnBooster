@@ -134,6 +134,8 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
+	ud.UUID = uuid
+
 	jsonData, err := json.Marshal(ud)
 	if err != nil {
 		return nil, fmt.Errorf("%s: marshal user: %w", op, err)
