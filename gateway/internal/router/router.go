@@ -2,6 +2,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"enbstr/internal/learn"
+	"enbstr/internal/middlewares"
 	"enbstr/internal/services"
 	"enbstr/internal/statemanager"
 	"enbstr/internal/users"
@@ -19,9 +21,11 @@ import (
 )
 
 type Server struct {
-	b        *tele.Bot
-	log      *zap.Logger
-	closable []services.Closable
+	ctxTimeout time.Duration
+	b          *tele.Bot
+	log        *zap.Logger
+	closable   []services.Closable
+	mdwrs      []middlewares.Middleware
 }
 
 var tasksList = sync.Pool{
@@ -44,10 +48,13 @@ func GetEnvInt(key string, defaultVal int) int {
 }
 
 func Setup(bot *tele.Bot, log *zap.Logger) *Server {
+	mdwrs := make([]middlewares.Middleware, 0, 1)
+	setupMiddlewares(&mdwrs, log)
 	srv := &Server{
 		b:        bot,
 		log:      log,
 		closable: make([]services.Closable, 0, 2),
+		mdwrs:    mdwrs,
 	}
 
 	redisCtxTimeout := GetEnvInt("RedisCtxTimeout", 10)
@@ -62,8 +69,16 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	log.Info("Successfully connected redis")
 
 	srv.setupServices(bot, states, time.Duration(ctxTimeout), log)
+	srv.ctxTimeout = time.Duration(ctxTimeout)
 
 	return srv
+}
+
+func setupMiddlewares(mdwrs *[]middlewares.Middleware, log *zap.Logger) {
+	const op = "router.setupMiddlewares"
+	rl := middlewares.NewRateLimiter()
+	*mdwrs = append(*mdwrs, rl)
+	log.Debug("Added rate limiter middleware", zap.String("op", op))
 }
 
 func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManager, ctxTimeout time.Duration, log *zap.Logger) {
@@ -71,30 +86,44 @@ func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManage
 	if err != nil {
 		log.Fatal("Failed to create users service", zap.Error(err))
 	}
-	usrsrv.RegisterRoutes(bot)
 
 	lrnsrv, err := learn.NewLS(states, ctxTimeout, log)
 	if err != nil {
 		log.Fatal("Failed to create learn service", zap.Error(err))
 	}
-	lrnsrv.RegisterRoutes(bot)
 
-	bot.Handle("Начать учёбу 📚", func(c tele.Context) error {
-		reqTrace := uuid.NewString()
+	bot.Handle(tele.OnText, func(c tele.Context) error {
+		msg := c.Message()
 
-		data, err := usrsrv.GetData(c.Sender().ID, reqTrace)
-		if err != nil {
-			return fmt.Errorf("get user data: %w", err)
+		ctx, cancel := context.WithTimeout(context.Background(), srv.ctxTimeout)
+		defer cancel()
+
+		for _, mdwr := range srv.mdwrs {
+			if err := mdwr.Handle(ctx); err != nil {
+				return fmt.Errorf("middleware: %w", err)
+			}
 		}
 
-		tasksPtr := tasksList.Get().(*[]learn.Task)
-		defer tasksList.Put(tasksPtr)
+		switch msg.Text {
+		case "/start", "Profile":
+			usrsrv.HandleRoutes(msg.Text, c)
+		case "Learning":
+			reqTrace := uuid.NewString()
+			data, err := usrsrv.GetData(c.Sender().ID, reqTrace)
+			if err != nil {
+				return fmt.Errorf("get user data: %w", err)
+			}
 
-		if err := lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
-			return fmt.Errorf("get tasks: %w", err)
+			tasksPtr := tasksList.Get().(*[]learn.Task)
+			defer tasksList.Put(tasksPtr)
+
+			if err := lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
+				return fmt.Errorf("get tasks: %w", err)
+			}
+
+			return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
 		}
-
-		return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
+		return nil
 	})
 
 	srv.closable = append(srv.closable, usrsrv, lrnsrv)
