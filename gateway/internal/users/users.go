@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"enbstr/internal/cbreaker"
+	"enbstr/internal/ui"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"github.com/google/uuid"
@@ -65,19 +66,19 @@ func NewUS(ctxTimeout time.Duration, log *zap.Logger) (*UsersService, error) {
 	}, nil
 }
 
-func (us *UsersService) RegisterRoutes(bot *tele.Bot) error {
+func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 	const op = "users.RegisterRoutes"
 
-	bot.Handle("/start", func(c tele.Context) error {
+	switch msg {
+	case "/start":
 		reqTrace := uuid.NewString()
 		uuid := c.Message().Sender.ID
 		if err := us.Register(uuid, reqTrace); err != nil {
 			return err
 		}
-		return c.Send("Welcome to EnBooster!")
-	})
-
-	bot.Handle("Профиль 👤", func(c tele.Context) error {
+		menu := ui.ReplyMenu([]string{"Learning", "Profile", "Help"})
+		return c.Send("Welcome to EnBooster!", menu)
+	case "Profile":
 		reqTrace := uuid.NewString()
 		uuid := c.Message().Sender.ID
 		ud, err := us.GetData(uuid, reqTrace)
@@ -87,7 +88,7 @@ func (us *UsersService) RegisterRoutes(bot *tele.Bot) error {
 
 		return c.Send(fmt.Sprintf("Your data:\nUUID: %d\nBest task: %d\nWorst task: %d\nStreak: %d",
 			ud.UUID, ud.BestTask, ud.WorstTask, ud.Streak))
-	})
+	}
 
 	return nil
 }
