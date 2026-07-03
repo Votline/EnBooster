@@ -23,6 +23,7 @@ import (
 
 type UsersService struct {
 	name       string
+	adminUUID  int64
 	ctxTimeout time.Duration
 	log        *zap.Logger
 	cb         *gobreaker.CircuitBreaker[any]
@@ -30,7 +31,7 @@ type UsersService struct {
 	client     pb.UsersServiceClient
 }
 
-func NewUS(ctxTimeout time.Duration, log *zap.Logger) (*UsersService, error) {
+func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersService, error) {
 	const op = "users.NewUS"
 
 	log.Info("Creating users service",
@@ -58,6 +59,7 @@ func NewUS(ctxTimeout time.Duration, log *zap.Logger) (*UsersService, error) {
 
 	return &UsersService{
 		name:       "users",
+		adminUUID:  adminUUID,
 		ctxTimeout: ctxTimeout,
 		log:        log,
 		conn:       conn,
@@ -76,7 +78,12 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		if err := us.Register(uuid, reqTrace); err != nil {
 			return err
 		}
-		menu := ui.ReplyMenu([]string{"Learning", "Profile", "Help"})
+		var menu *tele.ReplyMarkup
+		if uuid == us.adminUUID {
+			menu = ui.ReplyMenu([]string{"Learning", "Profile", "Help"})
+		} else {
+			menu = ui.ReplyMenu([]string{"Learning", "Profile"})
+		}
 		return c.Send("Welcome to EnBooster!", menu)
 	case "Profile":
 		reqTrace := uuid.NewString()

@@ -6,11 +6,18 @@ import (
 
 	sm "enbstr/internal/statemanager"
 
+	"github.com/google/uuid"
+	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 func (srv *Server) handleAdmin(c tele.Context) error {
 	const op = "router.admin"
+
+	srv.log.Debug("Admin command received",
+		zap.String("op", op))
+
+	reqTrace := uuid.NewString()
 
 	var err error
 	var state int8
@@ -30,13 +37,31 @@ func (srv *Server) handleAdmin(c tele.Context) error {
 		}
 		switch state {
 		case sm.StateTaskAdding:
-			err = c.Send("Задание добавлено")
+			var inserted int32
+			inserted, err = srv.lrnsrv.NewTasks(c.Message().Text, reqTrace)
+			if err != nil {
+				return fmt.Errorf("%s: add task: %w", op, err)
+			}
+			err = c.Send(fmt.Sprintf("Inserted tasks: %d", inserted))
 		case sm.StateTaskDeleting:
-			err = c.Send("Задание удалено")
+			if err = srv.lrnsrv.DelTask(c.Message().Text, reqTrace); err != nil {
+				return fmt.Errorf("%s: delete task: %w", op, err)
+			}
+			err = c.Send("Task deleted")
 		case sm.StateWordAdding:
-			err = c.Send("Слово добавлено")
+			var inserted int32
+			inserted, err = srv.lrnsrv.NewWords(c.Message().Text, reqTrace)
+			if err != nil {
+				return fmt.Errorf("%s: add word: %w", op, err)
+			}
+			err = c.Send(fmt.Sprintf("Inserted words: %d", inserted))
 		case sm.StateWordDeleting:
-			err = c.Send("Слово удалено")
+			if err = srv.lrnsrv.DelWord(c.Message().Text, reqTrace); err != nil {
+				return fmt.Errorf("%s: delete word: %w", op, err)
+			}
+			err = c.Send("Word deleted")
+		default:
+			err = c.Send("Unknown command")
 		}
 	}
 	if err != nil {

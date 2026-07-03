@@ -21,13 +21,16 @@ import (
 )
 
 type Server struct {
+	adminUUID  int64
 	ctxTimeout time.Duration
 	b          *tele.Bot
 	log        *zap.Logger
 	closable   []services.Closable
 	mdwrs      []middlewares.Middleware
 	sm         *statemanager.StateManager
-	adminUUID  int64
+
+	usrsrv *users.UsersService
+	lrnsrv *learn.LearnService
 }
 
 var tasksList = sync.Pool{
@@ -94,15 +97,17 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 }
 
 func (srv *Server) setupServices(bot *tele.Bot, log *zap.Logger) {
-	usrsrv, err := users.NewUS(srv.ctxTimeout, log)
+	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, log)
 	if err != nil {
 		log.Fatal("Failed to create users service", zap.Error(err))
 	}
+	srv.usrsrv = usrsrv
 
 	lrnsrv, err := learn.NewLS(srv.sm, srv.ctxTimeout, log)
 	if err != nil {
 		log.Fatal("Failed to create learn service", zap.Error(err))
 	}
+	srv.lrnsrv = lrnsrv
 
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		msg := c.Message()

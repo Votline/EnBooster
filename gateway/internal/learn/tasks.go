@@ -90,8 +90,8 @@ func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, req
 	return nil
 }
 
-func (ls *LearnService) DeleteTask(msg, reqTrace string) error {
-	const op = "learn.DeleteTask"
+func (ls *LearnService) DelTask(msg, reqTrace string) error {
+	const op = "learn.DelTask"
 
 	ls.log.Debug("Delete task request",
 		zap.String("op", op),
