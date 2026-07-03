@@ -13,8 +13,8 @@ type InlineBtn struct {
 func ReplyMenu(btnTexts []string) *tele.ReplyMarkup {
 	menu := &tele.ReplyMarkup{ResizeKeyboard: true}
 
-	currentRow := make([]tele.Btn, 0, 2)
 	btns := make([]tele.Row, 0, len(btnTexts))
+	var currentRow []tele.Btn
 
 	for _, text := range btnTexts {
 		btn := menu.Text(text)
@@ -22,7 +22,7 @@ func ReplyMenu(btnTexts []string) *tele.ReplyMarkup {
 
 		if len(currentRow) == 2 {
 			btns = append(btns, menu.Row(currentRow...))
-			currentRow = currentRow[:0]
+			currentRow = nil
 		}
 	}
 
@@ -48,7 +48,7 @@ func InlineMenu(btnData []InlineBtn) *tele.ReplyMarkup {
 
 		if len(currentRow) == 2 {
 			rows = append(rows, menu.Row(currentRow...))
-			currentRow = currentRow[:0]
+			currentRow = nil
 		}
 	}
 
