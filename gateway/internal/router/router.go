@@ -26,6 +26,8 @@ type Server struct {
 	log        *zap.Logger
 	closable   []services.Closable
 	mdwrs      []middlewares.Middleware
+	sm         *statemanager.StateManager
+	adminUUID  int64
 }
 
 var tasksList = sync.Pool{
@@ -60,6 +62,7 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	ratelimitTTL := time.Duration(GetEnvInt("RateLimitTTL", 30))
 	pingTimeout := time.Duration(GetEnvInt("RedisPingTimeout", 10))
 	ctxTimeout := time.Duration(GetEnvInt("CtxTimeout", 10))
+	adminUUID := int64(GetEnvInt("ADMIN_UUID", 0))
 
 	states, err := statemanager.NewSM(redisCtxTimeout, stateTTL, pingTimeout)
 	if err != nil {
@@ -67,10 +70,12 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	}
 	log.Info("Successfully connected redis state manager")
 
-	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
-
-	srv.setupServices(bot, states, time.Duration(ctxTimeout), log)
 	srv.ctxTimeout = time.Duration(ctxTimeout)
+	srv.adminUUID = adminUUID
+	srv.sm = states
+
+	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
+	srv.setupServices(bot, log)
 
 	return srv
 }
@@ -88,13 +93,13 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 	srv.log.Debug("Added rate limiter middleware", zap.String("op", op))
 }
 
-func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManager, ctxTimeout time.Duration, log *zap.Logger) {
-	usrsrv, err := users.NewUS(ctxTimeout, log)
+func (srv *Server) setupServices(bot *tele.Bot, log *zap.Logger) {
+	usrsrv, err := users.NewUS(srv.ctxTimeout, log)
 	if err != nil {
 		log.Fatal("Failed to create users service", zap.Error(err))
 	}
 
-	lrnsrv, err := learn.NewLS(states, ctxTimeout, log)
+	lrnsrv, err := learn.NewLS(srv.sm, srv.ctxTimeout, log)
 	if err != nil {
 		log.Fatal("Failed to create learn service", zap.Error(err))
 	}
@@ -129,6 +134,10 @@ func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManage
 			}
 
 			return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
+		default:
+			if c.Sender().ID == srv.adminUUID {
+				return srv.handleAdmin(c)
+			}
 		}
 		return nil
 	})

@@ -14,7 +14,10 @@ import (
 
 const (
 	StateNone = iota
-	StateWaitGetTask
+	StateTaskAdding
+	StateTaskDeleting
+	StateWordAdding
+	StateWordDeleting
 )
 
 type StateManager struct {
