@@ -48,25 +48,26 @@ func GetEnvInt(key string, defaultVal int) int {
 }
 
 func Setup(bot *tele.Bot, log *zap.Logger) *Server {
-	mdwrs := make([]middlewares.Middleware, 0, 1)
-	setupMiddlewares(&mdwrs, log)
 	srv := &Server{
 		b:        bot,
 		log:      log,
 		closable: make([]services.Closable, 0, 2),
-		mdwrs:    mdwrs,
+		mdwrs:    make([]middlewares.Middleware, 0, 1),
 	}
 
-	redisCtxTimeout := GetEnvInt("RedisCtxTimeout", 10)
-	stateTTL := GetEnvInt("StateTTL", 30)
-	pingTimeout := GetEnvInt("RedisPingTimeout", 10)
-	ctxTimeout := GetEnvInt("CtxTimeout", 10)
+	redisCtxTimeout := time.Duration(GetEnvInt("RedisCtxTimeout", 10))
+	stateTTL := time.Duration(GetEnvInt("StateTTL", 30))
+	ratelimitTTL := time.Duration(GetEnvInt("RateLimitTTL", 30))
+	pingTimeout := time.Duration(GetEnvInt("RedisPingTimeout", 10))
+	ctxTimeout := time.Duration(GetEnvInt("CtxTimeout", 10))
 
-	states, err := statemanager.NewSM(time.Duration(redisCtxTimeout), time.Duration(stateTTL), time.Duration(pingTimeout))
+	states, err := statemanager.NewSM(redisCtxTimeout, stateTTL, pingTimeout)
 	if err != nil {
 		log.Fatal("Failed to create state manager", zap.Error(err))
 	}
-	log.Info("Successfully connected redis")
+	log.Info("Successfully connected redis state manager")
+
+	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
 
 	srv.setupServices(bot, states, time.Duration(ctxTimeout), log)
 	srv.ctxTimeout = time.Duration(ctxTimeout)
@@ -74,11 +75,17 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	return srv
 }
 
-func setupMiddlewares(mdwrs *[]middlewares.Middleware, log *zap.Logger) {
+func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration) {
 	const op = "router.setupMiddlewares"
-	rl := middlewares.NewRateLimiter()
-	*mdwrs = append(*mdwrs, rl)
-	log.Debug("Added rate limiter middleware", zap.String("op", op))
+
+	rl, err := middlewares.NewRateLimiter(ctxTimout, rlTTL, pingTimeout)
+	if err != nil {
+		srv.log.Fatal("Failed to create rate limiter middleware",
+			zap.Error(err))
+	}
+	srv.mdwrs = append(srv.mdwrs, rl)
+
+	srv.log.Debug("Added rate limiter middleware", zap.String("op", op))
 }
 
 func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManager, ctxTimeout time.Duration, log *zap.Logger) {
@@ -95,11 +102,11 @@ func (srv *Server) setupServices(bot *tele.Bot, states *statemanager.StateManage
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		msg := c.Message()
 
-		ctx, cancel := context.WithTimeout(context.Background(), srv.ctxTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), srv.ctxTimeout*time.Second)
 		defer cancel()
 
 		for _, mdwr := range srv.mdwrs {
-			if err := mdwr.Handle(ctx); err != nil {
+			if err := mdwr.Handle(ctx, c); err != nil {
 				return fmt.Errorf("middleware: %w", err)
 			}
 		}

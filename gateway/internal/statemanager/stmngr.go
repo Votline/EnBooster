@@ -36,8 +36,7 @@ func NewSM(ctxTimeout time.Duration, stateTTL, pingTimeout time.Duration) (*Stat
 	ctx, cancel := context.WithTimeout(context.Background(), pingTimeout*time.Second)
 	defer cancel()
 
-	_, err := rdb.Ping(ctx).Result()
-	if err != nil {
+	if _, err := rdb.Ping(ctx).Result(); err != nil {
 		return nil, fmt.Errorf("%s: ping: %w", op, err)
 	}
 

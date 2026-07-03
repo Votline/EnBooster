@@ -76,3 +76,13 @@ services:
       - "--requirepass"
       - "${REDIS_LRN_PASSWORD}"
       - "--loglevel warning"
+
+  redis_rl:
+    image: redis:alpine
+    ports:
+      - "${REDIS_RL_PORT}:${REDIS_PORT}"
+    command:
+      - redis-server
+      - "--requirepass"
+      - "${REDIS_RL_PASSWORD}"
+      - "--loglevel warning"
