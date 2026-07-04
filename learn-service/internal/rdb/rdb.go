@@ -40,8 +40,8 @@ func NewRDB() (*RDB, error) {
 		return nil, fmt.Errorf("%s: redis ping: %w", op, err)
 	}
 
-	countTTL := db.GetEnvInt("CountTTL", 1800)
-	taskTTL := db.GetEnvInt("TaskTTL", 30)
+	countTTL := db.GetEnvInt("COUNT_TTL", 1800)
+	taskTTL := db.GetEnvInt("TASK_TTL", 30)
 
 	r := &RDB{
 		rdb:      rdb,

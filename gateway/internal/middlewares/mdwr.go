@@ -41,7 +41,7 @@ func NewRateLimiter(redisCtxTimeout, rateLimitTTL, pingTimeout time.Duration) (*
 		return nil, fmt.Errorf("%s: ping: %w", op, err)
 	}
 
-	limit := os.Getenv("RateLimit")
+	limit := os.Getenv("RATE_LIMIT")
 	limitInt, err := strconv.Atoi(limit)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to parse rate limit: %w", op, err)

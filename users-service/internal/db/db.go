@@ -50,10 +50,10 @@ func NewDB(log *zap.Logger) (*DB, error) {
 		return nil, fmt.Errorf("%s: sqlx connect: %w", op, err)
 	}
 
-	db.SetMaxOpenConns(getEnvInt("MaxOpenConns", 15))
-	db.SetMaxIdleConns(getEnvInt("MaxIdleConns", 10))
-	db.SetConnMaxLifetime(time.Duration(getEnvInt("MaxLifetime", 15)) * time.Minute)
-	db.SetConnMaxIdleTime(time.Duration(getEnvInt("MaxIdleTime", 10)) * time.Minute)
+	db.SetMaxOpenConns(getEnvInt("MAX_OPEN_CONNS", 15))
+	db.SetMaxIdleConns(getEnvInt("MAX_IDLE_CONNS", 10))
+	db.SetConnMaxLifetime(time.Duration(getEnvInt("MAX_LIFETIME", 15)) * time.Minute)
+	db.SetConnMaxIdleTime(time.Duration(getEnvInt("MAX_IDLETIME", 10)) * time.Minute)
 
 	log.Debug("DB users succesfully connected")
 

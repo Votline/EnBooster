@@ -60,11 +60,11 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 		mdwrs:    make([]middlewares.Middleware, 0, 1),
 	}
 
-	redisCtxTimeout := time.Duration(GetEnvInt("RedisCtxTimeout", 10))
-	stateTTL := time.Duration(GetEnvInt("StateTTL", 30))
-	ratelimitTTL := time.Duration(GetEnvInt("RateLimitTTL", 30))
-	pingTimeout := time.Duration(GetEnvInt("RedisPingTimeout", 10))
-	ctxTimeout := time.Duration(GetEnvInt("CtxTimeout", 10))
+	redisCtxTimeout := time.Duration(GetEnvInt("REDIS_CTX_TIMEOUT", 10))
+	stateTTL := time.Duration(GetEnvInt("STATE_TTL", 30))
+	ratelimitTTL := time.Duration(GetEnvInt("RATE_LIMIT_TTL", 30))
+	pingTimeout := time.Duration(GetEnvInt("REDIS_PING_TIMEOUT", 10))
+	ctxTimeout := time.Duration(GetEnvInt("CTX_TIMEOUT", 10))
 	adminUUID := int64(GetEnvInt("ADMIN_UUID", 0))
 
 	states, err := statemanager.NewSM(redisCtxTimeout, stateTTL, pingTimeout)

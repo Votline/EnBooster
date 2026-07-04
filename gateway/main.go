@@ -68,7 +68,7 @@ func createLogger() (*zap.Logger, error) {
 func createBot() (*tele.Bot, error) {
 	const op = "main.createBot"
 
-	pollerTimeout := router.GetEnvInt("PollerTimeout", 10)
+	pollerTimeout := router.GetEnvInt("POLLER_TIMEOUT", 10)
 
 	pref := tele.Settings{
 		Token:  os.Getenv("BOT_TOKEN"),
