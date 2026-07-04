@@ -35,25 +35,26 @@ func (srv *Server) handleAdmin(c tele.Context) error {
 	reqTrace := uuid.NewString()
 
 	var err error
-	var state int8
+	var usrctx sm.UserContext
 	setToNone := false
 	switch c.Message().Text {
 	case "Help":
 		helpMenu := ui.ReplyMenu([]string{"task_add", "task_del", "word_add", "word_del"})
 		err = c.Send(helpMsg, helpMenu)
 	case "task_add":
-		err = srv.sm.SetState(c.Sender().ID, sm.StateTaskAdding)
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskAdding, "")
 	case "task_del":
-		err = srv.sm.SetState(c.Sender().ID, sm.StateTaskDeleting)
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskDeleting, "")
 	case "word_add":
-		err = srv.sm.SetState(c.Sender().ID, sm.StateWordAdding)
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordAdding, "")
 	case "word_del":
-		err = srv.sm.SetState(c.Sender().ID, sm.StateWordDeleting)
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordDeleting, "")
 	default:
-		state, err = srv.sm.GetState(c.Sender().ID)
+		usrctx, err = srv.sm.GetUserCtx(c.Sender().ID)
 		if err != nil {
 			return fmt.Errorf("%s: get state: %w", op, err)
 		}
+		state := usrctx.State
 		switch state {
 		case sm.StateTaskAdding:
 			var inserted int32
@@ -84,12 +85,11 @@ func (srv *Server) handleAdmin(c tele.Context) error {
 			err = c.Send("Word deleted")
 			setToNone = true
 		default:
-			err = c.Send("Unknown command")
 			setToNone = true
 		}
 	}
 	if setToNone {
-		if err := srv.sm.SetState(c.Message().Sender.ID, sm.StateNone); err != nil {
+		if err := srv.sm.SetUserCtx(c.Message().Sender.ID, sm.StateNone, ""); err != nil {
 			return fmt.Errorf("%s: set state: %w", op, err)
 		}
 	}

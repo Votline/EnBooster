@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -18,7 +19,7 @@ import (
 
 // Task is a struct that represents a task
 type Task struct {
-	TaskData string `json:"task_data"`
+	TaskData string `json:"task"`
 	Level    string `json:"level"`
 	Answer   string `json:"answer"`
 	Position int32  `json:"position"`
@@ -133,4 +134,25 @@ func (ls *LearnService) DelTask(msg, reqTrace string) error {
 		zap.String("reqTrace", reqTrace))
 
 	return nil
+}
+
+func (ls *LearnService) VerifyAnswer(userAnswer, answer, reqTrace string) bool {
+	const op = "learn.VerifyAnswer"
+
+	correct := true
+	answers := strings.Split(answer, ",")
+	userAnswers := strings.Split(userAnswer, ",")
+
+	if len(answers) != len(userAnswers) {
+		return false
+	}
+
+	for i := range len(answers) {
+		if answers[i] != userAnswers[i] {
+			correct = false
+			break
+		}
+	}
+
+	return correct
 }
