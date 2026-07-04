@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// getEnvInt returns the value of the environment variable
+// or the default value if the environment variable is not set
 func getEnvInt(key string, defaultVal int) int {
 	valStr := os.Getenv(key)
 	if valStr == "" {
@@ -23,6 +25,8 @@ func getEnvInt(key string, defaultVal int) int {
 	return val
 }
 
+// NewCB creates a new circuit breaker
+// with values from environment variables
 func NewCB(name string, log *zap.Logger) *gobreaker.CircuitBreaker[any] {
 	const op = "cbreaker.NewCB"
 

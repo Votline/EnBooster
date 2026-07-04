@@ -21,6 +21,8 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// UsersService is a struct that implements Service interface
+// and makes connect to users-service by gRPC
 type UsersService struct {
 	name       string
 	adminUUID  int64
@@ -31,6 +33,7 @@ type UsersService struct {
 	client     pb.UsersServiceClient
 }
 
+// NewUS creates new UsersService instance
 func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersService, error) {
 	const op = "users.NewUS"
 
@@ -68,6 +71,7 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersSe
 	}, nil
 }
 
+// HandleRoutes handle user messages which intended for user-service
 func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 	const op = "users.RegisterRoutes"
 
@@ -100,10 +104,12 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 	return nil
 }
 
+// Close closes the connection to the server
 func (us *UsersService) Close() error {
 	return us.conn.Close()
 }
 
+// GetName returns the name of the service
 func (us *UsersService) GetName() string {
 	return us.name
 }

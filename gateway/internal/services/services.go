@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Closable is an interface for services that can be closed
 type Closable interface {
 	Close() error
 	GetName() string

@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Word is a struct that represents a word
 type Word struct {
 	Word        string `json:"word"`
 	Level       string `json:"level"`
@@ -24,6 +25,7 @@ type Word struct {
 	FirstLetter string `json:"first_letter"`
 }
 
+// NewWords adds new words to the database
 func (ls *LearnService) NewWords(msg, reqTrace string) (int32, error) {
 	const op = "learn.NewWords"
 
@@ -53,6 +55,7 @@ func (ls *LearnService) NewWords(msg, reqTrace string) (int32, error) {
 	return res.Inserted, nil
 }
 
+// GetWords returns words from the database
 func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error {
 	const op = "learn.GetWords"
 
@@ -87,6 +90,7 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error
 	return nil
 }
 
+// DelWord deletes a word from the database
 func (ls *LearnService) DelWord(msg, reqTrace string) error {
 	const op = "learn.DelWord"
 

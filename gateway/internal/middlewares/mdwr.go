@@ -14,10 +14,12 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// Middleware is an interface that defines a middleware
 type Middleware interface {
 	Handle(ctx context.Context, tctx tele.Context) error
 }
 
+// RateLimiter is a struct that implements Middleware interface
 type RateLimiter struct {
 	rdb        *redis.Client
 	ctxTimeout time.Duration
@@ -25,6 +27,7 @@ type RateLimiter struct {
 	limit      int
 }
 
+// NewRateLimiter creates new RateLimiter instance
 func NewRateLimiter(redisCtxTimeout, rateLimitTTL, pingTimeout time.Duration) (*RateLimiter, error) {
 	const op = "middlewares.NewRateLimiter"
 
@@ -41,7 +44,7 @@ func NewRateLimiter(redisCtxTimeout, rateLimitTTL, pingTimeout time.Duration) (*
 		return nil, fmt.Errorf("%s: ping: %w", op, err)
 	}
 
-	limit := os.Getenv("RateLimit")
+	limit := os.Getenv("RATE_LIMIT")
 	limitInt, err := strconv.Atoi(limit)
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to parse rate limit: %w", op, err)
@@ -55,6 +58,8 @@ func NewRateLimiter(redisCtxTimeout, rateLimitTTL, pingTimeout time.Duration) (*
 	}, nil
 }
 
+// incrAndExpire is a redis script that
+// increments a key and sets an expiration atomically
 var incrAndExpire = redis.NewScript(`
 local current = redis.call("INCR", KEYS[1])
 if current == 1 then
@@ -63,6 +68,8 @@ end
 return current
 `)
 
+// keyPool is a pool of byte slices
+// for storing keys
 var keyPool = sync.Pool{
 	New: func() any {
 		k := make([]byte, 0, 64)
@@ -70,6 +77,8 @@ var keyPool = sync.Pool{
 	},
 }
 
+// Handle implements Middleware interface
+// It checks if the user has exceeded the rate limit
 func (rl *RateLimiter) Handle(ctx context.Context, tctx tele.Context) error {
 	const op = "middlewares.RateLimiter.Handle"
 

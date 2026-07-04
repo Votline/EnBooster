@@ -12,6 +12,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// helpMsg is a help message for admin commands
 const helpMsg = `
 * task_add - add task. Format json:
 > [{"task":" <full task message> ","level":"<english level>","answer": "<answer(s)>" }]
@@ -23,6 +24,8 @@ const helpMsg = `
 > <word> <serial number>
 `
 
+// handleAdmin handles admin commands and
+// changes the state of the admin user
 func (srv *Server) handleAdmin(c tele.Context) error {
 	const op = "router.admin"
 
