@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Task is a struct that represents a task
 type Task struct {
 	TaskData string `json:"task_data"`
 	Level    string `json:"level"`
@@ -23,6 +24,7 @@ type Task struct {
 	Position int32  `json:"position"`
 }
 
+// NewTasks adds new tasks to the database
 func (ls *LearnService) NewTasks(msg, reqTrace string) (int32, error) {
 	const op = "learn.NewTasks"
 
@@ -52,6 +54,7 @@ func (ls *LearnService) NewTasks(msg, reqTrace string) (int32, error) {
 	return res.Inserted, nil
 }
 
+// GetTasks returns tasks from the database
 func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, reqTrace string) error {
 	const op = "learn.GetTasks"
 
@@ -90,6 +93,7 @@ func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, req
 	return nil
 }
 
+// DelTask deletes a task from the database
 func (ls *LearnService) DelTask(msg, reqTrace string) error {
 	const op = "learn.DelTask"
 

@@ -12,6 +12,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+// States are the possible states of the user
 const (
 	StateNone = iota
 	StateTaskAdding
@@ -20,6 +21,7 @@ const (
 	StateWordDeleting
 )
 
+// StateManager is a struct that manages the state of the user
 type StateManager struct {
 	rdb        *redis.Client
 	ctxTimeout time.Duration

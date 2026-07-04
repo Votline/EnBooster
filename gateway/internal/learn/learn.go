@@ -20,6 +20,8 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// LearnService is a struct that implements Service interface
+// and makes connect to learn-service by gRPC
 type LearnService struct {
 	name       string
 	ctxTimeout time.Duration
@@ -30,6 +32,7 @@ type LearnService struct {
 	states     *statemanager.StateManager
 }
 
+// NewLS creates new LearnService instance
 func NewLS(states *statemanager.StateManager, ctxTimeout time.Duration, log *zap.Logger) (*LearnService, error) {
 	const op = "learn.NewLS"
 
@@ -67,16 +70,19 @@ func NewLS(states *statemanager.StateManager, ctxTimeout time.Duration, log *zap
 	}, nil
 }
 
-func (ls *LearnService) RegisterRoutes(bot *tele.Bot) error {
-	const op = "learn.RegisterRoutes"
+// HandleRoutes handle user messages which intended for learn-service
+func (ls *LearnService) HandleRoutes(bot *tele.Bot) error {
+	const op = "learn.HandleRoutes"
 
 	return nil
 }
 
+// Close closes the connection to the server
 func (ls *LearnService) Close() error {
 	return ls.conn.Close()
 }
 
+// GetName returns the name of the service
 func (ls *LearnService) GetName() string {
 	return ls.name
 }

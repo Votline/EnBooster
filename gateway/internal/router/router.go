@@ -20,6 +20,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// Server is a struct for managing services, middlewares and bot
 type Server struct {
 	adminUUID  int64
 	ctxTimeout time.Duration
@@ -33,6 +34,7 @@ type Server struct {
 	lrnsrv *learn.LearnService
 }
 
+// tasksList is a sync.Pool for tasks
 var tasksList = sync.Pool{
 	New: func() any {
 		l := make([]learn.Task, 0)
@@ -40,6 +42,7 @@ var tasksList = sync.Pool{
 	},
 }
 
+// GetEnvInt returns an environment variable as an integer
 func GetEnvInt(key string, defaultVal int) int {
 	valStr := os.Getenv(key)
 	if valStr == "" {
@@ -52,6 +55,8 @@ func GetEnvInt(key string, defaultVal int) int {
 	return val
 }
 
+// Setup creates a new Server instance
+// with created services and middlewares
 func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	srv := &Server{
 		b:        bot,
@@ -78,11 +83,12 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	srv.sm = states
 
 	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
-	srv.setupServices(bot, log)
+	srv.setupServices()
 
 	return srv
 }
 
+// setupMiddlewares creates middlewares
 func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration) {
 	const op = "router.setupMiddlewares"
 
@@ -96,19 +102,27 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 	srv.log.Debug("Added rate limiter middleware", zap.String("op", op))
 }
 
-func (srv *Server) setupServices(bot *tele.Bot, log *zap.Logger) {
-	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, log)
+// setupServices creates services and appends them to closable
+func (srv *Server) setupServices() {
+	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, srv.log)
 	if err != nil {
-		log.Fatal("Failed to create users service", zap.Error(err))
+		srv.log.Fatal("Failed to create users service", zap.Error(err))
 	}
 	srv.usrsrv = usrsrv
 
-	lrnsrv, err := learn.NewLS(srv.sm, srv.ctxTimeout, log)
+	lrnsrv, err := learn.NewLS(srv.sm, srv.ctxTimeout, srv.log)
 	if err != nil {
-		log.Fatal("Failed to create learn service", zap.Error(err))
+		srv.log.Fatal("Failed to create learn service", zap.Error(err))
 	}
 	srv.lrnsrv = lrnsrv
 
+	srv.closable = append(srv.closable, usrsrv, lrnsrv)
+}
+
+// handleMessages handles users messages
+// call middlewares for each message
+// and call services handlers
+func (srv *Server) handleMessages(bot *tele.Bot) {
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		msg := c.Message()
 
@@ -123,10 +137,10 @@ func (srv *Server) setupServices(bot *tele.Bot, log *zap.Logger) {
 
 		switch msg.Text {
 		case "/start", "Profile":
-			usrsrv.HandleRoutes(msg.Text, c)
+			srv.usrsrv.HandleRoutes(msg.Text, c)
 		case "Learning":
 			reqTrace := uuid.NewString()
-			data, err := usrsrv.GetData(c.Sender().ID, reqTrace)
+			data, err := srv.usrsrv.GetData(c.Sender().ID, reqTrace)
 			if err != nil {
 				return fmt.Errorf("get user data: %w", err)
 			}
@@ -134,7 +148,7 @@ func (srv *Server) setupServices(bot *tele.Bot, log *zap.Logger) {
 			tasksPtr := tasksList.Get().(*[]learn.Task)
 			defer tasksList.Put(tasksPtr)
 
-			if err := lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
+			if err := srv.lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
 				return fmt.Errorf("get tasks: %w", err)
 			}
 
@@ -146,14 +160,14 @@ func (srv *Server) setupServices(bot *tele.Bot, log *zap.Logger) {
 		}
 		return nil
 	})
-
-	srv.closable = append(srv.closable, usrsrv, lrnsrv)
 }
 
+// Start starts the bot
 func (srv *Server) Start() {
 	srv.b.Start()
 }
 
+// Close closes the bot and services
 func (srv *Server) Close() {
 	const op = "router.Close"
 

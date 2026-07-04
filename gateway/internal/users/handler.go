@@ -15,6 +15,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// UserData is a struct that represents user data
 type UserData struct {
 	UUID      int64  `json:"uuid"`
 	BestTask  int32  `json:"best_task"`
@@ -24,6 +25,7 @@ type UserData struct {
 	TaskID    int32  `json:"task_id"`
 }
 
+// Register registers a new user
 func (us *UsersService) Register(uuid int64, reqTrace string) error {
 	const op = "users.Register"
 
@@ -52,6 +54,7 @@ func (us *UsersService) Register(uuid int64, reqTrace string) error {
 	return nil
 }
 
+// GetData returns user data
 func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 	const op = "users.GetData"
 
@@ -88,6 +91,7 @@ func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 	return userData, nil
 }
 
+// UpdateData updates user data
 func (us *UsersService) UpdateData(uuid int64, data UserData, reqTrace string) error {
 	const op = "users.UpdateData"
 
@@ -122,6 +126,7 @@ func (us *UsersService) UpdateData(uuid int64, data UserData, reqTrace string) e
 	return nil
 }
 
+// DelUser deletes a user
 func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
 	const op = "users.DelUser"
 
