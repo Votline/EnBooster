@@ -97,8 +97,8 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 			return err
 		}
 
-		return c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nBest task: %d\nWorst task: %d\nStreak: %d",
-			ud.UUID, ud.Level, ud.BestTask, ud.WorstTask, ud.Streak))
+		return c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nTask position:%d\nBest task: %d\nWorst task: %d\nStreak: %d",
+			ud.UUID, ud.Level, ud.TaskID, ud.BestTask, ud.WorstTask, ud.Streak))
 	}
 
 	return nil

@@ -86,7 +86,7 @@ func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]par
 		query = query.Where(sq.Eq{"level": level})
 	}
 
-	if pos > 0 {
+	if pos >= 0 {
 		query = query.Where(sq.Eq{"position": pos})
 	}
 
