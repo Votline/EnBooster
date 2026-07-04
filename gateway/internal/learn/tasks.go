@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -135,7 +136,23 @@ func (ls *LearnService) DelTask(msg, reqTrace string) error {
 	return nil
 }
 
-func (ls *LearnService) VerifyAnswer(userAnswer, answer, reqTrace string) error {
+func (ls *LearnService) VerifyAnswer(userAnswer, answer, reqTrace string) bool {
 	const op = "learn.VerifyAnswer"
-	return nil
+
+	correct := true
+	answers := strings.Split(answer, ",")
+	userAnswers := strings.Split(userAnswer, ",")
+
+	if len(answers) != len(userAnswers) {
+		return false
+	}
+
+	for i := range len(answers) {
+		if answers[i] != userAnswers[i] {
+			correct = false
+			break
+		}
+	}
+
+	return correct
 }
