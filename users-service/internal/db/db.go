@@ -29,7 +29,7 @@ type User struct {
 	Streak    int64  `db:"streak" json:"streak"`
 }
 
-func getEnvInt(key string, defaultVal int) int {
+func GetEnvInt(key string, defaultVal int) int {
 	valStr := os.Getenv(key)
 	if valStr == "" {
 		return defaultVal
@@ -50,10 +50,10 @@ func NewDB(log *zap.Logger) (*DB, error) {
 		return nil, fmt.Errorf("%s: sqlx connect: %w", op, err)
 	}
 
-	db.SetMaxOpenConns(getEnvInt("MAX_OPEN_CONNS", 15))
-	db.SetMaxIdleConns(getEnvInt("MAX_IDLE_CONNS", 10))
-	db.SetConnMaxLifetime(time.Duration(getEnvInt("MAX_LIFETIME", 15)) * time.Minute)
-	db.SetConnMaxIdleTime(time.Duration(getEnvInt("MAX_IDLETIME", 10)) * time.Minute)
+	db.SetMaxOpenConns(GetEnvInt("MAX_OPEN_CONNS", 15))
+	db.SetMaxIdleConns(GetEnvInt("MAX_IDLE_CONNS", 10))
+	db.SetConnMaxLifetime(time.Duration(GetEnvInt("MAX_LIFETIME", 15)) * time.Minute)
+	db.SetConnMaxIdleTime(time.Duration(GetEnvInt("MAX_IDLETIME", 10)) * time.Minute)
 
 	log.Debug("DB users succesfully connected")
 
@@ -185,6 +185,36 @@ func (d *DB) DelUser(uuid int64, ctx context.Context, reqTrace string) error {
 	}
 
 	d.log.Debug("User succesfully deleted",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return nil
+}
+
+// UpdateStreak atomically updates the streak of a user
+func (d *DB) UpdateStreak(uuid int64, ctx context.Context, reqTrace string, correct bool) error {
+	const op = "db.UpdateStreak"
+
+	caseExpr := sq.Expr("CASE WHEN ? = TRUE THEN EXTRACT(EPOCH FROM NOW())::BIGINT ELSE 0 END", correct)
+	query, args, err := d.bd.Update("users").
+		Set("streak", caseExpr).
+		Where(sq.Eq{"uuid": uuid}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: build update query: %w", op, err)
+	}
+
+	d.log.Debug("UpdateStreak query",
+		zap.String("query", query),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: update streak: %w", op, err)
+	}
+
+	d.log.Debug("Streak succesfully updated",
 		zap.Int64("uuid", uuid),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
