@@ -19,6 +19,8 @@ const (
 	StateTaskDeleting
 	StateWordAdding
 	StateWordDeleting
+	StateTaskLearning
+	StateAdminNotCommand
 )
 
 // StateManager is a struct that manages the state of the user
@@ -26,6 +28,12 @@ type StateManager struct {
 	rdb        *redis.Client
 	ctxTimeout time.Duration
 	stateTTL   time.Duration
+}
+
+// UserContext contains user state and additional data
+type UserContext struct {
+	State int8
+	Data  string
 }
 
 // NewSM connects to redis and returns a new StateManager
@@ -57,8 +65,8 @@ func (sm *StateManager) Close() error {
 	return sm.rdb.Close()
 }
 
-// GetState returns the state of the user from redis
-func (sm *StateManager) GetState(uuid int64) (int8, error) {
+// GetUserCtx returns the user context of the user from redis
+func (sm *StateManager) GetUserCtx(uuid int64) (UserContext, error) {
 	const op = "statemanager.GetState"
 
 	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
@@ -66,21 +74,28 @@ func (sm *StateManager) GetState(uuid int64) (int8, error) {
 
 	key := "users:state" + strconv.FormatInt(uuid, 10)
 
-	val, err := sm.rdb.Get(ctx, key).Result()
+	res, err := sm.rdb.HGetAll(ctx, key).Result()
 	if err != nil {
-		return StateNone, fmt.Errorf("%s: failed to get state: %w", op, err)
+		return UserContext{State: StateNone}, fmt.Errorf("%s: get state: %w", op, err)
 	}
 
-	state, err := strconv.ParseInt(val, 10, 8)
-	if err != nil {
-		return StateNone, fmt.Errorf("%s: failed to parse state: %w", op, err)
+	if len(res) == 0 {
+		return UserContext{State: StateNone}, nil
 	}
 
-	return int8(state), nil
+	stateInt, err := strconv.ParseInt(res["state"], 10, 8)
+	if err != nil {
+		return UserContext{State: StateNone}, fmt.Errorf("%s: parse state: %w", op, err)
+	}
+
+	return UserContext{
+		State: int8(stateInt),
+		Data:  res["data"],
+	}, nil
 }
 
-// SetState sets the state of the user in redis
-func (sm *StateManager) SetState(uuid int64, state int8) error {
+// SetUserCtx sets the state and data of the user in redis
+func (sm *StateManager) SetUserCtx(uuid int64, state int8, data string) error {
 	const op = "statemanager.SetState"
 
 	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
@@ -88,8 +103,16 @@ func (sm *StateManager) SetState(uuid int64, state int8) error {
 
 	key := "users:state" + strconv.FormatInt(uuid, 10)
 
-	if _, err := sm.rdb.Set(ctx, key, state, sm.stateTTL*time.Minute).Result(); err != nil {
-		return fmt.Errorf("%s: failed to set state: %w", op, err)
+	dataMap := map[string]string{
+		"state": strconv.FormatInt(int64(state), 10),
+		"data":  data,
+	}
+
+	pipe := sm.rdb.Pipeline()
+	pipe.HMSet(ctx, key, dataMap)
+	pipe.Expire(ctx, key, sm.stateTTL*time.Minute)
+	if _, err := pipe.Exec(ctx); err != nil {
+		return fmt.Errorf("%s: set state: %w", op, err)
 	}
 
 	return nil

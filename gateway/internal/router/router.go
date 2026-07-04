@@ -12,7 +12,7 @@ import (
 	"enbstr/internal/learn"
 	"enbstr/internal/middlewares"
 	"enbstr/internal/services"
-	"enbstr/internal/statemanager"
+	sm "enbstr/internal/statemanager"
 	"enbstr/internal/users"
 
 	"github.com/google/uuid"
@@ -28,7 +28,7 @@ type Server struct {
 	log        *zap.Logger
 	closable   []services.Closable
 	mdwrs      []middlewares.Middleware
-	sm         *statemanager.StateManager
+	sm         *sm.StateManager
 
 	usrsrv *users.UsersService
 	lrnsrv *learn.LearnService
@@ -72,7 +72,7 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	ctxTimeout := time.Duration(GetEnvInt("CTX_TIMEOUT", 10))
 	adminUUID := int64(GetEnvInt("ADMIN_UUID", 0))
 
-	states, err := statemanager.NewSM(redisCtxTimeout, stateTTL, pingTimeout)
+	states, err := sm.NewSM(redisCtxTimeout, stateTTL, pingTimeout)
 	if err != nil {
 		log.Fatal("Failed to create state manager", zap.Error(err))
 	}
@@ -84,6 +84,7 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 
 	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
 	srv.setupServices()
+	srv.handleMessages(bot)
 
 	return srv
 }
@@ -123,6 +124,8 @@ func (srv *Server) setupServices() {
 // call middlewares for each message
 // and call services handlers
 func (srv *Server) handleMessages(bot *tele.Bot) {
+	const op = "router.handleMessages"
+
 	bot.Handle(tele.OnText, func(c tele.Context) error {
 		msg := c.Message()
 
@@ -131,7 +134,7 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 
 		for _, mdwr := range srv.mdwrs {
 			if err := mdwr.Handle(ctx, c); err != nil {
-				return fmt.Errorf("middleware: %w", err)
+				return fmt.Errorf("%s: middleware: %w", op, err)
 			}
 		}
 
@@ -142,21 +145,34 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 			reqTrace := uuid.NewString()
 			data, err := srv.usrsrv.GetData(c.Sender().ID, reqTrace)
 			if err != nil {
-				return fmt.Errorf("get user data: %w", err)
+				return fmt.Errorf("%s: get user data: %w", op, err)
 			}
 
 			tasksPtr := tasksList.Get().(*[]learn.Task)
 			defer tasksList.Put(tasksPtr)
 
 			if err := srv.lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
-				return fmt.Errorf("get tasks: %w", err)
+				return fmt.Errorf("%s: get tasks: %w", op, err)
+			}
+
+			answer := ""
+			if len(*tasksPtr) > 0 {
+				answer = (*tasksPtr)[0].Answer
+			}
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskLearning, answer); err != nil {
+				return fmt.Errorf("%s set state: %w", op, err)
 			}
 
 			return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
 		default:
-			if c.Sender().ID == srv.adminUUID {
+			usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
+			if err != nil {
+				return fmt.Errorf("%s: get user state: %w", op, err)
+			}
+			if c.Sender().ID == srv.adminUUID && usrctx.State != sm.StateAdminNotCommand {
 				return srv.handleAdmin(c)
 			}
+			return srv.handleState(c)
 		}
 		return nil
 	})

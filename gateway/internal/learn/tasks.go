@@ -18,7 +18,7 @@ import (
 
 // Task is a struct that represents a task
 type Task struct {
-	TaskData string `json:"task_data"`
+	TaskData string `json:"task"`
 	Level    string `json:"level"`
 	Answer   string `json:"answer"`
 	Position int32  `json:"position"`
@@ -132,5 +132,10 @@ func (ls *LearnService) DelTask(msg, reqTrace string) error {
 		zap.String("op", op),
 		zap.String("reqTrace", reqTrace))
 
+	return nil
+}
+
+func (ls *LearnService) VerifyAnswer(userAnswer, answer, reqTrace string) error {
+	const op = "learn.VerifyAnswer"
 	return nil
 }
