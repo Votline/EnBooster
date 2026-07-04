@@ -14,6 +14,7 @@ import (
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"github.com/google/uuid"
+	"github.com/segmentio/kafka-go"
 	"github.com/sony/gobreaker/v2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -24,13 +25,14 @@ import (
 // UsersService is a struct that implements Service interface
 // and makes connect to users-service by gRPC
 type UsersService struct {
-	name       string
-	adminUUID  int64
-	ctxTimeout time.Duration
-	log        *zap.Logger
-	cb         *gobreaker.CircuitBreaker[any]
-	conn       *grpc.ClientConn
-	client     pb.UsersServiceClient
+	name        string
+	adminUUID   int64
+	ctxTimeout  time.Duration
+	log         *zap.Logger
+	cb          *gobreaker.CircuitBreaker[any]
+	conn        *grpc.ClientConn
+	client      pb.UsersServiceClient
+	kafkaWriter *kafka.Writer
 }
 
 // NewUS creates new UsersService instance
@@ -60,14 +62,22 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersSe
 		return nil, fmt.Errorf("%s: failed to create client: %w", op, err)
 	}
 
+	writer := &kafka.Writer{
+		Addr:     kafka.TCP(os.Getenv("KAFKA_ADDR")),
+		Topic:    os.Getenv("KAFKA_TOPIC_GTW_US"),
+		Balancer: &kafka.LeastBytes{},
+		Async:    true,
+	}
+
 	return &UsersService{
-		name:       "users",
-		adminUUID:  adminUUID,
-		ctxTimeout: ctxTimeout,
-		log:        log,
-		conn:       conn,
-		cb:         cbreaker.NewCB("users", log),
-		client:     pb.NewUsersServiceClient(conn),
+		name:        "users",
+		adminUUID:   adminUUID,
+		ctxTimeout:  ctxTimeout,
+		log:         log,
+		conn:        conn,
+		cb:          cbreaker.NewCB("users", log),
+		client:      pb.NewUsersServiceClient(conn),
+		kafkaWriter: writer,
 	}, nil
 }
 
@@ -106,7 +116,20 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 
 // Close closes the connection to the server
 func (us *UsersService) Close() error {
-	return us.conn.Close()
+	const op = "users.Close"
+
+	errStr := ""
+	if err := us.kafkaWriter.Close(); err != nil {
+		errStr += err.Error()
+	}
+	if err := us.conn.Close(); err != nil {
+		errStr += err.Error()
+	}
+	if errStr != "" {
+		return fmt.Errorf("%s: %s", op, errStr)
+	}
+
+	return nil
 }
 
 // GetName returns the name of the service
