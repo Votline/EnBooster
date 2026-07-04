@@ -87,8 +87,8 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error
 	return nil
 }
 
-func (ls *LearnService) DeleteWord(msg, reqTrace string) error {
-	const op = "learn.DeleteWord"
+func (ls *LearnService) DelWord(msg, reqTrace string) error {
+	const op = "learn.DelWord"
 
 	ls.log.Debug("Delete word request",
 		zap.String("op", op),
