@@ -26,11 +26,13 @@ func (srv *Server) handleState(c tele.Context) error {
 	case sm.StateTaskLearning:
 		userAnswer := c.Message().Text
 		answer := usrctx.Data
-		if ok := srv.lrnsrv.VerifyAnswer(userAnswer, answer, reqTrace); !ok {
+		correct := srv.lrnsrv.VerifyAnswer(userAnswer, answer, reqTrace)
+		if !correct {
 			err = c.Send(fmt.Sprintf("Incorrect answer. Correct answer: %s", answer))
 		} else {
 			err = c.Send("Correct answer")
 		}
+		srv.usrsrv.UpdateByAnswer(c.Sender().ID, correct, reqTrace)
 		setToNone = true
 	default:
 		setToNone = true

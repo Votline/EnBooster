@@ -4,16 +4,20 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"users/internal/db"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
+	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -21,9 +25,18 @@ import (
 
 // usersserver provides users service grpc methods.
 type usersserver struct {
-	db  *db.DB
-	log *zap.Logger
+	db     *db.DB
+	log    *zap.Logger
+	reader *kafka.Reader
 	pb.UnimplementedUsersServiceServer
+}
+
+// UserAnswer used to apply user answer from kafka
+type UserAnswer struct {
+	UUID      int64  `json:"uuid"`
+	Correct   bool   `json:"correct"`
+	RequestID string `json:"request_id"`
+	Streak    int64
 }
 
 func main() {
@@ -40,13 +53,24 @@ func main() {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	db, err := db.NewDB(log)
+	pdb, err := db.NewDB(log)
 	if err != nil {
 		log.Fatal("failed to create db", zap.Error(err))
 	}
-	defer db.Close()
+	defer pdb.Close()
 
-	s := usersserver{log: log, db: db}
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{os.Getenv("KAFKA_ADDR")},
+		Topic:    os.Getenv("KAFKA_TOPIC_GTW_US"),
+		GroupID:  os.Getenv("KAFKA_GROUP_ID"),
+		MinBytes: db.GetEnvInt("KAFKA_MIN_BYTES", 10),
+		MaxBytes: db.GetEnvInt("KAFKA_MAX_BYTES", 10e6),
+	})
+	defer reader.Close()
+
+	log.Debug("Kafka reader successfully created")
+
+	s := usersserver{log: log, db: pdb, reader: reader}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterUsersServiceServer(srv, &s)
 
@@ -58,9 +82,15 @@ func main() {
 		}
 	}()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go s.ApplyAnswer(ctx)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
+	cancel()
 	gracefulShutdown(&s, srv)
 }
 
@@ -202,4 +232,69 @@ func (s *usersserver) DelUser(ctx context.Context, req *pb.DelReq) (*pb.DelRes, 
 		zap.String("op", op))
 
 	return &pb.DelRes{}, nil
+}
+
+// ApplyAnswer used to apply user answer from kafka
+// and update user streak
+func (s *usersserver) ApplyAnswer(ctx context.Context) {
+	const op = "usersserver.ApplyAnswer"
+
+	ctxTimeout := time.Duration(db.GetEnvInt("CTX_TIMEOUT", 10))
+
+	for {
+		loopCtx, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
+
+		msg, err := s.reader.FetchMessage(loopCtx)
+		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				cancel()
+				continue
+			}
+			if strings.Contains(err.Error(), "Group Coordinator Not Available") {
+				cancel()
+				time.Sleep(time.Second)
+				continue
+			}
+			s.log.Error("Failed to read kafka message",
+				zap.Error(err),
+				zap.String("op", op))
+			cancel()
+			continue
+		}
+
+		var event UserAnswer
+		if err := json.Unmarshal(msg.Value, &event); err != nil {
+			s.log.Error("Failed to unmarshal kafka message",
+				zap.Error(err),
+				zap.String("op", op))
+			s.reader.CommitMessages(loopCtx, msg)
+			cancel()
+			continue
+		}
+
+		event.Streak = time.Now().Unix()
+
+		if err := s.db.UpdateStreak(event.UUID, loopCtx, event.RequestID, event.Correct); err != nil {
+			s.log.Error("Failed to update streak",
+				zap.Error(err),
+				zap.String("op", op))
+			cancel()
+			continue
+		}
+
+		if err := s.reader.CommitMessages(loopCtx, msg); err != nil {
+			s.log.Error("Failed to commit kafka message",
+				zap.Error(err),
+				zap.String("op", op))
+			cancel()
+			continue
+		}
+
+		s.log.Debug("Successfully updated streak",
+			zap.Int64("uuid", event.UUID),
+			zap.String("request_id", event.RequestID),
+			zap.String("op", op))
+
+		cancel()
+	}
 }

@@ -6,12 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 	"unsafe"
 
 	"enbstr/internal/services"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
+	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +25,13 @@ type UserData struct {
 	Streak    int64  `json:"streak"`
 	Level     string `json:"level"`
 	TaskID    int32  `json:"task_id"`
+}
+
+// UserAnswer used to push user answer to kafka
+type UserAnswer struct {
+	UUID      int64  `json:"uuid"`
+	Correct   bool   `json:"correct"`
+	RequestID string `json:"request_id"`
 }
 
 // Register registers a new user
@@ -153,4 +162,49 @@ func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
 		zap.String("reqTrace", reqTrace))
 
 	return nil
+}
+
+func (us *UsersService) UpdateByAnswer(uuid int64, correct bool, reqTrace string) {
+	const op = "users.UpdateByAnswer"
+
+	us.log.Debug("Update user by answer request",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
+
+	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
+	defer cancel()
+
+	event := UserAnswer{
+		UUID:      uuid,
+		Correct:   correct,
+		RequestID: reqTrace,
+	}
+
+	payload, err := json.Marshal(event)
+	if err != nil {
+		us.log.Error("Failed to marshal event",
+			zap.String("op", op),
+			zap.String("reqTrace", reqTrace),
+			zap.Error(err))
+		return
+	}
+
+	key := strconv.FormatInt(uuid, 10)
+	keyBytes := unsafe.Slice(unsafe.StringData(key), len(key))
+
+	if err := us.kafkaWriter.WriteMessages(ctx,
+		kafka.Message{
+			Key:   keyBytes,
+			Value: payload,
+		}); err != nil {
+		us.log.Error("Failed to write message to kafka",
+			zap.String("op", op),
+			zap.String("reqTrace", reqTrace),
+			zap.Error(err))
+	}
+
+	us.log.Debug("Update user by answer successfully pushed to kafka",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
 }
