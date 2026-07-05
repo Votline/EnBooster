@@ -20,7 +20,7 @@ ID:1
 Type:grpc
 Timeout:5s
 Certs:ignore
-Response:{"inserted":1}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\new_tasks]
 
 [get_all_tasks_by_level]
@@ -37,7 +37,7 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:2
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\get_all_tasks_by_level]
 
 [get_one_task_by_pos]
@@ -54,7 +54,7 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:3
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"[{\"task\":\"Complete the sentences...\\n\\n1. If I ___ (have) more time, I would learn Go.\",\"level\":\"Intermediate\",\"answer\":\"1. had\",\"position\":1}]"}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\get_one_task_by_pos]
 
 [del_task]
@@ -71,7 +71,7 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:4
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\del_task]
 
 [new_words]
@@ -87,7 +87,7 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:5
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"inserted":1}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\new_words]
 
 [get_word_by_str]
@@ -103,7 +103,7 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:6
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"[{\"word\":\"Run\",\"explain\":\"To manage a business\",\"level\":\"Intermediate\",\"first_letter\":\"R\",\"serial\":1}]"}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\get_word_by_str]
 
 [del_word]
@@ -120,6 +120,6 @@ ProtoPath:{VARIABLE key=learnproto ; default=../protos/learn.proto}
 ID:7
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50052: connect: connection refused"
 [\del_word]
 
