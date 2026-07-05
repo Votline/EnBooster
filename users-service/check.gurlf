@@ -25,7 +25,7 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:1
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50051: connect: connection refused"
 [\reg]
 
 [get]
@@ -41,7 +41,7 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:2
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"data":"{\"uuid\":2652368750734967987,\"level\":\"A1\",\"task_id\":0,\"best_task\":0,\"worst_task\":0,\"streak\":0}"}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50051: connect: connection refused"
 [\get]
 
 [upd]
@@ -57,14 +57,14 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:3
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50051: connect: connection refused"
 [\upd]
 
 [get_rep]
 TargetID:2
 ID:4
 Type:repeat
-Response:{"data":"{\"uuid\":2652368750734967987,\"level\":\"B1\",\"task_id\":14,\"best_task\":21,\"worst_task\":1,\"streak\":1800}"}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50051: connect: connection refused"
 [\get_rep]
 
 [del]
@@ -80,6 +80,6 @@ ProtoPath:{VARIABLE key=usersproto ; default=../protos/users.proto}
 ID:5
 Type:grpc
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{}
+Response:connection error: desc = "transport: Error while dialing: dial tcp 127.0.0.1:50051: connect: connection refused"
 [\del]
 
