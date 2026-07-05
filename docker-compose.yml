@@ -23,6 +23,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   learn-service:
     build:
@@ -86,25 +88,47 @@ services:
       - "--requirepass"
       - "${REDIS_RL_PASSWORD}"
       - "--loglevel warning"
-
   kafka:
     image: apache/kafka:3.7.0
     ports:
       - "${KAFKA_PORT}:${KAFKA_PORT}"
     logging:
       driver: "none"
+    volumes:
+      - ./kafka/ssl:/etc/kafka/secrets
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/${KAFKA_PORT}'"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_ALLOW_AUTO_CREATE_TOPICS: 'true'
+      KAFKA_ALLOW_AUTO_CREATE_TOPICS: "true"
 
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
 
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '${KAFKA_VOTERS}'
-      KAFKA_LISTENERS: '${KAFKA_LIS_1},${KAFKA_LIS_2}'
-      KAFKA_ADVERTISED_LISTENERS: '${KAFKA_ADV}'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
-      KAFKA_CLUSTER_ID: '${KAFKA_CLUSTER_ID}'
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "${KAFKA_VOTERS}"
+
+      KAFKA_LISTENERS: "${KAFKA_LIS_1},${KAFKA_LIS_2}"
+      KAFKA_ADVERTISED_LISTENERS: "${KAFKA_ADV}"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:SSL"
+
+      KAFKA_CLUSTER_ID: "${KAFKA_CLUSTER_ID}"
+
+      KAFKA_LOG4J_ROOT_LOGLEVEL: "WARN"
+
+      KAFKA_SSL_KEYSTORE_LOCATION: "${KAFKA_KEY_LOC}"
+      KAFKA_SSL_KEYSTORE_TYPE: "${KAFKA_KEY_TYPE}"
+      KAFKA_SSL_KEYSTORE_PASSWORD: "${KAFKA_PASSWORD}"
+
+      KAFKA_SSL_TRUSTSTORE_LOCATION: "${KAFKA_KEY_LOC}"
+      KAFKA_SSL_TRUSTSTORE_TYPE: "${KAFKA_KEY_TYPE}"
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: "${KAFKA_PASSWORD}"
+
+      KAFKA_SSL_CLIENT_AUTH: "none"
