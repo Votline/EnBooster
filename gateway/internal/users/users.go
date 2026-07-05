@@ -35,16 +35,11 @@ type UsersService struct {
 	kafkaWriter *kafka.Writer
 }
 
-// NewUS creates new UsersService instance
-func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersService, error) {
-	const op = "users.NewUS"
-
-	log.Info("Creating users service",
-		zap.String("op", op))
-
-	caCert, err := os.ReadFile("ssl/ca.crt")
+// getTLSConfig returns tls config from path with servername
+func getTLSConfig(srvName, path string) (*tls.Config, error) {
+	caCert, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("%s: get certs: %w", op, err)
+		return nil, fmt.Errorf("get certs: %w", err)
 	}
 
 	certPool := x509.NewCertPool()
@@ -52,14 +47,34 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersSe
 
 	config := &tls.Config{
 		RootCAs:    certPool,
-		ServerName: os.Getenv("TLS_SERVER_NAME"),
+		ServerName: srvName,
+	}
+
+	return config, nil
+}
+
+// NewUS creates new UsersService instance
+func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersService, error) {
+	const op = "users.NewUS"
+
+	log.Info("Creating users service",
+		zap.String("op", op))
+
+	rpcCert, err := getTLSConfig(os.Getenv("TLS_SERVER_NAME"), "ssl/ca.crt")
+	if err != nil {
+		return nil, fmt.Errorf("%s: get certs: %w", op, err)
 	}
 
 	conn, err := grpc.NewClient(
 		os.Getenv("USERS_HOST")+":"+os.Getenv("USERS_PORT"),
-		grpc.WithTransportCredentials(credentials.NewTLS(config)))
+		grpc.WithTransportCredentials(credentials.NewTLS(rpcCert)))
 	if err != nil {
 		return nil, fmt.Errorf("%s: failed to create client: %w", op, err)
+	}
+
+	kafkaCert, err := getTLSConfig(os.Getenv("KAFKA_SERVER_NAME"), "ssl/kafka.crt")
+	if err != nil {
+		return nil, fmt.Errorf("%s: get certs: %w", op, err)
 	}
 
 	writer := &kafka.Writer{
@@ -67,6 +82,9 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersSe
 		Topic:    os.Getenv("KAFKA_TOPIC_GTW_US"),
 		Balancer: &kafka.LeastBytes{},
 		Async:    true,
+		Transport: &kafka.Transport{
+			TLS: kafkaCert,
+		},
 	}
 
 	return &UsersService{
