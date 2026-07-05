@@ -95,9 +95,16 @@ func main() {
 	heartbeatIntevarl := time.Duration(db.GetEnvInt("KAFKA_HEARTB_INTERVAL", 2))
 	maxWait := time.Duration(db.GetEnvInt("KAFKA_MAX_WAIT", 100))
 
+	kafkaAddr := os.Getenv("KAFKA_ADDR")
+	kafkaTopic := os.Getenv("KAFKA_TOPIC_GTW_US")
+
+	ensureTopics(kafkaAddr, kafkaTopic, kafkaTLS)
+
+	log.Debug("Kafka topics successfully created")
+
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  []string{os.Getenv("KAFKA_ADDR")},
-		Topic:    os.Getenv("KAFKA_TOPIC_GTW_US"),
+		Brokers:  []string{kafkaAddr},
+		Topic:    kafkaTopic,
 		GroupID:  os.Getenv("KAFKA_GROUP_ID"),
 		MinBytes: db.GetEnvInt("KAFKA_MIN_BYTES", 1),
 		MaxBytes: db.GetEnvInt("KAFKA_MAX_BYTES", 10e6),
@@ -136,6 +143,41 @@ func main() {
 	<-quit
 	cancel()
 	gracefulShutdown(&s, srv)
+}
+
+func ensureTopics(kafkaAddr, kafkaTopic string, kafkaTLS *tls.Config) error {
+	const op = "usersserver.ensureTopics"
+	client := &kafka.Client{
+		Addr:    kafka.TCP(kafkaAddr),
+		Timeout: 5 * time.Second,
+		Transport: &kafka.Transport{
+			TLS: kafkaTLS,
+		},
+	}
+
+	resp, err := client.CreateTopics(context.Background(), &kafka.CreateTopicsRequest{
+		Topics: []kafka.TopicConfig{
+			{
+				Topic:             kafkaTopic,
+				NumPartitions:     1,
+				ReplicationFactor: 1,
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("%s: kafka create topics: %w", op, err)
+	}
+
+	for _, topicErr := range resp.Errors {
+		if topicErr != nil {
+			if errors.Is(topicErr, kafka.TopicAlreadyExists) {
+				return nil
+			}
+			return fmt.Errorf("%s: kafka failed to create topic: %w", op, topicErr)
+		}
+	}
+
+	return nil
 }
 
 func gracefulShutdown(s *usersserver, srv *grpc.Server) {
@@ -286,61 +328,71 @@ func (s *usersserver) ApplyAnswer(ctx context.Context) {
 	ctxTimeout := time.Duration(db.GetEnvInt("CTX_TIMEOUT", 10))
 
 	for {
-		msg, err := s.reader.FetchMessage(ctx)
-		if err != nil {
-			if errors.Is(err, context.Canceled) {
-				s.log.Debug("Kafka consumer stopped gracefully",
+		select {
+		case <-ctx.Done():
+			s.log.Debug("Kafka consumer stopped gracefully",
+				zap.String("op", op))
+			return
+		default:
+			loopCtx, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
+
+			msg, err := s.reader.FetchMessage(loopCtx)
+			if err != nil {
+				if errors.Is(err, context.Canceled) {
+					cancel()
+					time.Sleep(time.Second)
+					continue
+				}
+				if strings.Contains(err.Error(), "Group Coordinator Not Available") {
+					cancel()
+					time.Sleep(time.Second)
+					continue
+				}
+				if errors.Is(err, context.DeadlineExceeded) {
+					cancel()
+					continue
+				}
+				s.log.Error("Failed to read kafka message",
+					zap.Error(err),
 					zap.String("op", op))
-				return
-			}
-			if strings.Contains(err.Error(), "Group Coordinator Not Available") {
-				time.Sleep(time.Second)
+				cancel()
 				continue
 			}
-			if errors.Is(err, context.DeadlineExceeded) {
+
+			var event UserAnswer
+			if err := json.Unmarshal(msg.Value, &event); err != nil {
+				s.log.Error("Failed to unmarshal kafka message",
+					zap.Error(err),
+					zap.String("op", op))
+				s.reader.CommitMessages(loopCtx, msg)
+				cancel()
 				continue
 			}
-			s.log.Error("Failed to read kafka message",
-				zap.Error(err),
+
+			event.Streak = time.Now().Unix()
+
+			if err := s.db.UpdateStreak(event.UUID, loopCtx, event.RequestID, event.Correct); err != nil {
+				s.log.Error("Failed to update streak",
+					zap.Error(err),
+					zap.String("op", op))
+				cancel()
+				continue
+			}
+
+			if err := s.reader.CommitMessages(loopCtx, msg); err != nil {
+				s.log.Error("Failed to commit kafka message",
+					zap.Error(err),
+					zap.String("op", op))
+				cancel()
+				continue
+			}
+
+			s.log.Debug("Successfully updated streak",
+				zap.Int64("uuid", event.UUID),
+				zap.String("request_id", event.RequestID),
 				zap.String("op", op))
-			continue
-		}
 
-		var event UserAnswer
-		if err := json.Unmarshal(msg.Value, &event); err != nil {
-			s.log.Error("Failed to unmarshal kafka message",
-				zap.Error(err),
-				zap.String("op", op))
-			s.reader.CommitMessages(ctx, msg)
-			continue
-		}
-
-		event.Streak = time.Now().Unix()
-
-		dctx, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
-		defer cancel()
-
-		if err := s.db.UpdateStreak(event.UUID, dctx, event.RequestID, event.Correct); err != nil {
-			s.log.Error("Failed to update streak",
-				zap.Error(err),
-				zap.String("op", op))
 			cancel()
-			continue
 		}
-
-		if err := s.reader.CommitMessages(dctx, msg); err != nil {
-			s.log.Error("Failed to commit kafka message",
-				zap.Error(err),
-				zap.String("op", op))
-			cancel()
-			continue
-		}
-
-		s.log.Debug("Successfully updated streak",
-			zap.Int64("uuid", event.UUID),
-			zap.String("request_id", event.RequestID),
-			zap.String("op", op))
-
-		cancel()
 	}
 }
