@@ -2,3 +2,4 @@
 gateway/ssl/
 users-service/ssl/
 learn-service/ssl/
+kafka/
