@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,6 +41,24 @@ type UserAnswer struct {
 	Streak    int64
 }
 
+// getTLSConfig returns tls config from path with servername
+func getTLSConfig(srvName, path string) (*tls.Config, error) {
+	caCert, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("get certs: %w", err)
+	}
+
+	certPool := x509.NewCertPool()
+	certPool.AppendCertsFromPEM(caCert)
+
+	config := &tls.Config{
+		RootCAs:    certPool,
+		ServerName: srvName,
+	}
+
+	return config, nil
+}
+
 func main() {
 	log, _ := zap.NewDevelopment()
 	defer log.Sync()
@@ -59,12 +79,36 @@ func main() {
 	}
 	defer pdb.Close()
 
+	kafkaTLS, err := getTLSConfig(os.Getenv("KAFKA_SERVER_NAME"), "ssl/kafka.crt")
+	if err != nil {
+		log.Fatal("failed to get TLS config", zap.Error(err))
+	}
+
+	ctxTimeout := time.Duration(db.GetEnvInt("CTX_TIMEOUT", 10))
+	dialer := &kafka.Dialer{
+		Timeout:   ctxTimeout * time.Second,
+		DualStack: true,
+		TLS:       kafkaTLS,
+	}
+
+	sesTimeout := time.Duration(db.GetEnvInt("KAFKA_SESSION_TIMEOUT", 6))
+	heartbeatIntevarl := time.Duration(db.GetEnvInt("KAFKA_HEARTB_INTERVAL", 2))
+	maxWait := time.Duration(db.GetEnvInt("KAFKA_MAX_WAIT", 100))
+
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{os.Getenv("KAFKA_ADDR")},
 		Topic:    os.Getenv("KAFKA_TOPIC_GTW_US"),
 		GroupID:  os.Getenv("KAFKA_GROUP_ID"),
-		MinBytes: db.GetEnvInt("KAFKA_MIN_BYTES", 10),
+		MinBytes: db.GetEnvInt("KAFKA_MIN_BYTES", 1),
 		MaxBytes: db.GetEnvInt("KAFKA_MAX_BYTES", 10e6),
+		Dialer:   dialer,
+
+		StartOffset:       kafka.FirstOffset,
+		SessionTimeout:    sesTimeout * time.Second,
+		HeartbeatInterval: heartbeatIntevarl * time.Second,
+		MaxWait:           maxWait * time.Millisecond,
+
+		WatchPartitionChanges: true,
 	})
 	defer reader.Close()
 
@@ -242,23 +286,23 @@ func (s *usersserver) ApplyAnswer(ctx context.Context) {
 	ctxTimeout := time.Duration(db.GetEnvInt("CTX_TIMEOUT", 10))
 
 	for {
-		loopCtx, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
-
-		msg, err := s.reader.FetchMessage(loopCtx)
+		msg, err := s.reader.FetchMessage(ctx)
 		if err != nil {
-			if errors.Is(err, context.DeadlineExceeded) {
-				cancel()
-				continue
+			if errors.Is(err, context.Canceled) {
+				s.log.Debug("Kafka consumer stopped gracefully",
+					zap.String("op", op))
+				return
 			}
 			if strings.Contains(err.Error(), "Group Coordinator Not Available") {
-				cancel()
 				time.Sleep(time.Second)
+				continue
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
 				continue
 			}
 			s.log.Error("Failed to read kafka message",
 				zap.Error(err),
 				zap.String("op", op))
-			cancel()
 			continue
 		}
 
@@ -267,14 +311,16 @@ func (s *usersserver) ApplyAnswer(ctx context.Context) {
 			s.log.Error("Failed to unmarshal kafka message",
 				zap.Error(err),
 				zap.String("op", op))
-			s.reader.CommitMessages(loopCtx, msg)
-			cancel()
+			s.reader.CommitMessages(ctx, msg)
 			continue
 		}
 
 		event.Streak = time.Now().Unix()
 
-		if err := s.db.UpdateStreak(event.UUID, loopCtx, event.RequestID, event.Correct); err != nil {
+		dctx, cancel := context.WithTimeout(ctx, ctxTimeout*time.Second)
+		defer cancel()
+
+		if err := s.db.UpdateStreak(event.UUID, dctx, event.RequestID, event.Correct); err != nil {
 			s.log.Error("Failed to update streak",
 				zap.Error(err),
 				zap.String("op", op))
@@ -282,7 +328,7 @@ func (s *usersserver) ApplyAnswer(ctx context.Context) {
 			continue
 		}
 
-		if err := s.reader.CommitMessages(loopCtx, msg); err != nil {
+		if err := s.reader.CommitMessages(dctx, msg); err != nil {
 			s.log.Error("Failed to commit kafka message",
 				zap.Error(err),
 				zap.String("op", op))
