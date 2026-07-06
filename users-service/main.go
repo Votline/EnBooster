@@ -38,7 +38,6 @@ type UserAnswer struct {
 	UUID      int64  `json:"uuid"`
 	Correct   bool   `json:"correct"`
 	RequestID string `json:"request_id"`
-	Streak    int64
 }
 
 // getTLSConfig returns tls config from path with servername
@@ -368,8 +367,6 @@ func (s *usersserver) ApplyAnswer(ctx context.Context) {
 				cancel()
 				continue
 			}
-
-			event.Streak = time.Now().Unix()
 
 			if err := s.db.UpdateStreak(event.UUID, loopCtx, event.RequestID, event.Correct); err != nil {
 				s.log.Error("Failed to update streak",

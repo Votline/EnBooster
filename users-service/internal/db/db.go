@@ -26,7 +26,7 @@ type User struct {
 	TaskID    int32  `db:"task_id" json:"task_id"`
 	BestTask  int32  `db:"best_task" json:"best_task"`
 	WorstTask int32  `db:"worst_task" json:"worst_task"`
-	Streak    int64  `db:"streak" json:"streak"`
+	Streak    int32  `db:"streak" json:"streak"`
 }
 
 func GetEnvInt(key string, defaultVal int) int {
@@ -196,9 +196,17 @@ func (d *DB) DelUser(uuid int64, ctx context.Context, reqTrace string) error {
 func (d *DB) UpdateStreak(uuid int64, ctx context.Context, reqTrace string, correct bool) error {
 	const op = "db.UpdateStreak"
 
-	caseExpr := sq.Expr("CASE WHEN ? = TRUE THEN EXTRACT(EPOCH FROM NOW())::BIGINT ELSE 0 END", correct)
+	currentDay := time.Now().UTC().Unix() / 86400
+
+	caseExpr := sq.Expr(`CASE
+		WHEN last_done_day = ? THEN streak
+		WHEN last_done_day = ? THEN streak + 1
+		ELSE 1
+	END`, currentDay, currentDay-1)
+
 	query, args, err := d.bd.Update("users").
 		Set("streak", caseExpr).
+		Set("last_done_day", currentDay).
 		Where(sq.Eq{"uuid": uuid}).
 		ToSql()
 	if err != nil {
