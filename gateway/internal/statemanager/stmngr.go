@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"unsafe"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -30,10 +31,17 @@ type StateManager struct {
 	stateTTL   time.Duration
 }
 
+// TaskSession contains the current theme and a counter
+type TaskSession struct {
+	CurrentTheme string `json:"current_theme"`
+	Counter      int    `json:"counter"`
+	Answer       string `json:"answer"`
+}
+
 // UserContext contains user state and additional data
 type UserContext struct {
-	State int8
-	Data  string
+	State    int8
+	JSONData string
 }
 
 // NewSM connects to redis and returns a new StateManager
@@ -89,14 +97,16 @@ func (sm *StateManager) GetUserCtx(uuid int64) (UserContext, error) {
 	}
 
 	return UserContext{
-		State: int8(stateInt),
-		Data:  res["data"],
+		State:    int8(stateInt),
+		JSONData: res["json_data"],
 	}, nil
 }
 
 // SetUserCtx sets the state and data of the user in redis
-func (sm *StateManager) SetUserCtx(uuid int64, state int8, data string) error {
+func (sm *StateManager) SetUserCtx(uuid int64, state int8, jsonData []byte) error {
 	const op = "statemanager.SetState"
+
+	jsonStr := unsafe.String(unsafe.SliceData(jsonData), len(jsonData))
 
 	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
 	defer cancel()
@@ -104,8 +114,8 @@ func (sm *StateManager) SetUserCtx(uuid int64, state int8, data string) error {
 	key := "users:state" + strconv.FormatInt(uuid, 10)
 
 	dataMap := map[string]string{
-		"state": strconv.FormatInt(int64(state), 10),
-		"data":  data,
+		"state":     strconv.FormatInt(int64(state), 10),
+		"json_data": jsonStr,
 	}
 
 	pipe := sm.rdb.Pipeline()

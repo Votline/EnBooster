@@ -156,11 +156,14 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 			}
 
 			answer := ""
+			theme := ""
 			if len(*tasksPtr) > 0 {
 				answer = (*tasksPtr)[0].Answer
+				theme = (*tasksPtr)[0].Theme
 			}
-			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskLearning, answer); err != nil {
-				return fmt.Errorf("%s set state: %w", op, err)
+
+			if err := srv.usrsrv.UpdateUserTaskCtx(c.Sender().ID, sm.StateTaskLearning, theme, reqTrace, answer, 0, srv.sm); err != nil {
+				return fmt.Errorf("%s: update user task ctx: %w", op, err)
 			}
 
 			return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))

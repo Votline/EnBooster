@@ -23,6 +23,7 @@ type Task struct {
 	Level    string `json:"level"`
 	Answer   string `json:"answer"`
 	Position int32  `json:"position"`
+	Theme    string `json:"theme"`
 }
 
 // NewTasks adds new tasks to the database

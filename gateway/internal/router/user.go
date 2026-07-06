@@ -2,14 +2,18 @@
 package router
 
 import (
+	"encoding/json"
 	"fmt"
+	"unsafe"
 
 	sm "enbstr/internal/statemanager"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
+// handleState check user state and call services
 func (srv *Server) handleState(c tele.Context) error {
 	const op = "router.handleState"
 
@@ -24,21 +28,42 @@ func (srv *Server) handleState(c tele.Context) error {
 	var setToNone bool
 	switch state {
 	case sm.StateTaskLearning:
+		var taskSes sm.TaskSession
+		uctxData := unsafe.Slice(unsafe.StringData(usrctx.JSONData), len(usrctx.JSONData))
+		if err := json.Unmarshal(uctxData, &taskSes); err != nil {
+			return fmt.Errorf("%s: unmarshal: %w", op, err)
+		}
+
+		add := 0
+		answer := taskSes.Answer
 		userAnswer := c.Message().Text
-		answer := usrctx.Data
 		correct := srv.lrnsrv.VerifyAnswer(userAnswer, answer, reqTrace)
 		if !correct {
+			add = -1
 			err = c.Send(fmt.Sprintf("Incorrect answer. Correct answer: %s", answer))
 		} else {
+			add = 1
 			err = c.Send("Correct answer")
 		}
-		srv.usrsrv.UpdateByAnswer(c.Sender().ID, correct, reqTrace)
-		setToNone = true
+		if err := srv.usrsrv.UpdateUserTaskCtx(c.Sender().ID, sm.StateTaskLearning, taskSes.CurrentTheme, reqTrace, answer, add, srv.sm); err != nil {
+			srv.log.Error("Failed to update user task ctx",
+				zap.String("op", op),
+				zap.String("reqTrace", reqTrace),
+				zap.Error(err))
+		}
+
+		srv.usrsrv.UpdateByAnswer(c.Sender().ID, correct, taskSes.Counter+add, taskSes.CurrentTheme, reqTrace)
+		if err := srv.usrsrv.UpdateUserTaskCtx(c.Sender().ID, sm.StateNone, taskSes.CurrentTheme, reqTrace, answer, add, srv.sm); err != nil {
+			srv.log.Error("Failed to update user task ctx",
+				zap.String("op", op),
+				zap.String("reqTrace", reqTrace),
+				zap.Error(err))
+		}
 	default:
 		setToNone = true
 	}
 	if setToNone {
-		if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, ""); err != nil {
+		if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
 			return fmt.Errorf("%s: set state: %w", op, err)
 		}
 	}

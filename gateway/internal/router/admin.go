@@ -42,13 +42,13 @@ func (srv *Server) handleAdmin(c tele.Context) error {
 		helpMenu := ui.ReplyMenu([]string{"task_add", "task_del", "word_add", "word_del"})
 		err = c.Send(helpMsg, helpMenu)
 	case "task_add":
-		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskAdding, "")
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskAdding, nil)
 	case "task_del":
-		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskDeleting, "")
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskDeleting, nil)
 	case "word_add":
-		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordAdding, "")
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordAdding, nil)
 	case "word_del":
-		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordDeleting, "")
+		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordDeleting, nil)
 	default:
 		usrctx, err = srv.sm.GetUserCtx(c.Sender().ID)
 		if err != nil {
@@ -89,7 +89,7 @@ func (srv *Server) handleAdmin(c tele.Context) error {
 		}
 	}
 	if setToNone {
-		if err := srv.sm.SetUserCtx(c.Message().Sender.ID, sm.StateNone, ""); err != nil {
+		if err := srv.sm.SetUserCtx(c.Message().Sender.ID, sm.StateNone, nil); err != nil {
 			return fmt.Errorf("%s: set state: %w", op, err)
 		}
 	}
