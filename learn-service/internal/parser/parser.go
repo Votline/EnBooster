@@ -15,6 +15,7 @@ type Task struct {
 	Level    string `json:"level" db:"level"`
 	Answer   string `json:"answer" db:"answer"`
 	Position int32  `json:"position" db:"position"`
+	Theme    string `json:"theme" db:"theme"`
 }
 
 // Word is a single word from json words data.

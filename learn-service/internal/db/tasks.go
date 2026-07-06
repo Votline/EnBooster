@@ -40,7 +40,7 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task, reqTrace stri
 	}
 
 	insertBuilder := d.bd.Insert("tasks").
-		Columns("task", "level", "answer", "position")
+		Columns("task", "level", "theme", "answer", "position")
 
 	for _, task := range tasks {
 		curMaxPos++
@@ -80,7 +80,7 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task, reqTrace stri
 func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]parser.Task, reqTrace string) error {
 	const op = "db.GetTask"
 
-	query := d.bd.Select("task, level, answer, position").From("tasks")
+	query := d.bd.Select("task, level, theme, answer, position").From("tasks")
 
 	if level != "" {
 		query = query.Where(sq.Eq{"level": level})
