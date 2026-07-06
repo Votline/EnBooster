@@ -22,9 +22,9 @@ type UserData struct {
 	UUID      int64  `json:"uuid"`
 	BestTask  int32  `json:"best_task"`
 	WorstTask int32  `json:"worst_task"`
-	Streak    int64  `json:"streak"`
 	Level     string `json:"level"`
 	TaskID    int32  `json:"task_id"`
+	Streak    int32  `json:"streak"`
 }
 
 // UserAnswer used to push user answer to kafka
