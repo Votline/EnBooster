@@ -11,6 +11,7 @@ import (
 	"unsafe"
 
 	"enbstr/internal/services"
+	stm "enbstr/internal/statemanager"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"github.com/segmentio/kafka-go"
@@ -19,18 +20,22 @@ import (
 
 // UserData is a struct that represents user data
 type UserData struct {
-	UUID      int64  `json:"uuid"`
-	BestTask  int32  `json:"best_task"`
-	WorstTask int32  `json:"worst_task"`
-	Level     string `json:"level"`
-	TaskID    int32  `json:"task_id"`
-	Streak    int32  `json:"streak"`
+	UUID          int64  `json:"uuid"`
+	BestTheme     string `json:"best_theme"`
+	BestThemeCnt  int32  `json:"best_theme_counter"`
+	WorstTheme    string `json:"worst_theme"`
+	WorstThemeCnt int32  `json:"worst_theme_counter"`
+	Level         string `json:"level"`
+	TaskID        int32  `json:"task_id"`
+	Streak        int32  `json:"streak"`
 }
 
 // UserAnswer used to push user answer to kafka
 type UserAnswer struct {
 	UUID      int64  `json:"uuid"`
 	Correct   bool   `json:"correct"`
+	Counter   int    `json:"counter"`
+	Theme     string `json:"theme"`
 	RequestID string `json:"request_id"`
 }
 
@@ -164,7 +169,9 @@ func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
 	return nil
 }
 
-func (us *UsersService) UpdateByAnswer(uuid int64, correct bool, reqTrace string) {
+// UpdateByAnswer push message to kafka with 'correct' field
+// to update user streak
+func (us *UsersService) UpdateByAnswer(uuid int64, correct bool, counter int, theme, reqTrace string) {
 	const op = "users.UpdateByAnswer"
 
 	us.log.Debug("Update user by answer request",
@@ -178,6 +185,8 @@ func (us *UsersService) UpdateByAnswer(uuid int64, correct bool, reqTrace string
 	event := UserAnswer{
 		UUID:      uuid,
 		Correct:   correct,
+		Counter:   counter,
+		Theme:     theme,
 		RequestID: reqTrace,
 	}
 
@@ -207,4 +216,51 @@ func (us *UsersService) UpdateByAnswer(uuid int64, correct bool, reqTrace string
 	us.log.Debug("Update user by answer successfully pushed to kafka",
 		zap.String("op", op),
 		zap.String("reqTrace", reqTrace))
+}
+
+// UpdateUserTaskCtx get user context, update it previous counter
+// and set new state
+func (us *UsersService) UpdateUserTaskCtx(uuid int64, state int8, theme, reqTrace, answer string, add int, sm *stm.StateManager) error {
+	const op = "users.UpdateUserTaskCtx"
+
+	us.log.Debug("Update user task ctx request",
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace),
+		zap.String("op", op))
+
+	var taskSes stm.TaskSession
+	var jsonData []byte
+
+	uctx, err := sm.GetUserCtx(uuid)
+	if err != nil {
+		return fmt.Errorf("%s: get user state: %w", op, err)
+	}
+	uctxData := unsafe.Slice(unsafe.StringData(uctx.JSONData), len(uctx.JSONData))
+	if uctx.JSONData != "" {
+		if err := json.Unmarshal(uctxData, &taskSes); err != nil {
+			return fmt.Errorf("%s: unmarshal: %w", op, err)
+		}
+	}
+
+	curSes := stm.TaskSession{
+		CurrentTheme: theme,
+		Counter:      taskSes.Counter + add,
+		Answer:       answer,
+	}
+
+	jsonData, err = json.Marshal(curSes)
+	if err != nil {
+		return fmt.Errorf("%s: marshal json: %w", op, err)
+	}
+
+	if err := sm.SetUserCtx(uuid, state, jsonData); err != nil {
+		return fmt.Errorf("%s set state: %w", op, err)
+	}
+
+	us.log.Debug("Update user task ctx successfully",
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace),
+		zap.String("op", op))
+
+	return nil
 }

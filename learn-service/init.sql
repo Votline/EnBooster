@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS tasks (
 	task TEXT NOT NULL,
 	level VARCHAR(32) NOT NULL,
+	theme TEXT NOT NULL,
 	answer TEXT NOT NULL,
 	position INT DEFAULT 0,
 

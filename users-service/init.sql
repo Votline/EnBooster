@@ -1,7 +1,9 @@
 CREATE TABLE IF NOT EXISTS users (
 	uuid TEXT PRIMARY KEY,
-	best_task INT NOT NULL DEFAULT 0,
-	worst_task INT NOT NULL DEFAULT 0,
+	best_theme TEXT NOT NULL DEFAULT '',
+	best_theme_counter INT NOT NULL DEFAULT 0,
+	worst_theme TEXT NOT NULL DEFAULT '',
+	worst_theme_counter INT NOT NULL DEFAULT 0,
 	level TEXT NOT NULL DEFAULT 'A1',
 	task_id INT NOT NULL DEFAULT 1,
 	streak INT NOT NULL DEFAULT 0,
