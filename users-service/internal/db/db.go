@@ -218,12 +218,12 @@ func (d *DB) UpdateStreak(uuid int64, ctx context.Context, reqTrace string, corr
 	END`, counter, theme)
 
 	worstThemeCntCase := sq.Expr(`CASE
-		WHEN ? > worst_theme_counter THEN ?
+		WHEN ? < worst_theme_counter THEN ?
 		ELSE worst_theme_counter
 	END`, counter, counter)
 
 	worstThemeCase := sq.Expr(`CASE
-		WHEN ? > worst_theme_counter THEN ?
+		WHEN ? < worst_theme_counter THEN ?
 		ELSE worst_theme
 	END`, counter, theme)
 

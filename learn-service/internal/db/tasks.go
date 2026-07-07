@@ -45,7 +45,7 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task, reqTrace stri
 	for _, task := range tasks {
 		curMaxPos++
 		insertBuilder = insertBuilder.
-			Values(task.TaskData, task.Level, task.Answer, curMaxPos)
+			Values(task.TaskData, task.Level, task.Theme, task.Answer, curMaxPos)
 	}
 
 	d.log.Debug("Insert tasks",

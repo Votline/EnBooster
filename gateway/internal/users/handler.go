@@ -20,12 +20,14 @@ import (
 
 // UserData is a struct that represents user data
 type UserData struct {
-	UUID      int64  `json:"uuid"`
-	BestTask  int32  `json:"best_task"`
-	WorstTask int32  `json:"worst_task"`
-	Level     string `json:"level"`
-	TaskID    int32  `json:"task_id"`
-	Streak    int32  `json:"streak"`
+	UUID          int64  `json:"uuid"`
+	BestTheme     string `json:"best_theme"`
+	BestThemeCnt  int32  `json:"best_theme_counter"`
+	WorstTheme    string `json:"worst_theme"`
+	WorstThemeCnt int32  `json:"worst_theme_counter"`
+	Level         string `json:"level"`
+	TaskID        int32  `json:"task_id"`
+	Streak        int32  `json:"streak"`
 }
 
 // UserAnswer used to push user answer to kafka
@@ -183,6 +185,8 @@ func (us *UsersService) UpdateByAnswer(uuid int64, correct bool, counter int, th
 	event := UserAnswer{
 		UUID:      uuid,
 		Correct:   correct,
+		Counter:   counter,
+		Theme:     theme,
 		RequestID: reqTrace,
 	}
 
@@ -249,7 +253,7 @@ func (us *UsersService) UpdateUserTaskCtx(uuid int64, state int8, theme, reqTrac
 		return fmt.Errorf("%s: marshal json: %w", op, err)
 	}
 
-	if err := sm.SetUserCtx(uuid, stm.StateTaskLearning, jsonData); err != nil {
+	if err := sm.SetUserCtx(uuid, state, jsonData); err != nil {
 		return fmt.Errorf("%s set state: %w", op, err)
 	}
 
