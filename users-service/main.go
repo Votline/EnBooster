@@ -37,6 +37,8 @@ type usersserver struct {
 type UserAnswer struct {
 	UUID      int64  `json:"uuid"`
 	Correct   bool   `json:"correct"`
+	Theme     string `json:"theme"`
+	Counter   int    `json:"counter"`
 	RequestID string `json:"request_id"`
 }
 
@@ -368,7 +370,7 @@ func (s *usersserver) ApplyAnswer(ctx context.Context) {
 				continue
 			}
 
-			if err := s.db.UpdateStreak(event.UUID, loopCtx, event.RequestID, event.Correct); err != nil {
+			if err := s.db.UpdateStreak(event.UUID, loopCtx, event.RequestID, event.Correct, event.Theme, event.Counter); err != nil {
 				s.log.Error("Failed to update streak",
 					zap.Error(err),
 					zap.String("op", op))

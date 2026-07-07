@@ -21,12 +21,14 @@ type DB struct {
 }
 
 type User struct {
-	UUID      int64  `db:"uuid" json:"uuid"`
-	Level     string `db:"level" json:"level"`
-	TaskID    int32  `db:"task_id" json:"task_id"`
-	BestTask  int32  `db:"best_task" json:"best_task"`
-	WorstTask int32  `db:"worst_task" json:"worst_task"`
-	Streak    int32  `db:"streak" json:"streak"`
+	UUID              int64  `db:"uuid" json:"uuid"`
+	Level             string `db:"level" json:"level"`
+	TaskID            int32  `db:"task_id" json:"task_id"`
+	BestTheme         string `db:"best_theme" json:"best_theme"`
+	BestThemeCounter  int    `db:"best_theme_counter" json:"best_theme_counter"`
+	WorstTheme        string `db:"worst_theme" json:"worst_theme"`
+	WorstThemeCounter int    `db:"worst_theme_counter" json:"worst_theme_counter"`
+	Streak            int32  `db:"streak" json:"streak"`
 }
 
 func GetEnvInt(key string, defaultVal int) int {
@@ -102,7 +104,7 @@ func (d *DB) RegUser(uuid int64, ctx context.Context, reqTrace string) error {
 func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, error) {
 	const op = "db.GetUser"
 
-	query, args, err := d.bd.Select("level", "task_id", "best_task", "worst_task", "streak").
+	query, args, err := d.bd.Select("level", "task_id", "best_theme", "best_theme_counter", "worst_theme", "worst_theme_counter", "streak").
 		From("users").
 		Where(sq.Eq{"uuid": uuid}).
 		ToSql()
@@ -114,8 +116,6 @@ func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, e
 		zap.String("query", query),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
-
-	d.log.Debug("GetUser query", zap.String("query", query))
 
 	var user User
 	if err := d.db.GetContext(ctx, &user, query, args...); err != nil {
@@ -130,16 +130,19 @@ func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, e
 	return &user, nil
 }
 
+// UpdUser update all user fields in database
 func (d *DB) UpdUser(user User, ctx context.Context, reqTrace string) error {
 	const op = "db.UpdUser"
 
 	query, args, err := d.bd.Update("users").
 		SetMap(map[string]any{
-			"level":      user.Level,
-			"task_id":    user.TaskID,
-			"best_task":  user.BestTask,
-			"worst_task": user.WorstTask,
-			"streak":     user.Streak,
+			"level":               user.Level,
+			"task_id":             user.TaskID,
+			"best_theme":          user.BestTheme,
+			"best_theme_counter":  user.BestThemeCounter,
+			"worst_theme":         user.WorstTheme,
+			"worst_theme_counter": user.WorstThemeCounter,
+			"streak":              user.Streak,
 		}).
 		Where(sq.Eq{"uuid": user.UUID}).
 		ToSql()
@@ -193,19 +196,43 @@ func (d *DB) DelUser(uuid int64, ctx context.Context, reqTrace string) error {
 }
 
 // UpdateStreak atomically updates the streak of a user
-func (d *DB) UpdateStreak(uuid int64, ctx context.Context, reqTrace string, correct bool) error {
+func (d *DB) UpdateStreak(uuid int64, ctx context.Context, reqTrace string, correct bool, theme string, counter int) error {
 	const op = "db.UpdateStreak"
 
 	currentDay := time.Now().UTC().Unix() / 86400
 
-	caseExpr := sq.Expr(`CASE
+	streakCase := sq.Expr(`CASE
 		WHEN last_done_day = ? THEN streak
 		WHEN last_done_day = ? THEN streak + 1
 		ELSE 1
 	END`, currentDay, currentDay-1)
 
+	bestThemeCntCase := sq.Expr(`CASE
+		WHEN ? > best_theme_counter THEN ?
+		ELSE best_theme_counter
+	END`, counter, counter)
+
+	bestThemeCase := sq.Expr(`CASE
+		WHEN ? > best_theme_counter THEN ?
+		ELSE best_theme
+	END`, counter, theme)
+
+	worstThemeCntCase := sq.Expr(`CASE
+		WHEN ? > worst_theme_counter THEN ?
+		ELSE worst_theme_counter
+	END`, counter, counter)
+
+	worstThemeCase := sq.Expr(`CASE
+		WHEN ? > worst_theme_counter THEN ?
+		ELSE worst_theme
+	END`, counter, theme)
+
 	query, args, err := d.bd.Update("users").
-		Set("streak", caseExpr).
+		Set("streak", streakCase).
+		Set("best_theme", bestThemeCase).
+		Set("best_theme_counter", bestThemeCntCase).
+		Set("worst_theme", worstThemeCase).
+		Set("worst_theme_counter", worstThemeCntCase).
 		Set("last_done_day", currentDay).
 		Where(sq.Eq{"uuid": uuid}).
 		ToSql()
