@@ -171,7 +171,7 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, nil); err != nil {
 				return fmt.Errorf("%s: set state: %w", op, err)
 			}
-			return c.Send("Shiritori mode activated. Write any word")
+			return c.Send("Shiritori mode activated. To exit push '/stop' button. \nWrite any word")
 		default:
 			usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
 			if err != nil {

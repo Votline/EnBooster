@@ -4,6 +4,7 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -76,10 +77,17 @@ func (srv *Server) handleState(c tele.Context) error {
 				zap.Error(err))
 		}
 	case sm.StateShiritori:
+		userWord := c.Message().Text
+
+		if strings.ToLower(userWord) == "/stop" {
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+				return fmt.Errorf("%s: change state: %w", op, err)
+			}
+			return nil
+		}
+
 		lastLetter := lastLetterPool.Get().(*string)
 		defer lastLetterPool.Put(lastLetter)
-
-		userWord := c.Message().Text
 
 		srv.lrnsrv.GetLastLetter(userWord, lastLetter)
 		if *lastLetter == "" {
