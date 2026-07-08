@@ -4,14 +4,30 @@ package router
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"unsafe"
 
+	"enbstr/internal/learn"
 	sm "enbstr/internal/statemanager"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
+
+var lastLetterPool = sync.Pool{
+	New: func() any {
+		var s string
+		return &s
+	},
+}
+
+var wordsPool = sync.Pool{
+	New: func() any {
+		var w []learn.Word
+		return &w
+	},
+}
 
 // handleState check user state and call services
 func (srv *Server) handleState(c tele.Context) error {
@@ -59,6 +75,29 @@ func (srv *Server) handleState(c tele.Context) error {
 				zap.String("reqTrace", reqTrace),
 				zap.Error(err))
 		}
+	case sm.StateShiritori:
+		lastLetter := lastLetterPool.Get().(*string)
+		defer lastLetterPool.Put(lastLetter)
+
+		userWord := c.Message().Text
+
+		srv.lrnsrv.GetLastLetter(userWord, lastLetter)
+		if *lastLetter == "" {
+			return c.Send("Invalid word")
+		}
+
+		wordsPtr := wordsPool.Get().(*[]learn.Word)
+		defer wordsPool.Put(wordsPtr)
+
+		if err := srv.lrnsrv.GetWords(*lastLetter, reqTrace, wordsPtr); err != nil {
+			return fmt.Errorf("%s: get words: %w", op, err)
+		}
+
+		if len(*wordsPtr) == 0 {
+			return c.Send("Word not found")
+		}
+
+		return c.Send(fmt.Sprintf("Word:\n%v", (*wordsPtr)[0]))
 	default:
 		setToNone = true
 	}

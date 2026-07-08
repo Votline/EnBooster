@@ -112,9 +112,9 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		}
 		var menu *tele.ReplyMarkup
 		if uuid == us.adminUUID {
-			menu = ui.ReplyMenu([]string{"Learning", "Profile", "Help"})
+			menu = ui.ReplyMenu([]string{"Learning", "Shiritori", "Profile", "Help"})
 		} else {
-			menu = ui.ReplyMenu([]string{"Learning", "Profile"})
+			menu = ui.ReplyMenu([]string{"Learning", "Shiritori", "Profile"})
 		}
 		return c.Send("Welcome to EnBooster!", menu)
 	case "Profile":
