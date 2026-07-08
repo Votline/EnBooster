@@ -121,7 +121,8 @@ type GetTasksReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Level         string                 `protobuf:"bytes,1,opt,name=level,proto3" json:"level,omitempty"`
 	Position      int32                  `protobuf:"varint,2,opt,name=position,proto3" json:"position,omitempty"`
-	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,4,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,6 +167,13 @@ func (x *GetTasksReq) GetLevel() string {
 func (x *GetTasksReq) GetPosition() int32 {
 	if x != nil {
 		return x.Position
+	}
+	return 0
+}
+
+func (x *GetTasksReq) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
 	}
 	return 0
 }
@@ -416,7 +424,8 @@ func (x *NewWordsRes) GetInserted() int32 {
 type GetWordsReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SearchData    string                 `protobuf:"bytes,1,opt,name=search_data,json=searchData,proto3" json:"search_data,omitempty"` // word or serial number
-	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -456,6 +465,13 @@ func (x *GetWordsReq) GetSearchData() string {
 		return x.SearchData
 	}
 	return ""
+}
+
+func (x *GetWordsReq) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
 }
 
 func (x *GetWordsReq) GetRequestTrace() string {
@@ -614,11 +630,12 @@ const file_learn_proto_rawDesc = "" +
 	"\tjson_data\x18\x01 \x01(\tR\bjsonData\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\")\n" +
 	"\vNewTasksRes\x12\x1a\n" +
-	"\binserted\x18\x01 \x01(\x05R\binserted\"d\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\"z\n" +
 	"\vGetTasksReq\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1a\n" +
-	"\bposition\x18\x02 \x01(\x05R\bposition\x12#\n" +
-	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"!\n" +
+	"\bposition\x18\x02 \x01(\x05R\bposition\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12#\n" +
+	"\rrequest_trace\x18\x04 \x01(\tR\frequestTrace\"!\n" +
 	"\vGetTasksRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\"c\n" +
 	"\n" +
@@ -632,11 +649,12 @@ const file_learn_proto_rawDesc = "" +
 	"\tjson_data\x18\x01 \x01(\tR\bjsonData\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\")\n" +
 	"\vNewWordsRes\x12\x1a\n" +
-	"\binserted\x18\x01 \x01(\x05R\binserted\"S\n" +
+	"\binserted\x18\x01 \x01(\x05R\binserted\"i\n" +
 	"\vGetWordsReq\x12\x1f\n" +
 	"\vsearch_data\x18\x01 \x01(\tR\n" +
-	"searchData\x12#\n" +
-	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"!\n" +
+	"searchData\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"!\n" +
 	"\vGetWordsRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\"]\n" +
 	"\n" +

@@ -57,7 +57,7 @@ func (ls *LearnService) NewWords(msg, reqTrace string) (int32, error) {
 }
 
 // GetWords returns words from the database
-func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error {
+func (ls *LearnService) GetWords(searchData, reqTrace string, limit int32, buf *[]Word) error {
 	const op = "learn.GetWords"
 
 	ls.log.Debug("Get words request",
@@ -71,6 +71,7 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, buf *[]Word) error
 	res, err := services.CallRPC(ls.cb, func() (*pb.GetWordsRes, error) {
 		return ls.client.GetWords(ctx, &pb.GetWordsReq{
 			SearchData:   searchData,
+			Limit:        limit,
 			RequestTrace: reqTrace,
 		})
 	})

@@ -57,7 +57,7 @@ func (d *DB) NewWordsBulk(ctx context.Context, words []parser.Word, reqTrace str
 }
 
 // GetWords update 'words' slice with words by level and serial.
-func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Word, reqTrace string) error {
+func (d *DB) GetWords(ctx context.Context, searchData string, limit int32, words *[]parser.Word, reqTrace string) error {
 	const op = "db.GetWords"
 
 	query := d.bd.Select("word, explain, level, first_letter, serial").
@@ -72,6 +72,10 @@ func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Wo
 		}
 	} else {
 		query = query.Where(sq.Eq{"serial": serial})
+	}
+
+	if limit > 0 {
+		query = query.Limit(uint64(limit))
 	}
 
 	sql, args, err := query.ToSql()

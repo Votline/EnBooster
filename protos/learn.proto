@@ -16,7 +16,8 @@ message NewTasksRes {
 message GetTasksReq {
   string level = 1;
   int32 position = 2;
-  string request_trace = 3;
+  int32 limit = 3;
+  string request_trace = 4;
 }
 message GetTasksRes {
   string data = 1;
@@ -43,7 +44,8 @@ message NewWordsRes {
 
 message GetWordsReq {
   string search_data = 1; // word or serial number
-  string request_trace = 2;
+  int32 limit = 2;
+  string request_trace = 3;
 }
 message GetWordsRes {
   string data = 1;
