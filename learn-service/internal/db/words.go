@@ -65,7 +65,11 @@ func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Wo
 
 	serial, err := strconv.Atoi(searchData)
 	if err != nil {
-		query = query.Where(sq.Eq{"word": searchData})
+		if len(searchData) == 1 {
+			query = query.Where(sq.Eq{"first_letter": searchData})
+		} else {
+			query = query.Where(sq.Eq{"word": searchData})
+		}
 	} else {
 		query = query.Where(sq.Eq{"serial": serial})
 	}
@@ -77,6 +81,7 @@ func (d *DB) GetWords(ctx context.Context, searchData string, words *[]parser.Wo
 
 	d.log.Debug("Get words",
 		zap.String("query", sql),
+		zap.String("searchData", searchData),
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
 
