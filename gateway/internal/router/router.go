@@ -151,7 +151,7 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 			tasksPtr := tasksList.Get().(*[]learn.Task)
 			defer tasksList.Put(tasksPtr)
 
-			if err := srv.lrnsrv.GetTasks(data.Level, data.TaskID, tasksPtr, reqTrace); err != nil {
+			if err := srv.lrnsrv.GetTasks(data.Level, data.TaskID, 1, tasksPtr, reqTrace); err != nil {
 				return fmt.Errorf("%s: get tasks: %w", op, err)
 			}
 

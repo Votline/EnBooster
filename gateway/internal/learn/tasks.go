@@ -57,7 +57,7 @@ func (ls *LearnService) NewTasks(msg, reqTrace string) (int32, error) {
 }
 
 // GetTasks returns tasks from the database
-func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, reqTrace string) error {
+func (ls *LearnService) GetTasks(level string, pos, limit int32, tasksList *[]Task, reqTrace string) error {
 	const op = "learn.GetTasks"
 
 	ls.log.Debug("Get tasks request",
@@ -73,6 +73,7 @@ func (ls *LearnService) GetTasks(level string, pos int32, tasksList *[]Task, req
 		return ls.client.GetTasks(ctx, &pb.GetTasksReq{
 			Level:        level,
 			Position:     pos,
+			Limit:        limit,
 			RequestTrace: reqTrace,
 		})
 	})

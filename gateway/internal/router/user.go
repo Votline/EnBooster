@@ -97,7 +97,7 @@ func (srv *Server) handleState(c tele.Context) error {
 		wordsPtr := wordsPool.Get().(*[]learn.Word)
 		defer wordsPool.Put(wordsPtr)
 
-		if err := srv.lrnsrv.GetWords(*lastLetter, reqTrace, wordsPtr); err != nil {
+		if err := srv.lrnsrv.GetWords(*lastLetter, reqTrace, -1, wordsPtr); err != nil {
 			return fmt.Errorf("%s: get words: %w", op, err)
 		}
 
