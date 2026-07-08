@@ -77,7 +77,7 @@ func (d *DB) NewTaskBulk(ctx context.Context, tasks []parser.Task, reqTrace stri
 }
 
 // GetTasks returns tasks by level and position.
-func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]parser.Task, reqTrace string) error {
+func (d *DB) GetTasks(ctx context.Context, level string, pos, limit int32, tasks *[]parser.Task, reqTrace string) error {
 	const op = "db.GetTask"
 
 	query := d.bd.Select("task, level, theme, answer, position").From("tasks")
@@ -88,6 +88,10 @@ func (d *DB) GetTasks(ctx context.Context, level string, pos int32, tasks *[]par
 
 	if pos >= 0 {
 		query = query.Where(sq.Eq{"position": pos})
+	}
+
+	if limit > 0 {
+		query = query.Limit(uint64(limit))
 	}
 
 	sql, args, err := query.ToSql()

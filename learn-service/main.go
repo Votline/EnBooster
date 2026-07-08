@@ -159,6 +159,7 @@ func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.Ge
 		return nil, fmt.Errorf("%s: empty level", op)
 	}
 	pos := req.GetPosition()
+	limit := req.GetLimit()
 	reqTrace := req.GetRequestTrace()
 
 	key := fmt.Sprintf("%s:%d", level, pos)
@@ -198,7 +199,7 @@ func (s *learnserver) GetTasks(ctx context.Context, req *pb.GetTasksReq) (*pb.Ge
 	*tasksPtr = (*tasksPtr)[:0]
 	defer tasksPool.Put(tasksPtr)
 
-	if err := s.db.GetTasks(ctx, level, pos, tasksPtr, reqTrace); err != nil {
+	if err := s.db.GetTasks(ctx, level, pos, limit, tasksPtr, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: get tasks: %w", op, err)
 	}
 
@@ -318,6 +319,7 @@ func (s *learnserver) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.Ge
 	if searchData == "" {
 		return nil, fmt.Errorf("%s: empty search data", op)
 	}
+	limit := req.GetLimit()
 	reqTrace := req.GetRequestTrace()
 
 	s.log.Debug("Get words request",
@@ -329,7 +331,7 @@ func (s *learnserver) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.Ge
 	*wordsPtr = (*wordsPtr)[:0]
 	defer wordsPool.Put(wordsPtr)
 
-	if err := s.db.GetWords(ctx, searchData, wordsPtr, reqTrace); err != nil {
+	if err := s.db.GetWords(ctx, searchData, limit, wordsPtr, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: get words: %w", op, err)
 	}
 
