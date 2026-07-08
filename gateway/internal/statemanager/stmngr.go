@@ -22,6 +22,7 @@ const (
 	StateWordDeleting
 	StateTaskLearning
 	StateAdminNotCommand
+	StateShiritori
 )
 
 // StateManager is a struct that manages the state of the user

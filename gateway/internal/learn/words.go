@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -129,4 +130,28 @@ func (ls *LearnService) DelWord(msg, reqTrace string) error {
 		zap.String("reqTrace", reqTrace))
 
 	return nil
+}
+
+// GetLastLetter returns the last letter of the word
+// following the rules of the shiritori game
+func (ls *LearnService) GetLastLetter(word string, buf *string) {
+	word = strings.ToLower(word)
+
+	if len(word) == 0 {
+		*buf = ""
+		return
+	}
+
+	for i := len(word) - 1; i >= 0; i-- {
+		char := word[i]
+		switch char {
+		case 'e', 'j', 'q', 's':
+			continue
+		default:
+			*buf = word[i : i+1]
+			return
+		}
+	}
+
+	*buf = ""
 }

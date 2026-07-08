@@ -155,18 +155,23 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 				return fmt.Errorf("%s: get tasks: %w", op, err)
 			}
 
-			answer := ""
-			theme := ""
-			if len(*tasksPtr) > 0 {
-				answer = (*tasksPtr)[0].Answer
-				theme = (*tasksPtr)[0].Theme
+			if len(*tasksPtr) == 0 {
+				return c.Send("Task not found")
 			}
+
+			answer := (*tasksPtr)[0].Answer
+			theme := (*tasksPtr)[0].Theme
 
 			if err := srv.usrsrv.UpdateUserTaskCtx(c.Sender().ID, sm.StateTaskLearning, theme, reqTrace, answer, 0, srv.sm); err != nil {
 				return fmt.Errorf("%s: update user task ctx: %w", op, err)
 			}
 
-			return c.Send(fmt.Sprintf("Список заданий:\n%v", *tasksPtr))
+			return c.Send(fmt.Sprintf("Task:\n%v", (*tasksPtr)[0]))
+		case "Shiritori":
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, nil); err != nil {
+				return fmt.Errorf("%s: set state: %w", op, err)
+			}
+			return c.Send("Shiritori mode activated. To exit push '/stop' button. \nWrite any word")
 		default:
 			usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
 			if err != nil {
