@@ -54,6 +54,17 @@ message GetWordsRes {
   // returns json object (many data)
 }
 
+message GetWordsWithTargetReq {
+  string user_word = 1;
+  string first_letter = 2;
+  int32 limit = 3;
+  string request_trace = 4;
+}
+message GetWordsWithTargetRes {
+  string data = 1; // json as 'GetWordsRes'
+  bool found = 2; // user_word in data?
+}
+
 message DelWordReq {
   string word = 1; // 1 word
   int32 serial = 2; // 1 serial number
@@ -68,5 +79,6 @@ service LearnService {
 
   rpc NewWords (NewWordsReq) returns (NewWordsRes);
   rpc GetWords (GetWordsReq) returns (GetWordsRes);
+  rpc GetWordsWithTarget (GetWordsWithTargetReq) returns (GetWordsWithTargetRes);
   rpc DelWord (DelWordReq) returns (DelWordRes);
 }

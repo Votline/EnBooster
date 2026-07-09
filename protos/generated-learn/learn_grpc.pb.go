@@ -19,12 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LearnService_NewTasks_FullMethodName = "/learn.LearnService/NewTasks"
-	LearnService_GetTasks_FullMethodName = "/learn.LearnService/GetTasks"
-	LearnService_DelTask_FullMethodName  = "/learn.LearnService/DelTask"
-	LearnService_NewWords_FullMethodName = "/learn.LearnService/NewWords"
-	LearnService_GetWords_FullMethodName = "/learn.LearnService/GetWords"
-	LearnService_DelWord_FullMethodName  = "/learn.LearnService/DelWord"
+	LearnService_NewTasks_FullMethodName           = "/learn.LearnService/NewTasks"
+	LearnService_GetTasks_FullMethodName           = "/learn.LearnService/GetTasks"
+	LearnService_DelTask_FullMethodName            = "/learn.LearnService/DelTask"
+	LearnService_NewWords_FullMethodName           = "/learn.LearnService/NewWords"
+	LearnService_GetWords_FullMethodName           = "/learn.LearnService/GetWords"
+	LearnService_GetWordsWithTarget_FullMethodName = "/learn.LearnService/GetWordsWithTarget"
+	LearnService_DelWord_FullMethodName            = "/learn.LearnService/DelWord"
 )
 
 // LearnServiceClient is the client API for LearnService service.
@@ -36,6 +37,7 @@ type LearnServiceClient interface {
 	DelTask(ctx context.Context, in *DelTaskReq, opts ...grpc.CallOption) (*DelTaskRes, error)
 	NewWords(ctx context.Context, in *NewWordsReq, opts ...grpc.CallOption) (*NewWordsRes, error)
 	GetWords(ctx context.Context, in *GetWordsReq, opts ...grpc.CallOption) (*GetWordsRes, error)
+	GetWordsWithTarget(ctx context.Context, in *GetWordsWithTargetReq, opts ...grpc.CallOption) (*GetWordsWithTargetRes, error)
 	DelWord(ctx context.Context, in *DelWordReq, opts ...grpc.CallOption) (*DelWordRes, error)
 }
 
@@ -97,6 +99,16 @@ func (c *learnServiceClient) GetWords(ctx context.Context, in *GetWordsReq, opts
 	return out, nil
 }
 
+func (c *learnServiceClient) GetWordsWithTarget(ctx context.Context, in *GetWordsWithTargetReq, opts ...grpc.CallOption) (*GetWordsWithTargetRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWordsWithTargetRes)
+	err := c.cc.Invoke(ctx, LearnService_GetWordsWithTarget_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *learnServiceClient) DelWord(ctx context.Context, in *DelWordReq, opts ...grpc.CallOption) (*DelWordRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DelWordRes)
@@ -116,6 +128,7 @@ type LearnServiceServer interface {
 	DelTask(context.Context, *DelTaskReq) (*DelTaskRes, error)
 	NewWords(context.Context, *NewWordsReq) (*NewWordsRes, error)
 	GetWords(context.Context, *GetWordsReq) (*GetWordsRes, error)
+	GetWordsWithTarget(context.Context, *GetWordsWithTargetReq) (*GetWordsWithTargetRes, error)
 	DelWord(context.Context, *DelWordReq) (*DelWordRes, error)
 	mustEmbedUnimplementedLearnServiceServer()
 }
@@ -141,6 +154,9 @@ func (UnimplementedLearnServiceServer) NewWords(context.Context, *NewWordsReq) (
 }
 func (UnimplementedLearnServiceServer) GetWords(context.Context, *GetWordsReq) (*GetWordsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetWords not implemented")
+}
+func (UnimplementedLearnServiceServer) GetWordsWithTarget(context.Context, *GetWordsWithTargetReq) (*GetWordsWithTargetRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetWordsWithTarget not implemented")
 }
 func (UnimplementedLearnServiceServer) DelWord(context.Context, *DelWordReq) (*DelWordRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DelWord not implemented")
@@ -256,6 +272,24 @@ func _LearnService_GetWords_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LearnService_GetWordsWithTarget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWordsWithTargetReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LearnServiceServer).GetWordsWithTarget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LearnService_GetWordsWithTarget_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LearnServiceServer).GetWordsWithTarget(ctx, req.(*GetWordsWithTargetReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LearnService_DelWord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DelWordReq)
 	if err := dec(in); err != nil {
@@ -300,6 +334,10 @@ var LearnService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetWords",
 			Handler:    _LearnService_GetWords_Handler,
+		},
+		{
+			MethodName: "GetWordsWithTarget",
+			Handler:    _LearnService_GetWordsWithTarget_Handler,
 		},
 		{
 			MethodName: "DelWord",
