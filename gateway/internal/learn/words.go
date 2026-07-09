@@ -92,6 +92,54 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, limit int32, buf *
 	return nil
 }
 
+// GetWordsWithTarget returns words from the database
+// and whether user word in the database
+func (ls *LearnService) GetWordsWithTarget(userWord, lastLetter, reqTrace string, buf *[]Word) (bool, error) {
+	const op = "learn.GetWordsWithTarget"
+
+	ls.log.Debug("Get words with target request",
+		zap.String("op", op),
+		zap.String("userWord", userWord),
+		zap.String("lastLetter", lastLetter),
+		zap.String("reqTrace", reqTrace))
+
+	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
+	defer cancel()
+
+	res, err := services.CallRPC(ls.cb, func() (*pb.GetWordsWithTargetRes, error) {
+		return ls.client.GetWordsWithTarget(ctx, &pb.GetWordsWithTargetReq{
+			UserWord:     userWord,
+			FirstLetter:  lastLetter,
+			RequestTrace: reqTrace,
+		})
+	})
+	if err != nil {
+		return false, fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	if !res.Found {
+		return res.Found, nil
+	}
+
+	dataBytes := unsafe.Slice(unsafe.StringData(res.Data), len(res.Data))
+	if err := json.Unmarshal(dataBytes, buf); err != nil {
+		return false, fmt.Errorf("%s: unmarshal words: %w", op, err)
+	}
+
+	(*buf) = (*buf)[1:]
+
+	if len(*buf) == 0 {
+		return false, fmt.Errorf("%s: words not found", op)
+	}
+
+	ls.log.Debug("Get words with target response",
+		zap.String("op", op),
+		zap.Int("words len", len(*buf)),
+		zap.String("reqTrace", reqTrace))
+
+	return res.Found, nil
+}
+
 // DelWord deletes a word from the database
 func (ls *LearnService) DelWord(msg, reqTrace string) error {
 	const op = "learn.DelWord"
