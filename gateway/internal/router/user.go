@@ -109,7 +109,20 @@ func (srv *Server) handleState(c tele.Context) error {
 			return c.Send("Bot couldn't find any word")
 		}
 
-		return c.Send(fmt.Sprintf("Word:\n%v", (*wordsPtr)[0]))
+		botWord := (*wordsPtr)[0].Word
+
+		repeat, notMatch, err := srv.usrsrv.UpdateUserShiritoriCtx(c.Sender().ID, userWord, sm.StateShiritori, srv.sm)
+		if err != nil {
+			return fmt.Errorf("%s: update user shiritori ctx: %w", op, err)
+		}
+		if repeat {
+			return c.Send("You already used this word")
+		}
+		if notMatch {
+			return c.Send("First letter in your word doesn't match with last letter in previous word")
+		}
+
+		return c.Send(fmt.Sprintf("Word:\n%v", botWord))
 	default:
 		setToNone = true
 	}
