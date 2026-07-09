@@ -74,9 +74,12 @@ func (d *DB) GetWords(ctx context.Context, searchData string, limit int32, words
 		query = query.Where(sq.Eq{"serial": serial})
 	}
 
-	if limit > 0 {
-		query = query.Limit(uint64(limit))
+	lim := uint64(limit)
+	if limit <= 0 {
+		lim = d.getLimit
 	}
+
+	query = query.Limit(lim)
 
 	sql, args, err := query.ToSql()
 	if err != nil {
@@ -90,6 +93,45 @@ func (d *DB) GetWords(ctx context.Context, searchData string, limit int32, words
 		zap.String("request_trace", reqTrace))
 
 	if err := d.db.SelectContext(ctx, words, sql, args...); err != nil {
+		return fmt.Errorf("%s: exec get words query: %w", op, err)
+	}
+
+	d.log.Debug("Successfully get words",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	return nil
+}
+
+// GetWordsWithTarget words by first letter with user word.
+func (d *DB) GetWordsWithTarget(ctx context.Context, userWord, firstLetter string, limit int32, words *[]parser.Word, reqTrace string) error {
+	const op = "db.GetWordsWithTarget"
+
+	lim := uint64(limit)
+	if limit <= 0 {
+		lim = d.getLimit
+	}
+
+	query, args, err := d.bd.Select("word, explain, level, first_letter, serial").
+		From("words").
+		Where(sq.Or{
+			sq.Eq{"first_letter": firstLetter},
+			sq.Eq{"word": userWord},
+		}).
+		OrderByClause(sq.Expr("CASE WHEN word = ? THEN 0 ELSE 1 END ASC", userWord)).
+		Limit(lim + 1).ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: create get words query: %w", op, err)
+	}
+
+	d.log.Debug("Get words",
+		zap.String("query", query),
+		zap.String("first_letter", firstLetter),
+		zap.String("user_word", userWord),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	if err := d.db.SelectContext(ctx, words, query, args...); err != nil {
 		return fmt.Errorf("%s: exec get words query: %w", op, err)
 	}
 

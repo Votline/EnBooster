@@ -348,6 +348,54 @@ func (s *learnserver) GetWords(ctx context.Context, req *pb.GetWordsReq) (*pb.Ge
 	return &pb.GetWordsRes{Data: wordsStr}, nil
 }
 
+func (s *learnserver) GetWordsWithTarget(ctx context.Context, req *pb.GetWordsWithTargetReq) (*pb.GetWordsWithTargetRes, error) {
+	const op = "learnserver.GetWordsWithTarget"
+
+	limit := req.GetLimit()
+	userWord := req.GetUserWord()
+	firstLetter := req.GetFirstLetter()
+	requestTrace := req.GetRequestTrace()
+
+	s.log.Debug("Get words with target request",
+		zap.String("user_word", userWord),
+		zap.String("first_letter", firstLetter),
+		zap.String("op", op),
+		zap.String("request_trace", requestTrace))
+
+	wordsPtr := wordsPool.Get().(*[]parser.Word)
+	*wordsPtr = (*wordsPtr)[:0]
+	defer wordsPool.Put(wordsPtr)
+
+	if err := s.db.GetWordsWithTarget(ctx, userWord, firstLetter, limit, wordsPtr, requestTrace); err != nil {
+		return nil, fmt.Errorf("%s: get words: %w", op, err)
+	}
+
+	if len(*wordsPtr) == 0 {
+		return &pb.GetWordsWithTargetRes{
+			Data:  "[]",
+			Found: false,
+		}, nil
+	}
+
+	wordsBytes, err := json.Marshal(*wordsPtr)
+	if err != nil {
+		return nil, fmt.Errorf("%s: marshal words: %w", op, err)
+	}
+
+	wordsStr := unsafe.String(unsafe.SliceData(wordsBytes), len(wordsBytes))
+
+	s.log.Debug("Succesfully get words with target",
+		zap.String("user_word", userWord),
+		zap.String("first_word", (*wordsPtr)[0].Word),
+		zap.String("op", op),
+		zap.String("request_trace", requestTrace))
+
+	return &pb.GetWordsWithTargetRes{
+		Data:  wordsStr,
+		Found: (*wordsPtr)[0].Word == userWord,
+	}, nil
+}
+
 func (s *learnserver) DelWord(ctx context.Context, req *pb.DelWordReq) (*pb.DelWordRes, error) {
 	const op = "learnserver.DelWord"
 

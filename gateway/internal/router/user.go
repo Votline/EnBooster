@@ -97,12 +97,16 @@ func (srv *Server) handleState(c tele.Context) error {
 		wordsPtr := wordsPool.Get().(*[]learn.Word)
 		defer wordsPool.Put(wordsPtr)
 
-		if err := srv.lrnsrv.GetWords(*lastLetter, reqTrace, -1, wordsPtr); err != nil {
+		found, err := srv.lrnsrv.GetWordsWithTarget(userWord, *lastLetter, reqTrace, wordsPtr)
+		if err != nil {
 			return fmt.Errorf("%s: get words: %w", op, err)
+		}
+		if !found {
+			return c.Send("Your word not found")
 		}
 
 		if len(*wordsPtr) == 0 {
-			return c.Send("Word not found")
+			return c.Send("Bot couldn't find any word")
 		}
 
 		return c.Send(fmt.Sprintf("Word:\n%v", (*wordsPtr)[0]))

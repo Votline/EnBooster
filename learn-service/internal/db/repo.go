@@ -15,9 +15,10 @@ import (
 )
 
 type DB struct {
-	db  *sqlx.DB
-	log *zap.Logger
-	bd  sq.StatementBuilderType
+	getLimit uint64
+	db       *sqlx.DB
+	log      *zap.Logger
+	bd       sq.StatementBuilderType
 }
 
 func GetEnvInt(key string, defaultVal int) int {
@@ -46,12 +47,15 @@ func NewDB(log *zap.Logger) (*DB, error) {
 	db.SetConnMaxLifetime(time.Duration(GetEnvInt("MAX_LIFETIME", 15)) * time.Minute)
 	db.SetConnMaxIdleTime(time.Duration(GetEnvInt("MAX_IDLETIME", 10)) * time.Minute)
 
+	getLimit := GetEnvInt("GET_LIMIT", 50)
+
 	log.Debug("DB learn sucesfully connected")
 
 	return &DB{
-		db:  db,
-		log: log,
-		bd:  sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
+		getLimit: uint64(getLimit),
+		db:       db,
+		log:      log,
+		bd:       sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 	}, nil
 }
 
