@@ -16,3 +16,9 @@ CREATE TABLE IF NOT EXISTS words (
 	first_letter VARCHAR(1) NOT NULL,
 	serial SERIAL PRIMARY KEY
 );
+
+CREATE INDEX IF NOT EXISTS idx_words_word
+ON words USING btree (word);
+
+CREATE INDEX IF NOT EXISTS idx_words_first_letter
+ON words USING btree (first_letter);
