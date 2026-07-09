@@ -32,11 +32,18 @@ type StateManager struct {
 	stateTTL   time.Duration
 }
 
-// TaskSession contains the current theme and a counter
+// TaskSession used for handle user results
+// needed for best/worst theme and count they
 type TaskSession struct {
 	CurrentTheme string `json:"current_theme"`
 	Counter      int    `json:"counter"`
 	Answer       string `json:"answer"`
+}
+
+// ShiritoriSession helps check if the user used the word
+type ShiritoriSession struct {
+	UsedWords  map[string]bool `json:"used_words"`
+	LastLetter string          `json:"last_letter"`
 }
 
 // UserContext contains user state and additional data
