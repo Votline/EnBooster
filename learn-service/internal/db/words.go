@@ -103,37 +103,9 @@ func (d *DB) GetWords(ctx context.Context, searchData string, limit int32, words
 	return nil
 }
 
-// DelWords delete by word and serial.
-func (d *DB) DelWords(ctx context.Context, level string, serial int32, reqTrace string) error {
-	const op = "db.DelWords"
-
-	query, args, err := d.bd.Delete("words").
-		Where(sq.Eq{"word": level}).
-		Where(sq.Eq{"serial": serial}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("%s: create del words query: %w", op, err)
-	}
-
-	d.log.Debug("Delete words",
-		zap.String("query", query),
-		zap.String("op", op),
-		zap.String("request_trace", reqTrace))
-
-	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("%s: exec del words query: %w", op, err)
-	}
-
-	d.log.Debug("Successfully deleted words",
-		zap.String("op", op),
-		zap.String("request_trace", reqTrace))
-
-	return nil
-}
-
-// GetAndCheck get words by first letter with user word.
-func (d *DB) GetAndCheck(ctx context.Context, firstLetter, userWord string, limit int32, words *[]parser.Word, reqTrace string) error {
-	const op = "db.GetWords"
+// GetWordsWithTarget words by first letter with user word.
+func (d *DB) GetWordsWithTarget(ctx context.Context, userWord, firstLetter string, limit int32, words *[]parser.Word, reqTrace string) error {
+	const op = "db.GetWordsWithTarget"
 
 	lim := uint64(limit)
 	if limit <= 0 {
@@ -164,6 +136,34 @@ func (d *DB) GetAndCheck(ctx context.Context, firstLetter, userWord string, limi
 	}
 
 	d.log.Debug("Successfully get words",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	return nil
+}
+
+// DelWords delete by word and serial.
+func (d *DB) DelWords(ctx context.Context, level string, serial int32, reqTrace string) error {
+	const op = "db.DelWords"
+
+	query, args, err := d.bd.Delete("words").
+		Where(sq.Eq{"word": level}).
+		Where(sq.Eq{"serial": serial}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: create del words query: %w", op, err)
+	}
+
+	d.log.Debug("Delete words",
+		zap.String("query", query),
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: exec del words query: %w", op, err)
+	}
+
+	d.log.Debug("Successfully deleted words",
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
 
