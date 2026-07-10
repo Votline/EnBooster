@@ -24,6 +24,7 @@ type Word struct {
 	Level       string `json:"level"`
 	Explain     string `json:"explain"`
 	FirstLetter string `json:"first_letter"`
+	Serial      int    `json:"serial"`
 }
 
 // NewWords adds new words to the database
@@ -94,13 +95,14 @@ func (ls *LearnService) GetWords(searchData, reqTrace string, limit int32, buf *
 
 // GetWordsWithTarget returns words from the database
 // and whether user word in the database
-func (ls *LearnService) GetWordsWithTarget(userWord, lastLetter, reqTrace string, buf *[]Word) (bool, error) {
+func (ls *LearnService) GetWordsWithTarget(userWord, lastLetter, reqTrace string, offsetID int, buf *[]Word) (bool, error) {
 	const op = "learn.GetWordsWithTarget"
 
 	ls.log.Debug("Get words with target request",
 		zap.String("op", op),
 		zap.String("userWord", userWord),
 		zap.String("lastLetter", lastLetter),
+		zap.Int("offsetID", offsetID),
 		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), ls.ctxTimeout*time.Second)
@@ -110,6 +112,7 @@ func (ls *LearnService) GetWordsWithTarget(userWord, lastLetter, reqTrace string
 		return ls.client.GetWordsWithTarget(ctx, &pb.GetWordsWithTargetReq{
 			UserWord:     userWord,
 			FirstLetter:  lastLetter,
+			OffsetId:     int32(offsetID),
 			RequestTrace: reqTrace,
 		})
 	})
@@ -129,7 +132,7 @@ func (ls *LearnService) GetWordsWithTarget(userWord, lastLetter, reqTrace string
 	(*buf) = (*buf)[1:]
 
 	if len(*buf) == 0 {
-		return false, fmt.Errorf("%s: words not found", op)
+		return false, nil
 	}
 
 	ls.log.Debug("Get words with target response",

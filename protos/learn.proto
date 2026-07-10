@@ -58,7 +58,8 @@ message GetWordsWithTargetReq {
   string user_word = 1;
   string first_letter = 2;
   int32 limit = 3;
-  string request_trace = 4;
+  int32 offset_id = 4;
+  string request_trace = 5;
 }
 message GetWordsWithTargetRes {
   string data = 1; // json as 'GetWordsRes'

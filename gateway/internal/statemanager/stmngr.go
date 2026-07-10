@@ -42,8 +42,9 @@ type TaskSession struct {
 
 // ShiritoriSession helps check if the user used the word
 type ShiritoriSession struct {
-	UsedWords  map[string]bool `json:"used_words"`
-	LastLetter string          `json:"last_letter"`
+	UsedWords     map[string]bool `json:"used_words"`
+	LastLetter    string          `json:"last_letter"`
+	LetterOffsets map[string]int  `json:"letter_offsets"`
 }
 
 // UserContext contains user state and additional data
