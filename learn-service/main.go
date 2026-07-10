@@ -354,6 +354,7 @@ func (s *learnserver) GetWordsWithTarget(ctx context.Context, req *pb.GetWordsWi
 	limit := req.GetLimit()
 	userWord := req.GetUserWord()
 	firstLetter := req.GetFirstLetter()
+	offsetID := req.GetOffsetId()
 	requestTrace := req.GetRequestTrace()
 
 	s.log.Debug("Get words with target request",
@@ -366,7 +367,7 @@ func (s *learnserver) GetWordsWithTarget(ctx context.Context, req *pb.GetWordsWi
 	*wordsPtr = (*wordsPtr)[:0]
 	defer wordsPool.Put(wordsPtr)
 
-	if err := s.db.GetWordsWithTarget(ctx, userWord, firstLetter, limit, wordsPtr, requestTrace); err != nil {
+	if err := s.db.GetWordsWithTarget(ctx, userWord, firstLetter, offsetID, limit, wordsPtr, requestTrace); err != nil {
 		return nil, fmt.Errorf("%s: get words: %w", op, err)
 	}
 

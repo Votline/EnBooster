@@ -104,7 +104,7 @@ func (d *DB) GetWords(ctx context.Context, searchData string, limit int32, words
 }
 
 // GetWordsWithTarget words by first letter with user word.
-func (d *DB) GetWordsWithTarget(ctx context.Context, userWord, firstLetter string, limit int32, words *[]parser.Word, reqTrace string) error {
+func (d *DB) GetWordsWithTarget(ctx context.Context, userWord, firstLetter string, offsetID, limit int32, words *[]parser.Word, reqTrace string) error {
 	const op = "db.GetWordsWithTarget"
 
 	lim := uint64(limit)
@@ -115,10 +115,13 @@ func (d *DB) GetWordsWithTarget(ctx context.Context, userWord, firstLetter strin
 	query, args, err := d.bd.Select("word, explain, level, first_letter, serial").
 		From("words").
 		Where(sq.Or{
-			sq.Eq{"first_letter": firstLetter},
+			sq.And{
+				sq.Eq{"first_letter": firstLetter},
+				sq.Gt{"serial": offsetID},
+			},
 			sq.Eq{"word": userWord},
 		}).
-		OrderByClause(sq.Expr("CASE WHEN word = ? THEN 0 ELSE 1 END ASC", userWord)).
+		OrderByClause(sq.Expr("CASE WHEN word = ? THEN 0 ELSE 1 END ASC, serial ASC", userWord)).
 		Limit(lim + 1).ToSql()
 	if err != nil {
 		return fmt.Errorf("%s: create get words query: %w", op, err)
