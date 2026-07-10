@@ -530,7 +530,8 @@ type GetWordsWithTargetReq struct {
 	UserWord      string                 `protobuf:"bytes,1,opt,name=user_word,json=userWord,proto3" json:"user_word,omitempty"`
 	FirstLetter   string                 `protobuf:"bytes,2,opt,name=first_letter,json=firstLetter,proto3" json:"first_letter,omitempty"`
 	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
-	RequestTrace  string                 `protobuf:"bytes,4,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	OffsetId      int32                  `protobuf:"varint,4,opt,name=offset_id,json=offsetId,proto3" json:"offset_id,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,5,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -582,6 +583,13 @@ func (x *GetWordsWithTargetReq) GetFirstLetter() string {
 func (x *GetWordsWithTargetReq) GetLimit() int32 {
 	if x != nil {
 		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetWordsWithTargetReq) GetOffsetId() int32 {
+	if x != nil {
+		return x.OffsetId
 	}
 	return 0
 }
@@ -776,12 +784,13 @@ const file_learn_proto_rawDesc = "" +
 	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12#\n" +
 	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"!\n" +
 	"\vGetWordsRes\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\"\x92\x01\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"\xaf\x01\n" +
 	"\x15GetWordsWithTargetReq\x12\x1b\n" +
 	"\tuser_word\x18\x01 \x01(\tR\buserWord\x12!\n" +
 	"\ffirst_letter\x18\x02 \x01(\tR\vfirstLetter\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12#\n" +
-	"\rrequest_trace\x18\x04 \x01(\tR\frequestTrace\"A\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x1b\n" +
+	"\toffset_id\x18\x04 \x01(\x05R\boffsetId\x12#\n" +
+	"\rrequest_trace\x18\x05 \x01(\tR\frequestTrace\"A\n" +
 	"\x15GetWordsWithTargetRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\x12\x14\n" +
 	"\x05found\x18\x02 \x01(\bR\x05found\"]\n" +
