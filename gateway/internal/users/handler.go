@@ -268,62 +268,50 @@ func (us *UsersService) UpdateUserTaskCtx(uuid int64, state int8, theme, reqTrac
 // UpdateUserShiritoriCtx updates user shiritori context
 // append new word to the used words
 // check if the word is repeated - return true if it is
-func (us *UsersService) UpdateUserShiritoriCtx(uuid int64, word string, state int8, sm *stm.StateManager) (bool, bool, error) {
+func (us *UsersService) UpdateUserShiritoriCtx(
+	shiritoriSes *stm.ShiritoriSession, uuid int64,
+	userWord, userLastLetter, botWord, botLastLetter string,
+	offsetID int, state int8, sm *stm.StateManager,
+) (isRepeat bool, notMatch bool, err error) {
 	const op = "users.UpdateUserShiritoriCtx"
 
 	us.log.Debug("Is word repeated request",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
-		zap.String("word", word))
-
-	usrctx, err := sm.GetUserCtx(uuid)
-	if err != nil {
-		return false, false, fmt.Errorf("%s: get user state: %w", op, err)
-	}
-
-	var shiritoriSes stm.ShiritoriSession
-	uctxData := unsafe.Slice(unsafe.StringData(usrctx.JSONData), len(usrctx.JSONData))
-	if usrctx.JSONData != "" {
-		if err := json.Unmarshal(uctxData, &shiritoriSes); err != nil {
-			return false, false, fmt.Errorf("%s: unmarshal: %w", op, err)
-		}
-	}
+		zap.String("user_word", userWord))
 
 	if shiritoriSes.UsedWords == nil {
 		shiritoriSes.UsedWords = make(map[string]bool)
 	}
-
-	notMatch := false
-	LastLetter := shiritoriSes.LastLetter
-	if LastLetter == "" {
-		shiritoriSes.LastLetter = word[0:1]
-	} else {
-		if LastLetter != word[0:1] {
-			notMatch = true
-		}
+	if shiritoriSes.LetterOffsets == nil {
+		shiritoriSes.LetterOffsets = make(map[string]int)
 	}
 
-	res := shiritoriSes.UsedWords[word]
-	if res {
-		return res, notMatch, nil
+	isRepeat = false
+	notMatch = false
+	if shiritoriSes.LastLetter != "" && shiritoriSes.LastLetter != userWord[0:1] {
+		notMatch = true
+		return isRepeat, notMatch, nil
 	}
 
-	shiritoriSes.UsedWords[word] = true
+	isRepeat = shiritoriSes.UsedWords[userWord]
+	if isRepeat {
+		return isRepeat, notMatch, nil
+	}
+
+	shiritoriSes.LastLetter = botLastLetter
+	shiritoriSes.UsedWords[userWord] = true
+	shiritoriSes.UsedWords[botWord] = true
+	shiritoriSes.LetterOffsets[userLastLetter] = offsetID
 
 	jsonData, err := json.Marshal(shiritoriSes)
 	if err != nil {
-		return false, notMatch, fmt.Errorf("%s: marshal json: %w", op, err)
+		return isRepeat, notMatch, fmt.Errorf("%s: marshal json: %w", op, err)
 	}
 
 	if err := sm.SetUserCtx(uuid, state, jsonData); err != nil {
-		return false, notMatch, fmt.Errorf("%s: set user state: %w", op, err)
+		return isRepeat, notMatch, fmt.Errorf("%s: set user state: %w", op, err)
 	}
 
-	us.log.Debug("Is word repeated successfully",
-		zap.String("op", op),
-		zap.Int64("uuid", uuid),
-		zap.String("word", word),
-		zap.Bool("res", res))
-
-	return res, notMatch, nil
+	return isRepeat, notMatch, nil
 }

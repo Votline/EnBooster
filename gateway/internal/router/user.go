@@ -86,6 +86,18 @@ func (srv *Server) handleState(c tele.Context) error {
 			return nil
 		}
 
+		usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
+		if err != nil {
+			return fmt.Errorf("%s: get user state: %w", op, err)
+		}
+		var shiritoriSes sm.ShiritoriSession
+		if usrctx.JSONData != "" {
+			uctxData := unsafe.Slice(unsafe.StringData(usrctx.JSONData), len(usrctx.JSONData))
+			if err := json.Unmarshal(uctxData, &shiritoriSes); err != nil {
+				return fmt.Errorf("%s: unmarshal: %w", op, err)
+			}
+		}
+
 		lastLetter := lastLetterPool.Get().(*string)
 		defer lastLetterPool.Put(lastLetter)
 
@@ -94,10 +106,15 @@ func (srv *Server) handleState(c tele.Context) error {
 			return c.Send("Invalid word")
 		}
 
+		if shiritoriSes.LetterOffsets == nil {
+			shiritoriSes.LetterOffsets = make(map[string]int)
+		}
+		offsetID := shiritoriSes.LetterOffsets[*lastLetter]
+
 		wordsPtr := wordsPool.Get().(*[]learn.Word)
 		defer wordsPool.Put(wordsPtr)
 
-		found, err := srv.lrnsrv.GetWordsWithTarget(userWord, *lastLetter, reqTrace, wordsPtr)
+		found, err := srv.lrnsrv.GetWordsWithTarget(userWord, *lastLetter, reqTrace, offsetID, wordsPtr)
 		if err != nil {
 			return fmt.Errorf("%s: get words: %w", op, err)
 		}
@@ -110,8 +127,19 @@ func (srv *Server) handleState(c tele.Context) error {
 		}
 
 		botWord := (*wordsPtr)[0].Word
+		botWordID := (*wordsPtr)[0].Serial
 
-		repeat, notMatch, err := srv.usrsrv.UpdateUserShiritoriCtx(c.Sender().ID, userWord, sm.StateShiritori, srv.sm)
+		botLastLetter := lastLetterPool.Get().(*string)
+		defer lastLetterPool.Put(botLastLetter)
+
+		srv.lrnsrv.GetLastLetter(botWord, botLastLetter)
+		if *botLastLetter == "" {
+			return c.Send("Bot couldn't find any word")
+		}
+
+		repeat, notMatch, err := srv.usrsrv.UpdateUserShiritoriCtx(
+			&shiritoriSes, c.Sender().ID, userWord, *lastLetter, botWord, *botLastLetter,
+			botWordID, sm.StateShiritori, srv.sm)
 		if err != nil {
 			return fmt.Errorf("%s: update user shiritori ctx: %w", op, err)
 		}
