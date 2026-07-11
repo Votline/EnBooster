@@ -79,16 +79,7 @@ func (srv *Server) handleState(c tele.Context) error {
 	case sm.StateShiritori:
 		userWord := c.Message().Text
 
-		if strings.ToLower(userWord) == "/stop" {
-			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
-				return fmt.Errorf("%s: change state: %w", op, err)
-			}
-			if err := c.Send("Shiritpri game stopped."); err != nil {
-				return fmt.Errorf("%s: bot send: %w", op, err)
-			}
-			return nil
-		}
-
+		// unmarshal to structure
 		usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
 		if err != nil {
 			return fmt.Errorf("%s: get user state: %w", op, err)
@@ -101,6 +92,41 @@ func (srv *Server) handleState(c tele.Context) error {
 			}
 		}
 
+		// check if user wants to stop the game
+		// print shiritori statistics
+		if strings.ToLower(userWord) == "/stop" {
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+				return fmt.Errorf("%s: change state: %w", op, err)
+			}
+
+			botWords := shiritoriSes.AllWords - shiritoriSes.UserWords
+			incorrectWords := shiritoriSes.UserWords - shiritoriSes.UserCorrectWords
+
+			msg := fmt.Sprintf(
+				"Shiritori game stopped.\n\n"+
+					"Match Statistics: \n"+
+					"Total words in game: %d\n"+
+					"Bot words: %d\n"+
+					"Your total attempts: %d\n"+
+					"Your correct words: %d\n"+
+					"Your mistakes: %d\n",
+				shiritoriSes.AllWords,
+				botWords,
+				shiritoriSes.UserWords,
+				shiritoriSes.UserCorrectWords,
+				incorrectWords,
+			)
+			if err := c.Send("Shiritpri game stopped. " + msg); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		}
+
+		// increment all words and user words
+		shiritoriSes.AllWords += 1
+		shiritoriSes.UserWords += 1
+
+		// get last letter of the user word
 		lastLetter := lastLetterPool.Get().(*string)
 		defer lastLetterPool.Put(lastLetter)
 
@@ -109,11 +135,13 @@ func (srv *Server) handleState(c tele.Context) error {
 			return c.Send("Invalid word")
 		}
 
+		// get offset of the last letter
 		if shiritoriSes.LetterOffsets == nil {
 			shiritoriSes.LetterOffsets = make(map[string]int)
 		}
 		offsetID := shiritoriSes.LetterOffsets[*lastLetter]
 
+		// get words with target
 		wordsPtr := wordsPool.Get().(*[]learn.Word)
 		defer wordsPool.Put(wordsPtr)
 
@@ -121,12 +149,29 @@ func (srv *Server) handleState(c tele.Context) error {
 		if err != nil {
 			return fmt.Errorf("%s: get words: %w", op, err)
 		}
+
+		// check if bot found any word and user word exists
+		// AND increment all words counter
 		if !found {
-			return c.Send("Your word not found")
+			if err := srv.saveState(c, shiritoriSes); err != nil {
+				return fmt.Errorf("%s: save state: %w", op, err)
+			}
+			if err := c.Send("Your word not found"); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
 		}
 
 		if len(*wordsPtr) == 0 {
-			return c.Send("Bot couldn't find any word")
+			if err := srv.saveState(c, shiritoriSes); err != nil {
+				return fmt.Errorf("%s: save state: %w", op, err)
+			}
+			if err := c.Send("Bot couldn't find any word"); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		} else {
+			shiritoriSes.AllWords += 1
 		}
 
 		botWord := (*wordsPtr)[0].Word
@@ -137,23 +182,37 @@ func (srv *Server) handleState(c tele.Context) error {
 
 		srv.lrnsrv.GetLastLetter(botWord, botLastLetter)
 		if *botLastLetter == "" {
-			return c.Send("Bot couldn't find any word")
+			return fmt.Errorf("%s: get last letter bot word: %s: %w", op, botWord, err)
 		}
 
+		// update user shiritori ctx with get bools for shiritori rules
+		// inside the method also increment user CORRECT words
 		repeat, notMatch, err := srv.usrsrv.UpdateUserShiritoriCtx(
 			&shiritoriSes, c.Sender().ID, userWord, *lastLetter, botWord, *botLastLetter,
 			botWordID, sm.StateShiritori, srv.sm)
 		if err != nil {
 			return fmt.Errorf("%s: update user shiritori ctx: %w", op, err)
 		}
+
+		// shiritori rules
+
 		if repeat {
-			return c.Send("You already used this word")
-		}
-		if notMatch {
-			return c.Send("First letter in your word doesn't match with last letter in previous word")
+			if err := c.Send("You already used this word"); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
 		}
 
-		return c.Send(fmt.Sprintf("Word:\n%v", botWord))
+		if notMatch {
+			if err := c.Send("First letter in your word doesn't match with last letter in previous word"); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		}
+
+		if err := c.Send(fmt.Sprintf("Word:\n%v", botWord)); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
 	default:
 		setToNone = true
 	}
@@ -167,4 +226,14 @@ func (srv *Server) handleState(c tele.Context) error {
 	}
 
 	return nil
+}
+
+func (srv *Server) saveState(c tele.Context, shiritoriSes sm.ShiritoriSession) error {
+	const op = "router.user.saveState"
+
+	jsonData, err := json.Marshal(shiritoriSes)
+	if err != nil {
+		return fmt.Errorf("%s: marshal json: %w", op, err)
+	}
+	return srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, jsonData)
 }
