@@ -71,7 +71,7 @@ func NewLS(states *statemanager.StateManager, ctxTimeout time.Duration, log *zap
 }
 
 // HandleRoutes handle user messages which intended for learn-service
-func (ls *LearnService) HandleRoutes(bot *tele.Bot) error {
+func (ls *LearnService) HandleRoutes(msg string, c tele.Context) error {
 	const op = "learn.HandleRoutes"
 
 	return nil

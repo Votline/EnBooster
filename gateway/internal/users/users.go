@@ -108,7 +108,7 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		reqTrace := uuid.NewString()
 		uuid := c.Message().Sender.ID
 		if err := us.Register(uuid, reqTrace); err != nil {
-			return err
+			return fmt.Errorf("%s: register user: %w", op, err)
 		}
 		var menu *tele.ReplyMarkup
 		if uuid == us.adminUUID {
@@ -116,19 +116,23 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		} else {
 			menu = ui.ReplyMenu([]string{"Learning", "Shiritori", "Profile"})
 		}
-		return c.Send("Welcome to EnBooster!", menu)
+		if err := c.Send("Welcome to EnBooster!", menu); err != nil {
+			return fmt.Errorf("%s: send welcome message: %w", op, err)
+		}
 	case "Profile":
 		reqTrace := uuid.NewString()
 		uuid := c.Message().Sender.ID
 		ud, err := us.GetData(uuid, reqTrace)
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: get user data: %w", op, err)
 		}
 
-		return c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nTask position:%d\nBest theme: %s | %d\nWorst theme: %s | %d\nStreak: %d",
+		if err := c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nTask position:%d\nBest theme: %s | %d\nWorst theme: %s | %d\nStreak: %d",
 			ud.UUID, ud.Level, ud.TaskID,
 			ud.BestTheme, ud.BestThemeCnt,
-			ud.WorstTheme, ud.WorstThemeCnt, ud.Streak))
+			ud.WorstTheme, ud.WorstThemeCnt, ud.Streak)); err != nil {
+			return fmt.Errorf("%s: send user data: %w", op, err)
+		}
 	}
 
 	return nil

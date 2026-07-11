@@ -132,7 +132,7 @@ func (ls *LearnService) GetWordsWithTarget(userWord, lastLetter, reqTrace string
 	(*buf) = (*buf)[1:]
 
 	if len(*buf) == 0 {
-		return false, nil
+		return res.Found, nil
 	}
 
 	ls.log.Debug("Get words with target response",
