@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -289,7 +290,8 @@ func (us *UsersService) UpdateUserShiritoriCtx(
 
 	isRepeat = false
 	notMatch = false
-	if shiritoriSes.LastLetter != "" && shiritoriSes.LastLetter != userWord[0:1] {
+	userFirstLetter := strings.ToLower(userWord[0:1])
+	if shiritoriSes.LastLetter != "" && shiritoriSes.LastLetter != userFirstLetter {
 		notMatch = true
 		return isRepeat, notMatch, nil
 	}
@@ -303,6 +305,8 @@ func (us *UsersService) UpdateUserShiritoriCtx(
 	shiritoriSes.UsedWords[userWord] = true
 	shiritoriSes.UsedWords[botWord] = true
 	shiritoriSes.LetterOffsets[userLastLetter] = offsetID
+
+	shiritoriSes.UserCorrectWords += 1
 
 	jsonData, err := json.Marshal(shiritoriSes)
 	if err != nil {
