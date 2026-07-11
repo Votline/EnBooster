@@ -83,6 +83,9 @@ func (srv *Server) handleState(c tele.Context) error {
 			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
 				return fmt.Errorf("%s: change state: %w", op, err)
 			}
+			if err := c.Send("Shiritpri game stopped."); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
 			return nil
 		}
 

@@ -142,45 +142,26 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 		case "/start", "Profile":
 			srv.usrsrv.HandleRoutes(msg.Text, c)
 		case "Learning":
-			reqTrace := uuid.NewString()
-			data, err := srv.usrsrv.GetData(c.Sender().ID, reqTrace)
-			if err != nil {
-				return fmt.Errorf("%s: get user data: %w", op, err)
+			if err := srv.learningTask(c); err != nil {
+				srv.log.Error("Failed to handle learning task", zap.Error(err))
+				c.Send("Something went wrong. Try again later")
+				return fmt.Errorf("%s: handle learning task: %w", op, err)
 			}
-
-			tasksPtr := tasksList.Get().(*[]learn.Task)
-			defer tasksList.Put(tasksPtr)
-
-			if err := srv.lrnsrv.GetTasks(data.Level, data.TaskID, 1, tasksPtr, reqTrace); err != nil {
-				return fmt.Errorf("%s: get tasks: %w", op, err)
-			}
-
-			if len(*tasksPtr) == 0 {
-				return c.Send("Task not found")
-			}
-
-			answer := (*tasksPtr)[0].Answer
-			theme := (*tasksPtr)[0].Theme
-
-			if err := srv.usrsrv.UpdateUserTaskCtx(c.Sender().ID, sm.StateTaskLearning, theme, reqTrace, answer, 0, srv.sm); err != nil {
-				return fmt.Errorf("%s: update user task ctx: %w", op, err)
-			}
-
-			return c.Send(fmt.Sprintf("Task:\n%v", (*tasksPtr)[0]))
+			return nil
 		case "Shiritori":
-			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, nil); err != nil {
-				return fmt.Errorf("%s: set state: %w", op, err)
+			if err := srv.shiritori(c); err != nil {
+				srv.log.Error("Failed to handle shiritori", zap.Error(err))
+				c.Send("Something went wrong. Try again later")
+				return fmt.Errorf("%s: handle shiritori: %w", op, err)
 			}
-			return c.Send("Shiritori mode activated. To exit push '/stop' button. \nWrite any word")
+			return nil
 		default:
-			usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
-			if err != nil {
-				return fmt.Errorf("%s: get user state: %w", op, err)
+			if err := srv.handleDefaultState(c); err != nil {
+				srv.log.Error("Failed to handle default state", zap.Error(err))
+				c.Send("Something went wrong. Try again later")
+				return fmt.Errorf("%s: handle default state: %w", op, err)
 			}
-			if c.Sender().ID == srv.adminUUID && usrctx.State != sm.StateAdminNotCommand {
-				return srv.handleAdmin(c)
-			}
-			return srv.handleState(c)
+			return nil
 		}
 		return nil
 	})
@@ -203,4 +184,69 @@ func (srv *Server) Close() {
 	}
 	srv.b.Stop()
 	srv.log.Info("Bot stopped", zap.String("op", op))
+}
+
+// learningTask handles 'Learning' command
+func (srv *Server) learningTask(c tele.Context) error {
+	const op = "router.learningTask"
+
+	reqTrace := uuid.NewString()
+	data, err := srv.usrsrv.GetData(c.Sender().ID, reqTrace)
+	if err != nil {
+		return fmt.Errorf("%s: get user data: %w", op, err)
+	}
+
+	tasksPtr := tasksList.Get().(*[]learn.Task)
+	defer tasksList.Put(tasksPtr)
+
+	if err := srv.lrnsrv.GetTasks(data.Level, data.TaskID, 1, tasksPtr, reqTrace); err != nil {
+		return fmt.Errorf("%s: get tasks: %w", op, err)
+	}
+
+	if len(*tasksPtr) == 0 {
+		return c.Send("Task not found")
+	}
+
+	answer := (*tasksPtr)[0].Answer
+	theme := (*tasksPtr)[0].Theme
+
+	if err := srv.usrsrv.UpdateUserTaskCtx(c.Sender().ID, sm.StateTaskLearning, theme, reqTrace, answer, 0, srv.sm); err != nil {
+		return fmt.Errorf("%s: update user task ctx: %w", op, err)
+	}
+
+	if err := c.Send(fmt.Sprintf("Task:\n%v", (*tasksPtr)[0])); err != nil {
+		return fmt.Errorf("%s: send task: %w", op, err)
+	}
+
+	return nil
+}
+
+// shiritori handles 'Shiritori' command
+func (srv *Server) shiritori(c tele.Context) error {
+	const op = "router.shiritori"
+
+	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, nil); err != nil {
+		return fmt.Errorf("%s: set state: %w", op, err)
+	}
+	return c.Send("Shiritori mode activated. To exit push '/stop' button. \nWrite any word.")
+}
+
+// handleDefaultState handles any other message
+func (srv *Server) handleDefaultState(c tele.Context) error {
+	const op = "router.handleDefaultState"
+
+	usrctx, err := srv.sm.GetUserCtx(c.Sender().ID)
+	if err != nil {
+		return fmt.Errorf("%s: get user state: %w", op, err)
+	}
+	if c.Sender().ID == srv.adminUUID && usrctx.State != sm.StateAdminNotCommand {
+		if err := srv.handleAdmin(c); err != nil {
+			return fmt.Errorf("%s: handle admin: %w", op, err)
+		}
+		return nil
+	}
+	if err := srv.handleState(c); err != nil {
+		return fmt.Errorf("%s: handle state: %w", op, err)
+	}
+	return nil
 }
