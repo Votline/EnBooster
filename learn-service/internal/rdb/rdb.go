@@ -31,7 +31,7 @@ func NewRDB() (*RDB, error) {
 		DB:       0,
 	})
 
-	pingTimeout := db.GetEnvInt("RedisPingTimeout", 10)
+	pingTimeout := db.GetEnvInt("REDIS_PING_TIMEOUT", 10)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(pingTimeout)*time.Second)
 	defer cancel()

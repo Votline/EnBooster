@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"aisrv/internal/rdb"
+
 	pb "github.com/Votline/EnBooster/protos/generated-ai"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -16,6 +18,7 @@ import (
 // aiserver is the ai service implementation.
 type aiserver struct {
 	log *zap.Logger
+	rdb *rdb.RDB
 	pb.UnimplementedAIServiceServer
 }
 
@@ -33,7 +36,12 @@ func main() {
 		log.Fatal("failed to listen", zap.Error(err))
 	}
 
-	s := aiserver{}
+	rdb, err := rdb.NewRDB()
+	if err != nil {
+		log.Fatal("failed to connect to database", zap.Error(err))
+	}
+
+	s := aiserver{rdb: rdb, log: log}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterAIServiceServer(srv, &s)
 
