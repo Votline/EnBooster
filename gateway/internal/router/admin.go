@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	sm "enbstr/internal/statemanager"
-	"enbstr/internal/ui"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -39,13 +38,12 @@ func (srv *Server) handleAdmin(c tele.Context) error {
 	setToNone := false
 	switch c.Message().Text {
 	case "Help":
-		helpMenu := ui.ReplyMenu([]string{"task_add", "task_del", "word_add", "word_del"})
-		err = c.Send(helpMsg, helpMenu)
-	case "task_add":
+		err = c.Send(helpMsg, srv.uiInstns.AdminCommands)
+	case "tasks_add":
 		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskAdding, nil)
 	case "task_del":
 		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateTaskDeleting, nil)
-	case "word_add":
+	case "words_add":
 		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordAdding, nil)
 	case "word_del":
 		err = srv.sm.SetUserCtx(c.Sender().ID, sm.StateWordDeleting, nil)

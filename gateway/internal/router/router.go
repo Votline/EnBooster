@@ -13,6 +13,7 @@ import (
 	"enbstr/internal/middlewares"
 	"enbstr/internal/services"
 	sm "enbstr/internal/statemanager"
+	"enbstr/internal/ui"
 	"enbstr/internal/users"
 
 	"github.com/google/uuid"
@@ -24,6 +25,7 @@ import (
 type Server struct {
 	adminUUID  int64
 	ctxTimeout time.Duration
+	uiInstns   *ui.UI
 	b          *tele.Bot
 	log        *zap.Logger
 	closable   []services.Closable
@@ -78,8 +80,10 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	}
 	log.Info("Successfully connected redis state manager")
 
+	uiInstns := ui.NewUI()
 	srv.ctxTimeout = time.Duration(ctxTimeout)
 	srv.adminUUID = adminUUID
+	srv.uiInstns = uiInstns
 	srv.sm = states
 
 	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
@@ -105,7 +109,7 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 
 // setupServices creates services and appends them to closable
 func (srv *Server) setupServices() {
-	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, srv.log)
+	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, srv.uiInstns, srv.log)
 	if err != nil {
 		srv.log.Fatal("Failed to create users service", zap.Error(err))
 	}
@@ -228,7 +232,10 @@ func (srv *Server) shiritori(c tele.Context) error {
 	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, nil); err != nil {
 		return fmt.Errorf("%s: set state: %w", op, err)
 	}
-	return c.Send("Shiritori mode activated. To exit push '/stop' button. \nWrite any word.")
+	return c.Send(
+		"Shiritori mode activated."+
+			"To exit push '/stop' button. \nWrite any word.",
+		srv.uiInstns.Shiritori)
 }
 
 // handleDefaultState handles any other message
