@@ -153,3 +153,11 @@ services:
       KAFKA_SSL_TRUSTSTORE_PASSWORD: "${KAFKA_PASSWORD}"
 
       KAFKA_SSL_CLIENT_AUTH: "none"
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - /opt/ollama/models:/root/.ollama/models
+    ports:
+      - "${OLLAMA_PORT_OUT}:${OLLAMA_PORT}"
