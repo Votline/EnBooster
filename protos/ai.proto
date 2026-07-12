@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package ai;
+option go_package = "generated-ai/;aiservice";
+
+message GenerateReq {
+  string uuid = 1;
+  string text = 2;
+  string request_trace = 3;
+}
+message GenerateRes {
+  string text = 1;
+}
+
+service AIService {
+  rpc Generate (GenerateReq) returns (GenerateRes);
+}
