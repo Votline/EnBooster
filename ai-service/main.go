@@ -22,6 +22,7 @@ import (
 type aiserver struct {
 	log *zap.Logger
 	rdb *rdb.RDB
+	rt  *router.Router
 	pb.UnimplementedAIServiceServer
 }
 
@@ -44,7 +45,9 @@ func main() {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	s := aiserver{rdb: rdb, log: log}
+	rt := router.NewRouter()
+
+	s := aiserver{rdb: rdb, rt: rt, log: log}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterAIServiceServer(srv, &s)
 
@@ -86,10 +89,16 @@ func (s *aiserver) Generate(ctx context.Context, req *pb.GenerateReq) (*pb.Gener
 		zap.Int("text_length", len(text)),
 		zap.String("request_trace", reqTrace))
 
-	res, err := router.CallAI(text)
+	res, err := s.rt.Generate(text)
 	if err != nil {
 		return nil, fmt.Errorf("%s: router.CallAI: %w", op, err)
 	}
+
+	s.log.Debug("Generate response sent",
+		zap.String("op", op),
+		zap.String("uuid", uuid),
+		zap.Int("res_length", len(res)),
+		zap.String("request_trace", reqTrace))
 
 	return &pb.GenerateRes{
 		Text: res,
