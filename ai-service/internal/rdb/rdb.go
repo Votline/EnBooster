@@ -1,5 +1,5 @@
-// Package rdb provides Redis database connection and
-// methods for caching data.
+// Package rdb provides Redis database connection
+// and related methods.
 package rdb
 
 import (

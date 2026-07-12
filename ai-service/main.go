@@ -2,12 +2,15 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"aisrv/internal/rdb"
+	"aisrv/internal/router"
 
 	pb "github.com/Votline/EnBooster/protos/generated-ai"
 	"go.uber.org/zap"
@@ -68,4 +71,27 @@ func gracefulShutdown(s *aiserver, srv *grpc.Server) {
 	s.log.Info("Server stopped", zap.String("op", op))
 
 	s.log.Info("Server shutdown successfully", zap.String("op", op))
+}
+
+func (s *aiserver) Generate(ctx context.Context, req *pb.GenerateReq) (*pb.GenerateRes, error) {
+	const op = "aiserver.Generate"
+
+	uuid := req.GetUuid()
+	text := req.GetText()
+	reqTrace := req.GetRequestTrace()
+
+	s.log.Debug("Generate request received",
+		zap.String("op", op),
+		zap.String("uuid", uuid),
+		zap.Int("text_length", len(text)),
+		zap.String("request_trace", reqTrace))
+
+	res, err := router.CallAI(text)
+	if err != nil {
+		return nil, fmt.Errorf("%s: router.CallAI: %w", op, err)
+	}
+
+	return &pb.GenerateRes{
+		Text: res,
+	}, nil
 }
