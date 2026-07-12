@@ -27,6 +27,7 @@ import (
 type UsersService struct {
 	name        string
 	adminUUID   int64
+	uiInstns    *ui.UI
 	ctxTimeout  time.Duration
 	log         *zap.Logger
 	cb          *gobreaker.CircuitBreaker[any]
@@ -54,7 +55,7 @@ func getTLSConfig(srvName, path string) (*tls.Config, error) {
 }
 
 // NewUS creates new UsersService instance
-func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersService, error) {
+func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, log *zap.Logger) (*UsersService, error) {
 	const op = "users.NewUS"
 
 	log.Info("Creating users service",
@@ -90,6 +91,7 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersSe
 	return &UsersService{
 		name:        "users",
 		adminUUID:   adminUUID,
+		uiInstns:    uiInstns,
 		ctxTimeout:  ctxTimeout,
 		log:         log,
 		conn:        conn,
@@ -103,18 +105,19 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, log *zap.Logger) (*UsersSe
 func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 	const op = "users.RegisterRoutes"
 
+	userID := c.Message().Sender.ID
+	var menu *tele.ReplyMarkup
+	if userID == us.adminUUID {
+		menu = us.uiInstns.AdminMain
+	} else {
+		menu = us.uiInstns.UserMain
+	}
+
 	switch msg {
 	case "/start":
 		reqTrace := uuid.NewString()
-		uuid := c.Message().Sender.ID
-		if err := us.Register(uuid, reqTrace); err != nil {
+		if err := us.Register(userID, reqTrace); err != nil {
 			return fmt.Errorf("%s: register user: %w", op, err)
-		}
-		var menu *tele.ReplyMarkup
-		if uuid == us.adminUUID {
-			menu = ui.ReplyMenu([]string{"Learning", "Shiritori", "Profile", "Help"})
-		} else {
-			menu = ui.ReplyMenu([]string{"Learning", "Shiritori", "Profile"})
 		}
 		if err := c.Send("Welcome to EnBooster!", menu); err != nil {
 			return fmt.Errorf("%s: send welcome message: %w", op, err)
@@ -130,7 +133,7 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		if err := c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nTask position:%d\nBest theme: %s | %d\nWorst theme: %s | %d\nStreak: %d",
 			ud.UUID, ud.Level, ud.TaskID,
 			ud.BestTheme, ud.BestThemeCnt,
-			ud.WorstTheme, ud.WorstThemeCnt, ud.Streak)); err != nil {
+			ud.WorstTheme, ud.WorstThemeCnt, ud.Streak), menu); err != nil {
 			return fmt.Errorf("%s: send user data: %w", op, err)
 		}
 	}
