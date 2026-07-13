@@ -213,6 +213,31 @@ func (srv *Server) handleState(c tele.Context) error {
 		if err := c.Send(fmt.Sprintf("Word:\n%v", botWord)); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
+	case sm.StateChatting:
+		usrMsg := c.Message().Text
+		if usrMsg == "/stop" {
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+				return fmt.Errorf("%s: change state: %w", op, err)
+			}
+			if err := c.Send("Chatting mode stopped."); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		}
+		reqTrace := uuid.NewString()
+		res, err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, reqTrace)
+		if err != nil {
+			return fmt.Errorf("%s: generate text: %w", op, err)
+		}
+		if len(res) == 0 {
+			if err := c.Send("AI didn't generate any text"); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		}
+		if err := c.Send(res); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
 	default:
 		setToNone = true
 	}
