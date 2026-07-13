@@ -77,21 +77,35 @@ func gracefulShutdown(s *aiserver, srv *grpc.Server) {
 }
 
 func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*pb.GenerateTextRes, error) {
-	const op = "aiserver.Generate"
+	const op = "aiserver.GenerateText"
 
 	uuid := req.GetUuid()
 	text := req.GetText()
 	reqTrace := req.GetRequestTrace()
 
-	s.log.Debug("Generate request received",
+	s.log.Debug("Generate text request received",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
 		zap.Int("text_length", len(text)),
 		zap.String("request_trace", reqTrace))
 
-	res, err := s.rt.Generate(text)
+	uctx, err := s.rdb.GetUserContext(uuid)
 	if err != nil {
-		return nil, fmt.Errorf("%s: router.CallAI: %w", op, err)
+		return nil, fmt.Errorf("%s: : %w", op, err)
+	}
+
+	if uctx == nil {
+		uctx = make([]int, 0)
+	}
+
+	s.log.Debug("User context received",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.Int("user_context_length", len(uctx)))
+
+	res, newUctx, err := s.rt.Generate(text, uctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: : %w", op, err)
 	}
 
 	s.log.Debug("Generate response sent",
@@ -99,6 +113,15 @@ func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*
 		zap.Int64("uuid", uuid),
 		zap.Int("res_length", len(res)),
 		zap.String("request_trace", reqTrace))
+
+	if err := s.rdb.SetUserContext(uuid, newUctx); err != nil {
+		return nil, fmt.Errorf("%s: : %w", op, err)
+	}
+
+	s.log.Debug("User context updated",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.Int("user_context_length", len(newUctx)))
 
 	return &pb.GenerateTextRes{
 		Text: res,
