@@ -26,6 +26,7 @@ type requestBody struct {
 	System  string `json:"system"`
 	Prompt  string `json:"prompt"`
 	Stream  bool   `json:"stream"`
+	Context []int  `json:"context"`
 	Options option `json:"options"`
 }
 
@@ -35,7 +36,8 @@ var aiRes struct {
 	Message  struct {
 		Content string `json:"content"`
 	} `json:"message"`
-	Done bool `json:"done"`
+	Done    bool  `json:"done"`
+	Context []int `json:"context"`
 }
 
 // Router contains all needed fields to call AI
@@ -77,29 +79,30 @@ func NewRouter() *Router {
 }
 
 // Generate generates text from AI.
-func (r Router) Generate(text string) (string, error) {
+func (r Router) Generate(text string, userContext []int) (string, []int, error) {
 	const op = "router.Generate"
 
 	r.reqBody.Prompt = text
+	r.reqBody.Context = userContext
 
 	jsonData, err := json.Marshal(r.reqBody)
 	if err != nil {
-		return "", fmt.Errorf("%s:json.Marshal: %w", op, err)
+		return "", nil, fmt.Errorf("%s:json.Marshal: %w", op, err)
 	}
 	jsonReader := bytes.NewReader(jsonData)
 
 	res, err := r.client.Post(r.url, "application/json", jsonReader)
 	if err != nil {
-		return "", fmt.Errorf("%s: http.Post: %w", op, err)
+		return "", nil, fmt.Errorf("%s: http.Post: %w", op, err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("%s: not StatusOK: %d", op, res.StatusCode)
+		return "", nil, fmt.Errorf("%s: not StatusOK: %d", op, res.StatusCode)
 	}
 
 	if err := json.NewDecoder(res.Body).Decode(&aiRes); err != nil {
-		return "", fmt.Errorf("%s: json.Decode: %w", op, err)
+		return "", nil, fmt.Errorf("%s: json.Decode: %w", op, err)
 	}
 
 	resText := aiRes.Response
@@ -107,5 +110,5 @@ func (r Router) Generate(text string) (string, error) {
 		resText = aiRes.Message.Content
 	}
 
-	return resText, nil
+	return resText, aiRes.Context, nil
 }

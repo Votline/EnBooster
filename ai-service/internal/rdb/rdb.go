@@ -4,9 +4,12 @@ package rdb
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
+	"unsafe"
 
 	"aisrv/internal/utils"
 
@@ -14,8 +17,9 @@ import (
 )
 
 type RDB struct {
-	rdb    *redis.Client
-	ctxTTL int
+	rdb     *redis.Client
+	ctxTTL  time.Duration
+	timeout time.Duration
 }
 
 func NewRDB() (*RDB, error) {
@@ -29,6 +33,7 @@ func NewRDB() (*RDB, error) {
 
 	pingTimeout := utils.GetEnvInt("REDIS_PING_TIMEOUT", 10)
 	ctxTTL := utils.GetEnvInt("REDIS_CTX_TTL", 10)
+	timeout := utils.GetEnvInt("REDIS_TIMEOUT", 10)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(pingTimeout)*time.Second)
 	defer cancel()
@@ -38,8 +43,9 @@ func NewRDB() (*RDB, error) {
 	}
 
 	r := &RDB{
-		rdb:    rdb,
-		ctxTTL: ctxTTL,
+		rdb:     rdb,
+		ctxTTL:  time.Duration(ctxTTL) * time.Minute,
+		timeout: time.Duration(timeout) * time.Second,
 	}
 
 	return r, nil
@@ -47,4 +53,51 @@ func NewRDB() (*RDB, error) {
 
 func (r *RDB) Close() error {
 	return r.rdb.Close()
+}
+
+// GetUserContext gets user context from redis.
+func (r *RDB) GetUserContext(uuid int64) ([]int, error) {
+	const op = "rdb.GetUserContext"
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	key := fmt.Sprintf("user_context:%d", uuid)
+
+	val, err := r.rdb.Get(ctx, key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("%s: redis get: %w", op, err)
+	}
+
+	var uctx []int
+	valBytes := unsafe.Slice(unsafe.StringData(val), len(val))
+	if err := json.Unmarshal(valBytes, &uctx); err != nil {
+		return nil, fmt.Errorf("%s: json.Unmarshal: %w", op, err)
+	}
+
+	return uctx, nil
+}
+
+// SetUserContext sets user context to redis.
+func (r *RDB) SetUserContext(uuid int64, uctx []int) error {
+	const op = "rdb.SetUserContext"
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	uctxJSON, err := json.Marshal(uctx)
+	if err != nil {
+		return fmt.Errorf("%s: json.Marshal: %w", op, err)
+	}
+
+	key := fmt.Sprintf("user_context:%d", uuid)
+
+	if err := r.rdb.Set(ctx, key, uctxJSON, r.ctxTTL).Err(); err != nil {
+		return fmt.Errorf("%s: redis set: %w", op, err)
+	}
+
+	return nil
 }

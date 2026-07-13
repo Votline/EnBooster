@@ -11,7 +11,8 @@ Data:`
 ProtoPath:{VARIABLE key=aisrvproto ; default=../protos/ai.proto}
 ID:0
 Type:grpc
+Timeout:20s
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:context deadline exceeded
+Response:{"text":"Well, here we go then! What’s the mess you've dragged us into this time? Just tell us what your character wants to do - as long as it involves a bit of chaos, things are usually worth talking about.  Let’s hear it!"}
 [\grpc_config]
 
