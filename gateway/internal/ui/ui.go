@@ -19,8 +19,8 @@ type UI struct {
 
 // NewUI creates a new UI instance
 func NewUI() *UI {
-	usermain := replyMenu(2, []string{"Learning", "Shiritori", "Profile"})
-	adminmain := replyMenu(2, []string{"Learning", "Shiritori", "Profile", "Help"})
+	usermain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile"})
+	adminmain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile", "Help"})
 	admincmds := replyMenu(2, []string{"tasks_add", "task_del", "words_add", "word_del"})
 	shiritori := replyMenu(1, []string{"/stop"})
 	return &UI{
