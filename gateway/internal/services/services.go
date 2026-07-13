@@ -21,21 +21,19 @@ type Closable interface {
 // is uses circuit breaker to prevent overloading the server
 func CallRPC[T any](cb *gobreaker.CircuitBreaker[any], fn func() (T, error)) (T, error) {
 	const op = "services.CallRPC"
-
 	var zero T
 
-	resCb, err := cb.Execute(func() (any, error) {
-		return retryRPC(func() (T, error) {
+	res, err := retryRPC(func() (T, error) {
+		resCb, err := cb.Execute(func() (any, error) {
 			return fn()
 		})
+		if err != nil {
+			return zero, err
+		}
+		return resCb.(T), nil
 	})
 	if err != nil {
 		return zero, fmt.Errorf("%s: rpc error %w", op, err)
-	}
-
-	res, ok := resCb.(T)
-	if !ok {
-		return zero, fmt.Errorf("%s: invalid response type", op)
 	}
 
 	return res, nil

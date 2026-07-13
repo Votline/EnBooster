@@ -23,6 +23,7 @@ const (
 	StateTaskLearning
 	StateAdminNotCommand
 	StateShiritori
+	StateChatting
 )
 
 // StateManager is a struct that manages the state of the user

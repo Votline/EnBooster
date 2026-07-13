@@ -76,7 +76,7 @@ func gracefulShutdown(s *aiserver, srv *grpc.Server) {
 	s.log.Info("Server shutdown successfully", zap.String("op", op))
 }
 
-func (s *aiserver) Generate(ctx context.Context, req *pb.GenerateReq) (*pb.GenerateRes, error) {
+func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*pb.GenerateTextRes, error) {
 	const op = "aiserver.Generate"
 
 	uuid := req.GetUuid()
@@ -85,7 +85,7 @@ func (s *aiserver) Generate(ctx context.Context, req *pb.GenerateReq) (*pb.Gener
 
 	s.log.Debug("Generate request received",
 		zap.String("op", op),
-		zap.String("uuid", uuid),
+		zap.Int64("uuid", uuid),
 		zap.Int("text_length", len(text)),
 		zap.String("request_trace", reqTrace))
 
@@ -96,11 +96,11 @@ func (s *aiserver) Generate(ctx context.Context, req *pb.GenerateReq) (*pb.Gener
 
 	s.log.Debug("Generate response sent",
 		zap.String("op", op),
-		zap.String("uuid", uuid),
+		zap.Int64("uuid", uuid),
 		zap.Int("res_length", len(res)),
 		zap.String("request_trace", reqTrace))
 
-	return &pb.GenerateRes{
+	return &pb.GenerateTextRes{
 		Text: res,
 	}, nil
 }

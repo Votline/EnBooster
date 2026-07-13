@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AIService_Generate_FullMethodName = "/ai.AIService/Generate"
+	AIService_GenerateText_FullMethodName = "/ai.AIService/GenerateText"
 )
 
 // AIServiceClient is the client API for AIService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AIServiceClient interface {
-	Generate(ctx context.Context, in *GenerateReq, opts ...grpc.CallOption) (*GenerateRes, error)
+	GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (*GenerateTextRes, error)
 }
 
 type aIServiceClient struct {
@@ -37,10 +37,10 @@ func NewAIServiceClient(cc grpc.ClientConnInterface) AIServiceClient {
 	return &aIServiceClient{cc}
 }
 
-func (c *aIServiceClient) Generate(ctx context.Context, in *GenerateReq, opts ...grpc.CallOption) (*GenerateRes, error) {
+func (c *aIServiceClient) GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (*GenerateTextRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenerateRes)
-	err := c.cc.Invoke(ctx, AIService_Generate_FullMethodName, in, out, cOpts...)
+	out := new(GenerateTextRes)
+	err := c.cc.Invoke(ctx, AIService_GenerateText_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *aIServiceClient) Generate(ctx context.Context, in *GenerateReq, opts ..
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
 type AIServiceServer interface {
-	Generate(context.Context, *GenerateReq) (*GenerateRes, error)
+	GenerateText(context.Context, *GenerateTextReq) (*GenerateTextRes, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -62,8 +62,8 @@ type AIServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAIServiceServer struct{}
 
-func (UnimplementedAIServiceServer) Generate(context.Context, *GenerateReq) (*GenerateRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method Generate not implemented")
+func (UnimplementedAIServiceServer) GenerateText(context.Context, *GenerateTextReq) (*GenerateTextRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateText not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -86,20 +86,20 @@ func RegisterAIServiceServer(s grpc.ServiceRegistrar, srv AIServiceServer) {
 	s.RegisterService(&AIService_ServiceDesc, srv)
 }
 
-func _AIService_Generate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateReq)
+func _AIService_GenerateText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateTextReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AIServiceServer).Generate(ctx, in)
+		return srv.(AIServiceServer).GenerateText(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AIService_Generate_FullMethodName,
+		FullMethod: AIService_GenerateText_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AIServiceServer).Generate(ctx, req.(*GenerateReq))
+		return srv.(AIServiceServer).GenerateText(ctx, req.(*GenerateTextReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -112,8 +112,8 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AIServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Generate",
-			Handler:    _AIService_Generate_Handler,
+			MethodName: "GenerateText",
+			Handler:    _AIService_GenerateText_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

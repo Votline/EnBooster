@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"enbstr/internal/ai"
 	"enbstr/internal/learn"
 	"enbstr/internal/middlewares"
 	"enbstr/internal/services"
@@ -34,6 +35,7 @@ type Server struct {
 
 	usrsrv *users.UsersService
 	lrnsrv *learn.LearnService
+	aisrv  *ai.AIService
 }
 
 // tasksList is a sync.Pool for tasks
@@ -109,6 +111,8 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 
 // setupServices creates services and appends them to closable
 func (srv *Server) setupServices() {
+	aiTimeout := time.Duration(GetEnvInt("AI_TIMEOUT", 30))
+
 	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, srv.uiInstns, srv.log)
 	if err != nil {
 		srv.log.Fatal("Failed to create users service", zap.Error(err))
@@ -120,6 +124,12 @@ func (srv *Server) setupServices() {
 		srv.log.Fatal("Failed to create learn service", zap.Error(err))
 	}
 	srv.lrnsrv = lrnsrv
+
+	airsrv, err := ai.NewAIS(aiTimeout, srv.uiInstns, srv.log)
+	if err != nil {
+		srv.log.Fatal("Failed to create ai service", zap.Error(err))
+	}
+	srv.aisrv = airsrv
 
 	srv.closable = append(srv.closable, usrsrv, lrnsrv)
 }
@@ -157,6 +167,13 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 				srv.log.Error("Failed to handle shiritori", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle shiritori: %w", op, err)
+			}
+			return nil
+		case "Chatting":
+			if err := srv.chatting(c); err != nil {
+				srv.log.Error("Failed to handle chatting", zap.Error(err))
+				c.Send("Something went wrong. Try again later")
+				return fmt.Errorf("%s: handle chatting: %w", op, err)
 			}
 			return nil
 		default:
@@ -255,5 +272,19 @@ func (srv *Server) handleDefaultState(c tele.Context) error {
 	if err := srv.handleState(c); err != nil {
 		return fmt.Errorf("%s: handle state: %w", op, err)
 	}
+	return nil
+}
+
+func (srv *Server) chatting(c tele.Context) error {
+	const op = "router.chatting"
+
+	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateChatting, nil); err != nil {
+		return fmt.Errorf("%s: set state: %w", op, err)
+	}
+
+	if err := c.Send("Chatting mode activated."); err != nil {
+		return fmt.Errorf("%s: send message: %w", op, err)
+	}
+
 	return nil
 }
