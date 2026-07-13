@@ -9,7 +9,14 @@ services:
     ports:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     depends_on:
-      - redis_sm
+      redis_sm:
+        condition: service_healthy
+      users-service:
+        condition: service_started
+      learn-service:
+        condition: service_started
+      ai-service:
+        condition: service_started
 
   users-service:
     build:
@@ -38,6 +45,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis_lrn:
+        condition: service_healthy
 
   ai-service:
     build:
@@ -48,6 +57,9 @@ services:
       - ./ai-service/.env_vars
     ports:
       - "${AISRV_PORT}:${AISRV_PORT}"
+    depends_on:
+      redis_ai:
+        condition: service_healthy
 
   postgres:
     image: postgres:17
@@ -78,6 +90,12 @@ services:
       - "--requirepass"
       - "${REDIS_SM_PASSWORD}"
       - "--loglevel warning"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_SM_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   redis_lrn:
     image: redis:alpine
@@ -88,6 +106,12 @@ services:
       - "--requirepass"
       - "${REDIS_LRN_PASSWORD}"
       - "--loglevel warning"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_SM_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   redis_rl:
     image: redis:alpine
@@ -98,6 +122,12 @@ services:
       - "--requirepass"
       - "${REDIS_RL_PASSWORD}"
       - "--loglevel warning"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_SM_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   redis_ai:
     image: redis:alpine
@@ -108,6 +138,12 @@ services:
       - "--requirepass"
       - "${REDIS_AI_PASSWORD}"
       - "--loglevel warning"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_SM_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   kafka:
     image: apache/kafka:3.7.0
