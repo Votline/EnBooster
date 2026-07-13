@@ -21,29 +21,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GenerateReq struct {
+type GenerateTextReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
 	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GenerateReq) Reset() {
-	*x = GenerateReq{}
+func (x *GenerateTextReq) Reset() {
+	*x = GenerateTextReq{}
 	mi := &file_ai_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GenerateReq) String() string {
+func (x *GenerateTextReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GenerateReq) ProtoMessage() {}
+func (*GenerateTextReq) ProtoMessage() {}
 
-func (x *GenerateReq) ProtoReflect() protoreflect.Message {
+func (x *GenerateTextReq) ProtoReflect() protoreflect.Message {
 	mi := &file_ai_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -55,53 +55,53 @@ func (x *GenerateReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GenerateReq.ProtoReflect.Descriptor instead.
-func (*GenerateReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use GenerateTextReq.ProtoReflect.Descriptor instead.
+func (*GenerateTextReq) Descriptor() ([]byte, []int) {
 	return file_ai_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *GenerateReq) GetUuid() string {
+func (x *GenerateTextReq) GetUuid() int64 {
 	if x != nil {
 		return x.Uuid
 	}
-	return ""
+	return 0
 }
 
-func (x *GenerateReq) GetText() string {
+func (x *GenerateTextReq) GetText() string {
 	if x != nil {
 		return x.Text
 	}
 	return ""
 }
 
-func (x *GenerateReq) GetRequestTrace() string {
+func (x *GenerateTextReq) GetRequestTrace() string {
 	if x != nil {
 		return x.RequestTrace
 	}
 	return ""
 }
 
-type GenerateRes struct {
+type GenerateTextRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GenerateRes) Reset() {
-	*x = GenerateRes{}
+func (x *GenerateTextRes) Reset() {
+	*x = GenerateTextRes{}
 	mi := &file_ai_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GenerateRes) String() string {
+func (x *GenerateTextRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GenerateRes) ProtoMessage() {}
+func (*GenerateTextRes) ProtoMessage() {}
 
-func (x *GenerateRes) ProtoReflect() protoreflect.Message {
+func (x *GenerateTextRes) ProtoReflect() protoreflect.Message {
 	mi := &file_ai_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -113,12 +113,12 @@ func (x *GenerateRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GenerateRes.ProtoReflect.Descriptor instead.
-func (*GenerateRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use GenerateTextRes.ProtoReflect.Descriptor instead.
+func (*GenerateTextRes) Descriptor() ([]byte, []int) {
 	return file_ai_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GenerateRes) GetText() string {
+func (x *GenerateTextRes) GetText() string {
 	if x != nil {
 		return x.Text
 	}
@@ -129,15 +129,15 @@ var File_ai_proto protoreflect.FileDescriptor
 
 const file_ai_proto_rawDesc = "" +
 	"\n" +
-	"\bai.proto\x12\x02ai\"Z\n" +
-	"\vGenerateReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x12\n" +
+	"\bai.proto\x12\x02ai\"^\n" +
+	"\x0fGenerateTextReq\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12#\n" +
-	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"!\n" +
-	"\vGenerateRes\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text29\n" +
-	"\tAIService\x12,\n" +
-	"\bGenerate\x12\x0f.ai.GenerateReq\x1a\x0f.ai.GenerateResB\x19Z\x17generated-ai/;aiserviceb\x06proto3"
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"%\n" +
+	"\x0fGenerateTextRes\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text2E\n" +
+	"\tAIService\x128\n" +
+	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextResB\x19Z\x17generated-ai/;aiserviceb\x06proto3"
 
 var (
 	file_ai_proto_rawDescOnce sync.Once
@@ -153,12 +153,12 @@ func file_ai_proto_rawDescGZIP() []byte {
 
 var file_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_ai_proto_goTypes = []any{
-	(*GenerateReq)(nil), // 0: ai.GenerateReq
-	(*GenerateRes)(nil), // 1: ai.GenerateRes
+	(*GenerateTextReq)(nil), // 0: ai.GenerateTextReq
+	(*GenerateTextRes)(nil), // 1: ai.GenerateTextRes
 }
 var file_ai_proto_depIdxs = []int32{
-	0, // 0: ai.AIService.Generate:input_type -> ai.GenerateReq
-	1, // 1: ai.AIService.Generate:output_type -> ai.GenerateRes
+	0, // 0: ai.AIService.GenerateText:input_type -> ai.GenerateTextReq
+	1, // 1: ai.AIService.GenerateText:output_type -> ai.GenerateTextRes
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
