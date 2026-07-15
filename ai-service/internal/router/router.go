@@ -2,9 +2,13 @@
 package router
 
 import (
+	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -30,14 +34,11 @@ type requestBody struct {
 	Options option `json:"options"`
 }
 
-// aiRes used for decode response from AI
-var aiRes struct {
+// aiResponse used for decode response from AI
+type aiResponse struct {
 	Response string `json:"response"`
-	Message  struct {
-		Content string `json:"content"`
-	} `json:"message"`
-	Done    bool  `json:"done"`
-	Context []int `json:"context"`
+	Done     bool   `json:"done"`
+	Context  []int  `json:"context"`
 }
 
 // Router contains all needed fields to call AI
@@ -64,7 +65,7 @@ func NewRouter() *Router {
 		reqBody: requestBody{
 			Model:  model,
 			System: system,
-			Stream: false,
+			Stream: true,
 			Options: option{
 				Temperature:   temp,
 				NumPredicts:   numPredicts,
@@ -79,36 +80,55 @@ func NewRouter() *Router {
 }
 
 // Generate generates text from AI.
-func (r Router) Generate(text string, userContext []int) (string, []int, error) {
+func (r Router) Generate(text string, userContext []int, yield func(string)) ([]int, error) {
 	const op = "router.Generate"
 
 	r.reqBody.Prompt = text
 	r.reqBody.Context = userContext
+	r.reqBody.Stream = true
 
 	jsonData, err := json.Marshal(r.reqBody)
 	if err != nil {
-		return "", nil, fmt.Errorf("%s:json.Marshal: %w", op, err)
+		return nil, fmt.Errorf("%s:json.Marshal: %w", op, err)
 	}
 	jsonReader := bytes.NewReader(jsonData)
 
-	res, err := r.client.Post(r.url, "application/json", jsonReader)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.url, jsonReader)
 	if err != nil {
-		return "", nil, fmt.Errorf("%s: http.Post: %w", op, err)
+		return nil, fmt.Errorf("%s: http.NewRequestWithContext: %w", op, err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := r.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("%s: client.Do: %w", op, err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return "", nil, fmt.Errorf("%s: not StatusOK: %d", op, res.StatusCode)
+		return nil, fmt.Errorf("%s: bad status code: %d", op, res.StatusCode)
 	}
 
-	if err := json.NewDecoder(res.Body).Decode(&aiRes); err != nil {
-		return "", nil, fmt.Errorf("%s: json.Decode: %w", op, err)
+	var lastContext []int
+	reader := bufio.NewReader(res.Body)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, fmt.Errorf("%s: reader.ReadBytes: %w", op, err)
+		}
+		aiRes := aiResponse{}
+		if err := json.Unmarshal(line, &aiRes); err != nil {
+			return nil, fmt.Errorf("%s: json.Unmarshal: %w", op, err)
+		}
+		lastContext = aiRes.Context
+		yield(aiRes.Response)
 	}
 
-	resText := aiRes.Response
-	if resText == "" {
-		resText = aiRes.Message.Content
-	}
-
-	return resText, aiRes.Context, nil
+	return lastContext, nil
 }
