@@ -4,8 +4,11 @@ package ai
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"time"
+	"unsafe"
 
 	"enbstr/internal/services"
 
@@ -14,7 +17,7 @@ import (
 )
 
 // GenerateText call ai-service Generate method
-func (ai *AIService) GenerateText(uuid int64, text, reqTrace string) (string, error) {
+func (ai *AIService) GenerateText(uuid int64, text, reqTrace string, yield func(res []byte)) error {
 	const op = "ai.GenerateText"
 
 	ai.log.Debug("Generate text request",
@@ -25,7 +28,7 @@ func (ai *AIService) GenerateText(uuid int64, text, reqTrace string) (string, er
 	ctx, cancel := context.WithTimeout(context.Background(), ai.ctxTimeout*time.Second)
 	defer cancel()
 
-	res, err := services.CallRPC(ai.cb, func() (*pb.GenerateTextRes, error) {
+	stream, err := services.CallRPC(ai.cb, func() (pb.AIService_GenerateTextClient, error) {
 		return ai.client.GenerateText(ctx, &pb.GenerateTextReq{
 			Uuid:         uuid,
 			Text:         text,
@@ -33,7 +36,29 @@ func (ai *AIService) GenerateText(uuid int64, text, reqTrace string) (string, er
 		})
 	})
 	if err != nil {
-		return "", fmt.Errorf("%s: rpc call: %w", op, err)
+		return fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	ai.log.Debug("Successfully connected to ai-service",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("reqTrace", reqTrace))
+
+	for {
+		res, err := stream.Recv()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return fmt.Errorf("%s: stream recv: %w", op, err)
+		}
+
+		ai.log.Debug("Received response from ai-service",
+			zap.String("op", op),
+			zap.Int64("uuid", uuid),
+			zap.String("reqTrace", reqTrace))
+
+		yield(unsafe.Slice(unsafe.StringData(res.Text), len(res.Text)))
 	}
 
 	ai.log.Debug("Generate text successfully",
@@ -42,5 +67,5 @@ func (ai *AIService) GenerateText(uuid int64, text, reqTrace string) (string, er
 		zap.Int("text length", len(text)),
 		zap.String("reqTrace", reqTrace))
 
-	return res.Text, nil
+	return nil
 }

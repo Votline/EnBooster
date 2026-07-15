@@ -2,10 +2,12 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 	"unsafe"
 
 	"enbstr/internal/learn"
@@ -29,6 +31,14 @@ var wordsPool = sync.Pool{
 		return &w
 	},
 }
+
+var aiTextPool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 512))
+	},
+}
+
+const updateInterval = time.Second * 1
 
 // handleState check user state and call services
 func (srv *Server) handleState(c tele.Context) error {
@@ -224,19 +234,32 @@ func (srv *Server) handleState(c tele.Context) error {
 			}
 			return nil
 		}
-		reqTrace := uuid.NewString()
-		res, err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, reqTrace)
+
+		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...")
 		if err != nil {
-			return fmt.Errorf("%s: generate text: %w", op, err)
-		}
-		if len(res) == 0 {
-			if err := c.Send("AI didn't generate any text"); err != nil {
-				return fmt.Errorf("%s: bot send: %w", op, err)
-			}
-			return nil
-		}
-		if err := c.Send(res); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		resBuf := aiTextPool.Get().(*bytes.Buffer)
+		resBuf.Reset()
+		defer aiTextPool.Put(resBuf)
+
+		var lastUpdate time.Time
+		reqTrace := uuid.NewString()
+		if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, reqTrace, func(res []byte) {
+			resBuf.Write(res)
+
+			if time.Since(lastUpdate) > updateInterval {
+				lastUpdate = time.Now()
+				if _, err := c.Bot().Edit(msg, resBuf.String()); err != nil {
+					srv.log.Error("Failed to edit message",
+						zap.String("op", op),
+						zap.String("reqTrace", reqTrace),
+						zap.Error(err))
+				}
+			}
+		}); err != nil {
+			return fmt.Errorf("%s: generate text: %w", op, err)
 		}
 	default:
 		setToNone = true
