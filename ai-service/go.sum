@@ -2,6 +2,8 @@ github.com/Votline/EnBooster/protos v1.0.9 h1:yX4HkfKgaar6rj8kCsG5N2aQoaZXxyE/yB
 github.com/Votline/EnBooster/protos v1.0.9/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/Votline/EnBooster/protos v1.1.0 h1:Mt2e2MK2vj8+3xmjJMPA/ALQ619fqYhpAjCegXHDab4=
 github.com/Votline/EnBooster/protos v1.1.0/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
+github.com/Votline/EnBooster/protos v1.1.1 h1:LUdc0qHonXc5N+09LFWdtz5PnKA3clmmCbX4Gltaxb4=
+github.com/Votline/EnBooster/protos v1.1.1/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

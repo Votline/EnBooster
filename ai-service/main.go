@@ -2,11 +2,12 @@
 package main
 
 import (
-	"context"
+	"bytes"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"aisrv/internal/rdb"
@@ -25,6 +26,14 @@ type aiserver struct {
 	rt  *router.Router
 	pb.UnimplementedAIServiceServer
 }
+
+var bufPool = sync.Pool{
+	New: func() any {
+		return bytes.NewBuffer(make([]byte, 0, 512))
+	},
+}
+
+const batchSizeThreehold = 128
 
 func main() {
 	log, _ := zap.NewDevelopment()
@@ -76,14 +85,14 @@ func gracefulShutdown(s *aiserver, srv *grpc.Server) {
 	s.log.Info("Server shutdown successfully", zap.String("op", op))
 }
 
-func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*pb.GenerateTextRes, error) {
+func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_GenerateTextServer) error {
 	const op = "aiserver.GenerateText"
 
 	uuid := req.GetUuid()
 	text := req.GetText()
 	reqTrace := req.GetRequestTrace()
 
-	s.log.Debug("Generate text request received",
+	s.log.Debug("Stream Generate text request received",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
 		zap.Int("text_length", len(text)),
@@ -91,7 +100,7 @@ func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*
 
 	uctx, err := s.rdb.GetUserContext(uuid)
 	if err != nil {
-		return nil, fmt.Errorf("%s: : %w", op, err)
+		return fmt.Errorf("%s: : %w", op, err)
 	}
 
 	if uctx == nil {
@@ -103,19 +112,38 @@ func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*
 		zap.Int64("uuid", uuid),
 		zap.Int("user_context_length", len(uctx)))
 
-	res, newUctx, err := s.rt.Generate(text, uctx)
+	resBuf := bufPool.Get().(*bytes.Buffer)
+	resBuf.Reset()
+	defer bufPool.Put(resBuf)
+
+	newUctx, err := s.rt.Generate(text, uctx, func(text string) {
+		resBuf.WriteString(text)
+
+		if resBuf.Len() > batchSizeThreehold {
+			if err := stream.Send(&pb.GenerateTextRes{Text: resBuf.String()}); err != nil {
+				s.log.Error("failed to send response", zap.String("op", op), zap.Error(err))
+			}
+			resBuf.Reset()
+		}
+	})
 	if err != nil {
-		return nil, fmt.Errorf("%s: : %w", op, err)
+		return fmt.Errorf("%s: : %w", op, err)
+	}
+
+	if resBuf.Len() > 0 {
+		if err := stream.Send(&pb.GenerateTextRes{Text: resBuf.String()}); err != nil {
+			s.log.Error("failed to send response", zap.String("op", op), zap.Error(err))
+		}
 	}
 
 	s.log.Debug("Generate response sent",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
-		zap.Int("res_length", len(res)),
+		zap.Int("res_length", resBuf.Len()),
 		zap.String("request_trace", reqTrace))
 
 	if err := s.rdb.SetUserContext(uuid, newUctx); err != nil {
-		return nil, fmt.Errorf("%s: : %w", op, err)
+		return fmt.Errorf("%s: : %w", op, err)
 	}
 
 	s.log.Debug("User context updated",
@@ -123,7 +151,5 @@ func (s *aiserver) GenerateText(ctx context.Context, req *pb.GenerateTextReq) (*
 		zap.Int64("uuid", uuid),
 		zap.Int("user_context_length", len(newUctx)))
 
-	return &pb.GenerateTextRes{
-		Text: res,
-	}, nil
+	return nil
 }
