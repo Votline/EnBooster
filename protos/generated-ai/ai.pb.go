@@ -135,9 +135,9 @@ const file_ai_proto_rawDesc = "" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12#\n" +
 	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"%\n" +
 	"\x0fGenerateTextRes\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text2E\n" +
-	"\tAIService\x128\n" +
-	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextResB\x19Z\x17generated-ai/;aiserviceb\x06proto3"
+	"\x04text\x18\x01 \x01(\tR\x04text2G\n" +
+	"\tAIService\x12:\n" +
+	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextRes0\x01B\x19Z\x17generated-ai/;aiserviceb\x06proto3"
 
 var (
 	file_ai_proto_rawDescOnce sync.Once

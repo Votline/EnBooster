@@ -13,5 +13,5 @@ message GenerateTextRes {
 }
 
 service AIService {
-  rpc GenerateText (GenerateTextReq) returns (GenerateTextRes);
+  rpc GenerateText (GenerateTextReq) returns (stream GenerateTextRes);
 }
