@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AIServiceClient interface {
-	GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (*GenerateTextRes, error)
+	GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GenerateTextRes], error)
 }
 
 type aIServiceClient struct {
@@ -37,21 +37,30 @@ func NewAIServiceClient(cc grpc.ClientConnInterface) AIServiceClient {
 	return &aIServiceClient{cc}
 }
 
-func (c *aIServiceClient) GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (*GenerateTextRes, error) {
+func (c *aIServiceClient) GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GenerateTextRes], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenerateTextRes)
-	err := c.cc.Invoke(ctx, AIService_GenerateText_FullMethodName, in, out, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &AIService_ServiceDesc.Streams[0], AIService_GenerateText_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &grpc.GenericClientStream[GenerateTextReq, GenerateTextRes]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AIService_GenerateTextClient = grpc.ServerStreamingClient[GenerateTextRes]
 
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
 type AIServiceServer interface {
-	GenerateText(context.Context, *GenerateTextReq) (*GenerateTextRes, error)
+	GenerateText(*GenerateTextReq, grpc.ServerStreamingServer[GenerateTextRes]) error
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -62,8 +71,8 @@ type AIServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAIServiceServer struct{}
 
-func (UnimplementedAIServiceServer) GenerateText(context.Context, *GenerateTextReq) (*GenerateTextRes, error) {
-	return nil, status.Error(codes.Unimplemented, "method GenerateText not implemented")
+func (UnimplementedAIServiceServer) GenerateText(*GenerateTextReq, grpc.ServerStreamingServer[GenerateTextRes]) error {
+	return status.Error(codes.Unimplemented, "method GenerateText not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -86,23 +95,16 @@ func RegisterAIServiceServer(s grpc.ServiceRegistrar, srv AIServiceServer) {
 	s.RegisterService(&AIService_ServiceDesc, srv)
 }
 
-func _AIService_GenerateText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateTextReq)
-	if err := dec(in); err != nil {
-		return nil, err
+func _AIService_GenerateText_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GenerateTextReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(AIServiceServer).GenerateText(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AIService_GenerateText_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AIServiceServer).GenerateText(ctx, req.(*GenerateTextReq))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(AIServiceServer).GenerateText(m, &grpc.GenericServerStream[GenerateTextReq, GenerateTextRes]{ServerStream: stream})
 }
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AIService_GenerateTextServer = grpc.ServerStreamingServer[GenerateTextRes]
 
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -110,12 +112,13 @@ func _AIService_GenerateText_Handler(srv interface{}, ctx context.Context, dec f
 var AIService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ai.AIService",
 	HandlerType: (*AIServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "GenerateText",
-			Handler:    _AIService_GenerateText_Handler,
+			StreamName:    "GenerateText",
+			Handler:       _AIService_GenerateText_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "ai.proto",
 }
