@@ -17,11 +17,12 @@ message GetRes {
   string data = 1; // json
 }
 
-message UpdReq {
-  string data = 1; // json
-  string request_trace = 2;
+message UpdSystemPromptReq {
+  int64  uuid = 1;
+  string system_prompt = 2;
+  string request_trace = 3;
 }
-message UpdRes {}
+message UpdSystemPromptRes {}
 
 message DelReq {
   int64 uuid = 1;
@@ -32,6 +33,6 @@ message DelRes {}
 service UsersService {
   rpc RegUser (RegReq) returns (RegRes);
   rpc GetUser (GetReq) returns (GetRes);
-  rpc UpdUser (UpdReq) returns (UpdRes);
+  rpc UpdSystemPrompt (UpdSystemPromptReq) returns (UpdSystemPromptRes);
   rpc DelUser (DelReq) returns (DelRes);
 }

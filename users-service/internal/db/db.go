@@ -29,6 +29,7 @@ type User struct {
 	WorstTheme        string `db:"worst_theme" json:"worst_theme"`
 	WorstThemeCounter int    `db:"worst_theme_counter" json:"worst_theme_counter"`
 	Streak            int32  `db:"streak" json:"streak"`
+	SystemPrompt      string `db:"system_prompt" json:"system_prompt"`
 }
 
 func GetEnvInt(key string, defaultVal int) int {
@@ -104,7 +105,10 @@ func (d *DB) RegUser(uuid int64, ctx context.Context, reqTrace string) error {
 func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, error) {
 	const op = "db.GetUser"
 
-	query, args, err := d.bd.Select("level", "task_id", "best_theme", "best_theme_counter", "worst_theme", "worst_theme_counter", "streak").
+	query, args, err := d.bd.Select(
+		"level", "task_id", "best_theme",
+		"best_theme_counter", "worst_theme",
+		"worst_theme_counter", "streak", "system_prompt").
 		From("users").
 		Where(sq.Eq{"uuid": uuid}).
 		ToSql()
@@ -128,71 +132,6 @@ func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, e
 		zap.String("op", op))
 
 	return &user, nil
-}
-
-// UpdUser update all user fields in database
-func (d *DB) UpdUser(user User, ctx context.Context, reqTrace string) error {
-	const op = "db.UpdUser"
-
-	query, args, err := d.bd.Update("users").
-		SetMap(map[string]any{
-			"level":               user.Level,
-			"task_id":             user.TaskID,
-			"best_theme":          user.BestTheme,
-			"best_theme_counter":  user.BestThemeCounter,
-			"worst_theme":         user.WorstTheme,
-			"worst_theme_counter": user.WorstThemeCounter,
-			"streak":              user.Streak,
-		}).
-		Where(sq.Eq{"uuid": user.UUID}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("%s: build update query: %w", op, err)
-	}
-
-	d.log.Debug("UpdUser query",
-		zap.String("query", query),
-		zap.String("request_trace", reqTrace),
-		zap.String("op", op))
-
-	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("%s: update user: %w", op, err)
-	}
-
-	d.log.Debug("User succesfully updated",
-		zap.Int64("uuid", user.UUID),
-		zap.String("request_trace", reqTrace),
-		zap.String("op", op))
-
-	return nil
-}
-
-// DelUser delete user from database
-func (d *DB) DelUser(uuid int64, ctx context.Context, reqTrace string) error {
-	const op = "db.DelUser"
-
-	query, args, err := d.bd.Delete("users").
-		Where(sq.Eq{"uuid": uuid}).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("%s: build delete query: %w", op, err)
-	}
-
-	d.log.Debug("DelUser query",
-		zap.String("query", query),
-		zap.String("request_trace", reqTrace),
-		zap.String("op", op))
-
-	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("%s: delete user: %w", op, err)
-	}
-
-	d.log.Debug("User succesfully deleted",
-		zap.Int64("uuid", uuid),
-		zap.String("request_trace", reqTrace),
-		zap.String("op", op))
-
-	return nil
 }
 
 // UpdateStreak atomically updates the streak of a user
@@ -250,6 +189,63 @@ func (d *DB) UpdateStreak(uuid int64, ctx context.Context, reqTrace string, corr
 	}
 
 	d.log.Debug("Streak succesfully updated",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return nil
+}
+
+// UpdateSystemPrompt updates the system prompt of a user
+func (d *DB) UpdateSystemPrompt(ctx context.Context, uuid int64, sp, reqTrace string) error {
+	const op = "db.UpdateSystemPrompt"
+
+	query, args, err := d.bd.Update("users").
+		Set("system_prompt", sp).
+		Where(sq.Eq{"uuid": uuid}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: build update query: %w", op, err)
+	}
+
+	d.log.Debug("UpdateSystemPrompt query",
+		zap.String("query", query),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: update system prompt: %w", op, err)
+	}
+
+	d.log.Debug("SystemPrompt succesfully updated",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return nil
+}
+
+// DelUser delete user from database
+func (d *DB) DelUser(uuid int64, ctx context.Context, reqTrace string) error {
+	const op = "db.DelUser"
+
+	query, args, err := d.bd.Delete("users").
+		Where(sq.Eq{"uuid": uuid}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: build delete query: %w", op, err)
+	}
+
+	d.log.Debug("DelUser query",
+		zap.String("query", query),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: delete user: %w", op, err)
+	}
+
+	d.log.Debug("User succesfully deleted",
 		zap.Int64("uuid", uuid),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))

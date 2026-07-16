@@ -29,6 +29,7 @@ type UserData struct {
 	Level         string `json:"level"`
 	TaskID        int32  `json:"task_id"`
 	Streak        int32  `json:"streak"`
+	SystemPrompt  string `json:"system_prompt"`
 }
 
 // UserAnswer used to push user answer to kafka
@@ -106,34 +107,30 @@ func (us *UsersService) GetData(uuid int64, reqTrace string) (UserData, error) {
 	return userData, nil
 }
 
-// UpdateData updates user data
-func (us *UsersService) UpdateData(uuid int64, data UserData, reqTrace string) error {
-	const op = "users.UpdateData"
+// UpdSystemPrompt updates user system prompt
+func (us *UsersService) UpdSystemPrompt(uuid int64, sp, reqTrace string) error {
+	const op = "users.UpdSystemPrompt"
 
-	us.log.Debug("Update user data request",
+	us.log.Debug("Update system prompt request",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
+		zap.Int("system_prompt_len", len(sp)),
 		zap.String("reqTrace", reqTrace))
 
 	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
 	defer cancel()
 
-	dataBytes, err := json.Marshal(data)
-	if err != nil {
-		return fmt.Errorf("%s: marshal: %w", op, err)
-	}
-	dataStr := unsafe.String(unsafe.SliceData(dataBytes), len(dataBytes))
-
-	if _, err := services.CallRPC(us.cb, func() (*pb.UpdRes, error) {
-		return us.client.UpdUser(ctx, &pb.UpdReq{
-			Data:         dataStr,
+	if _, err := services.CallRPC(us.cb, func() (*pb.UpdSystemPromptRes, error) {
+		return us.client.UpdSystemPrompt(ctx, &pb.UpdSystemPromptReq{
+			Uuid:         uuid,
+			SystemPrompt: sp,
 			RequestTrace: reqTrace,
 		})
 	}); err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
-	us.log.Debug("Update user data successfully",
+	us.log.Debug("Update system prompt successfully",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
 		zap.String("reqTrace", reqTrace))

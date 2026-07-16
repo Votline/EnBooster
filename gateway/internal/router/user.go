@@ -235,6 +235,17 @@ func (srv *Server) handleState(c tele.Context) error {
 			return nil
 		}
 
+		aiSes, err := srv.sm.GetUserCtx(c.Sender().ID)
+		if err != nil {
+			return fmt.Errorf("%s: get user state: %w", op, err)
+		}
+		var chatSes sm.ChattingSession
+		uctxData := unsafe.Slice(unsafe.StringData(aiSes.JSONData), len(aiSes.JSONData))
+		if err := json.Unmarshal(uctxData, &chatSes); err != nil {
+			return fmt.Errorf("%s: unmarshal: %w", op, err)
+		}
+		sysPrompt := chatSes.SystemPrompt
+
 		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...")
 		if err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
@@ -246,7 +257,7 @@ func (srv *Server) handleState(c tele.Context) error {
 
 		var lastUpdate time.Time
 		reqTrace := uuid.NewString()
-		if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, reqTrace, func(res []byte) {
+		if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, sysPrompt, reqTrace, func(res []byte) {
 			resBuf.Write(res)
 
 			if time.Since(lastUpdate) > updateInterval {
@@ -261,6 +272,24 @@ func (srv *Server) handleState(c tele.Context) error {
 		}); err != nil {
 			return fmt.Errorf("%s: generate text: %w", op, err)
 		}
+	case sm.StateSetSysPrompt:
+		srv.log.Debug("Change system prompt",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		sp := c.Message().Text
+		if err := srv.usrsrv.UpdSystemPrompt(c.Sender().ID, sp, reqTrace); err != nil {
+			return fmt.Errorf("%s: update system prompt: %w", op, err)
+		}
+		if err := c.Send("System prompt updated"); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		srv.log.Debug("Successfully changed system prompt",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		setToNone = true
 	default:
 		setToNone = true
 	}

@@ -205,28 +205,29 @@ func (x *GetRes) GetData() string {
 	return ""
 }
 
-type UpdReq struct {
+type UpdSystemPromptReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"` // json
-	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	SystemPrompt  string                 `protobuf:"bytes,2,opt,name=system_prompt,json=systemPrompt,proto3" json:"system_prompt,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdReq) Reset() {
-	*x = UpdReq{}
+func (x *UpdSystemPromptReq) Reset() {
+	*x = UpdSystemPromptReq{}
 	mi := &file_users_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdReq) String() string {
+func (x *UpdSystemPromptReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdReq) ProtoMessage() {}
+func (*UpdSystemPromptReq) ProtoMessage() {}
 
-func (x *UpdReq) ProtoReflect() protoreflect.Message {
+func (x *UpdSystemPromptReq) ProtoReflect() protoreflect.Message {
 	mi := &file_users_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -238,45 +239,52 @@ func (x *UpdReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdReq.ProtoReflect.Descriptor instead.
-func (*UpdReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdSystemPromptReq.ProtoReflect.Descriptor instead.
+func (*UpdSystemPromptReq) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *UpdReq) GetData() string {
+func (x *UpdSystemPromptReq) GetUuid() int64 {
 	if x != nil {
-		return x.Data
+		return x.Uuid
+	}
+	return 0
+}
+
+func (x *UpdSystemPromptReq) GetSystemPrompt() string {
+	if x != nil {
+		return x.SystemPrompt
 	}
 	return ""
 }
 
-func (x *UpdReq) GetRequestTrace() string {
+func (x *UpdSystemPromptReq) GetRequestTrace() string {
 	if x != nil {
 		return x.RequestTrace
 	}
 	return ""
 }
 
-type UpdRes struct {
+type UpdSystemPromptRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UpdRes) Reset() {
-	*x = UpdRes{}
+func (x *UpdSystemPromptRes) Reset() {
+	*x = UpdSystemPromptRes{}
 	mi := &file_users_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UpdRes) String() string {
+func (x *UpdSystemPromptRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdRes) ProtoMessage() {}
+func (*UpdSystemPromptRes) ProtoMessage() {}
 
-func (x *UpdRes) ProtoReflect() protoreflect.Message {
+func (x *UpdSystemPromptRes) ProtoReflect() protoreflect.Message {
 	mi := &file_users_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -288,8 +296,8 @@ func (x *UpdRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdRes.ProtoReflect.Descriptor instead.
-func (*UpdRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdSystemPromptRes.ProtoReflect.Descriptor instead.
+func (*UpdSystemPromptRes) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{5}
 }
 
@@ -394,19 +402,20 @@ const file_users_proto_rawDesc = "" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\x1c\n" +
 	"\x06GetRes\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\"A\n" +
-	"\x06UpdReq\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\x12#\n" +
-	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
-	"\x06UpdRes\"A\n" +
+	"\x04data\x18\x01 \x01(\tR\x04data\"r\n" +
+	"\x12UpdSystemPromptReq\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
+	"\rsystem_prompt\x18\x02 \x01(\tR\fsystemPrompt\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\x14\n" +
+	"\x12UpdSystemPromptRes\"A\n" +
 	"\x06DelReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
-	"\x06DelRes2\xb2\x01\n" +
+	"\x06DelRes2\xd2\x01\n" +
 	"\fUsersService\x12'\n" +
 	"\aRegUser\x12\r.users.RegReq\x1a\r.users.RegRes\x12'\n" +
-	"\aGetUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12'\n" +
-	"\aUpdUser\x12\r.users.UpdReq\x1a\r.users.UpdRes\x12'\n" +
+	"\aGetUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12G\n" +
+	"\x0fUpdSystemPrompt\x12\x19.users.UpdSystemPromptReq\x1a\x19.users.UpdSystemPromptRes\x12'\n" +
 	"\aDelUser\x12\r.users.DelReq\x1a\r.users.DelResB\x1fZ\x1dgenerated-users/;usersserviceb\x06proto3"
 
 var (
@@ -423,23 +432,23 @@ func file_users_proto_rawDescGZIP() []byte {
 
 var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_users_proto_goTypes = []any{
-	(*RegReq)(nil), // 0: users.RegReq
-	(*RegRes)(nil), // 1: users.RegRes
-	(*GetReq)(nil), // 2: users.GetReq
-	(*GetRes)(nil), // 3: users.GetRes
-	(*UpdReq)(nil), // 4: users.UpdReq
-	(*UpdRes)(nil), // 5: users.UpdRes
-	(*DelReq)(nil), // 6: users.DelReq
-	(*DelRes)(nil), // 7: users.DelRes
+	(*RegReq)(nil),             // 0: users.RegReq
+	(*RegRes)(nil),             // 1: users.RegRes
+	(*GetReq)(nil),             // 2: users.GetReq
+	(*GetRes)(nil),             // 3: users.GetRes
+	(*UpdSystemPromptReq)(nil), // 4: users.UpdSystemPromptReq
+	(*UpdSystemPromptRes)(nil), // 5: users.UpdSystemPromptRes
+	(*DelReq)(nil),             // 6: users.DelReq
+	(*DelRes)(nil),             // 7: users.DelRes
 }
 var file_users_proto_depIdxs = []int32{
 	0, // 0: users.UsersService.RegUser:input_type -> users.RegReq
 	2, // 1: users.UsersService.GetUser:input_type -> users.GetReq
-	4, // 2: users.UsersService.UpdUser:input_type -> users.UpdReq
+	4, // 2: users.UsersService.UpdSystemPrompt:input_type -> users.UpdSystemPromptReq
 	6, // 3: users.UsersService.DelUser:input_type -> users.DelReq
 	1, // 4: users.UsersService.RegUser:output_type -> users.RegRes
 	3, // 5: users.UsersService.GetUser:output_type -> users.GetRes
-	5, // 6: users.UsersService.UpdUser:output_type -> users.UpdRes
+	5, // 6: users.UsersService.UpdSystemPrompt:output_type -> users.UpdSystemPromptRes
 	7, // 7: users.UsersService.DelUser:output_type -> users.DelRes
 	4, // [4:8] is the sub-list for method output_type
 	0, // [0:4] is the sub-list for method input_type

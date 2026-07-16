@@ -17,7 +17,7 @@ import (
 )
 
 // GenerateText call ai-service Generate method
-func (ai *AIService) GenerateText(uuid int64, text, reqTrace string, yield func(res []byte)) error {
+func (ai *AIService) GenerateText(uuid int64, prompt, sysPrompt, reqTrace string, yield func(res []byte)) error {
 	const op = "ai.GenerateText"
 
 	ai.log.Debug("Generate text request",
@@ -31,7 +31,8 @@ func (ai *AIService) GenerateText(uuid int64, text, reqTrace string, yield func(
 	stream, err := services.CallRPC(ai.cb, func() (pb.AIService_GenerateTextClient, error) {
 		return ai.client.GenerateText(ctx, &pb.GenerateTextReq{
 			Uuid:         uuid,
-			Text:         text,
+			Prompt:       prompt,
+			SystemPrompt: sysPrompt,
 			RequestTrace: reqTrace,
 		})
 	})
@@ -44,6 +45,7 @@ func (ai *AIService) GenerateText(uuid int64, text, reqTrace string, yield func(
 		zap.Int64("uuid", uuid),
 		zap.String("reqTrace", reqTrace))
 
+	totalLen := 0
 	for {
 		res, err := stream.Recv()
 		if err != nil {
@@ -59,12 +61,13 @@ func (ai *AIService) GenerateText(uuid int64, text, reqTrace string, yield func(
 			zap.String("reqTrace", reqTrace))
 
 		yield(unsafe.Slice(unsafe.StringData(res.Text), len(res.Text)))
+		totalLen += len(res.Text)
 	}
 
 	ai.log.Debug("Generate text successfully",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
-		zap.Int("text length", len(text)),
+		zap.Int("totalLen", totalLen),
 		zap.String("reqTrace", reqTrace))
 
 	return nil

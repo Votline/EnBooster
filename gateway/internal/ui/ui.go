@@ -14,20 +14,28 @@ type UI struct {
 	UserMain      *tele.ReplyMarkup
 	AdminMain     *tele.ReplyMarkup
 	AdminCommands *tele.ReplyMarkup
-	Shiritori     *tele.ReplyMarkup
+	Stopmenu      *tele.ReplyMarkup
+	UserSettings  *tele.ReplyMarkup
 }
+
+const AISystemPromptID = "\fai_system_prompt"
 
 // NewUI creates a new UI instance
 func NewUI() *UI {
 	usermain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile"})
+	usersettings := inlineMenu(1, []InlineBtn{
+		{"Set AI system prompt", AISystemPromptID[1:]},
+		{"Set language level", "lang_level"},
+	})
 	adminmain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile", "Help"})
 	admincmds := replyMenu(2, []string{"tasks_add", "task_del", "words_add", "word_del"})
-	shiritori := replyMenu(1, []string{"/stop"})
+	stopmenu := replyMenu(1, []string{"/stop"})
 	return &UI{
 		UserMain:      usermain,
+		UserSettings:  usersettings,
 		AdminMain:     adminmain,
 		AdminCommands: admincmds,
-		Shiritori:     shiritori,
+		Stopmenu:      stopmenu,
 	}
 }
 

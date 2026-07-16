@@ -3,6 +3,7 @@ package router
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -113,7 +114,8 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 func (srv *Server) setupServices() {
 	aiTimeout := time.Duration(GetEnvInt("AI_TIMEOUT", 30))
 
-	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID, srv.uiInstns, srv.log)
+	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID,
+		srv.uiInstns, srv.sm, srv.b, srv.log)
 	if err != nil {
 		srv.log.Fatal("Failed to create users service", zap.Error(err))
 	}
@@ -252,7 +254,44 @@ func (srv *Server) shiritori(c tele.Context) error {
 	return c.Send(
 		"Shiritori mode activated."+
 			"To exit push '/stop' button. \nWrite any word.",
-		srv.uiInstns.Shiritori)
+		srv.uiInstns.Stopmenu)
+}
+
+// chatting handles 'Chatting' command
+func (srv *Server) chatting(c tele.Context) error {
+	const op = "router.chatting"
+
+	userUUID := c.Sender().ID
+	reqtrace := uuid.NewString()
+	ud, err := srv.usrsrv.GetData(userUUID, reqtrace)
+	if err != nil {
+		return fmt.Errorf("%s: get user data: %w", op, err)
+	}
+
+	srv.log.Debug("Chatting mode activated",
+		zap.Int64("user_id", c.Sender().ID),
+		zap.String("reqtrace", reqtrace))
+
+	chattingSession := sm.ChattingSession{
+		SystemPrompt: ud.SystemPrompt,
+	}
+	jsonData, err := json.Marshal(chattingSession)
+	if err != nil {
+		return fmt.Errorf("%s: marshal chatting session: %w", op, err)
+	}
+
+	if err := srv.sm.SetUserCtx(userUUID, sm.StateChatting, jsonData); err != nil {
+		return fmt.Errorf("%s: set state: %w", op, err)
+	}
+
+	if err := c.Send(
+		"Chatting mode activated."+
+			"To exit write '/stop'.",
+		srv.uiInstns.Stopmenu); err != nil {
+		return fmt.Errorf("%s: send message: %w", op, err)
+	}
+
+	return nil
 }
 
 // handleDefaultState handles any other message
@@ -272,19 +311,5 @@ func (srv *Server) handleDefaultState(c tele.Context) error {
 	if err := srv.handleState(c); err != nil {
 		return fmt.Errorf("%s: handle state: %w", op, err)
 	}
-	return nil
-}
-
-func (srv *Server) chatting(c tele.Context) error {
-	const op = "router.chatting"
-
-	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateChatting, nil); err != nil {
-		return fmt.Errorf("%s: set state: %w", op, err)
-	}
-
-	if err := c.Send("Chatting mode activated."); err != nil {
-		return fmt.Errorf("%s: send message: %w", op, err)
-	}
-
 	return nil
 }

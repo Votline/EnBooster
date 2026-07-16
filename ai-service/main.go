@@ -89,13 +89,15 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 	const op = "aiserver.GenerateText"
 
 	uuid := req.GetUuid()
-	text := req.GetText()
+	prompt := req.GetPrompt()
+	sysprompt := req.GetSystemPrompt()
 	reqTrace := req.GetRequestTrace()
 
 	s.log.Debug("Stream Generate text request received",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
-		zap.Int("text_length", len(text)),
+		zap.Int("prompt_length", len(prompt)),
+		zap.Int("system_prompt_length", len(sysprompt)),
 		zap.String("request_trace", reqTrace))
 
 	uctx, err := s.rdb.GetUserContext(uuid)
@@ -116,7 +118,7 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 	resBuf.Reset()
 	defer bufPool.Put(resBuf)
 
-	newUctx, err := s.rt.Generate(text, uctx, func(text string) {
+	newUctx, err := s.rt.Generate(prompt, sysprompt, uctx, func(text string) {
 		resBuf.WriteString(text)
 
 		if resBuf.Len() > batchSizeThreehold {
