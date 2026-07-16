@@ -264,35 +264,33 @@ func (s *usersserver) GetUser(ctx context.Context, req *pb.GetReq) (*pb.GetRes, 
 	}, nil
 }
 
-func (s *usersserver) UpdUser(ctx context.Context, req *pb.UpdReq) (*pb.UpdRes, error) {
-	const op = "usersserver.UpdUser"
+// UpdSystemPrompt updates the system prompt of a user
+func (s *usersserver) UpdSystemPrompt(ctx context.Context, req *pb.UpdSystemPromptReq) (*pb.UpdSystemPromptRes, error) {
+	const op = "usersserver.UpdSystemPrompt"
 
-	data := req.GetData()
-	if data == "" {
-		return nil, fmt.Errorf("%s: empty data", op)
+	uuid := req.GetUuid()
+	if uuid == 0 {
+		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
-	dataBytes := unsafe.Slice(unsafe.StringData(data), len(data))
-
 	reqTrace := req.GetRequestTrace()
-	s.log.Debug("UpdUser request",
-		zap.Int("data len", len(data)),
+	sp := req.GetSystemPrompt()
+
+	s.log.Debug("UpdSystemPromnt request",
+		zap.Int64("uuid", uuid),
+		zap.Int("system_prompt_len", len(sp)),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
-	var user db.User
-	if err := json.Unmarshal(dataBytes, &user); err != nil {
-		return nil, fmt.Errorf("%s: unmarshal data: %w", op, err)
+	if err := s.db.UpdateSystemPrompt(ctx, uuid, sp, reqTrace); err != nil {
+		return nil, fmt.Errorf("%s: db update system prompt: %w", op, err)
 	}
 
-	if err := s.db.UpdUser(user, ctx, reqTrace); err != nil {
-		return nil, fmt.Errorf("%s: db update user: %w", op, err)
-	}
-
-	s.log.Debug("Successfully updated user",
+	s.log.Debug("Successfully updated system prompt",
+		zap.Int64("uuid", uuid),
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
-	return &pb.UpdRes{}, nil
+	return &pb.UpdSystemPromptRes{}, nil
 }
 
 // DelUser delete user from database with uuid from request.

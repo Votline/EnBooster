@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/Votline/EnBooster/protos v1.1.0
+	github.com/Votline/EnBooster/protos v1.1.4
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.12.3
 	go.uber.org/zap v1.28.0

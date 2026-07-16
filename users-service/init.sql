@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS users (
 	level TEXT NOT NULL DEFAULT 'A1',
 	task_id INT NOT NULL DEFAULT 1,
 	streak INT NOT NULL DEFAULT 0,
-	last_done_day BIGINT NOT NULL DEFAULT 0
+	last_done_day BIGINT NOT NULL DEFAULT 0,
+	system_prompt TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_id ON users(uuid);
