@@ -207,7 +207,7 @@ func (x *GetRes) GetData() string {
 
 type UpdSystemPromptReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	SystemPrompt  string                 `protobuf:"bytes,2,opt,name=system_prompt,json=systemPrompt,proto3" json:"system_prompt,omitempty"`
 	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -244,11 +244,11 @@ func (*UpdSystemPromptReq) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *UpdSystemPromptReq) GetUuid() string {
+func (x *UpdSystemPromptReq) GetUuid() int64 {
 	if x != nil {
 		return x.Uuid
 	}
-	return ""
+	return 0
 }
 
 func (x *UpdSystemPromptReq) GetSystemPrompt() string {
@@ -404,7 +404,7 @@ const file_users_proto_rawDesc = "" +
 	"\x06GetRes\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\tR\x04data\"r\n" +
 	"\x12UpdSystemPromptReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12#\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rsystem_prompt\x18\x02 \x01(\tR\fsystemPrompt\x12#\n" +
 	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\x14\n" +
 	"\x12UpdSystemPromptRes\"A\n" +
