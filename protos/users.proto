@@ -18,8 +18,9 @@ message GetRes {
 }
 
 message UpdSystemPromptReq {
-  string system_prompt = 1;
-  string request_trace = 2;
+  string uuid = 1;
+  string system_prompt = 2;
+  string request_trace = 3;
 }
 message UpdSystemPromptRes {}
 
