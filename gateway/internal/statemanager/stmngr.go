@@ -24,6 +24,7 @@ const (
 	StateAdminNotCommand
 	StateShiritori
 	StateChatting
+	StateSetSysPrompt
 )
 
 // StateManager is a struct that manages the state of the user
@@ -136,6 +137,40 @@ func (sm *StateManager) SetUserCtx(uuid int64, state int8, jsonData []byte) erro
 	pipe.Expire(ctx, key, sm.stateTTL*time.Minute)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return fmt.Errorf("%s: set state: %w", op, err)
+	}
+
+	return nil
+}
+
+var updateonlystate = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) == 1 then
+	redis.call("HSET", KEYS[1], "state", ARGV[1])
+	redis.call("EXPIRE", KEYS[1], ARGV[2])
+	return 1
+else
+	redis.call("HSET", KEYS[1], "state", ARGV[1], "json_data", "")
+	redis.call("EXPIRE", KEYS[1], ARGV[2])
+	return 2
+end
+`)
+
+func (sm *StateManager) UpdUserStateCtx(uuid int64, state int8) error {
+	const op = "statemanager.UpdUserStateCtx"
+
+	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
+	defer cancel()
+
+	key := "users:state" + strconv.FormatInt(uuid, 10)
+
+	ttlSeconds := int64((sm.stateTTL * time.Minute).Seconds())
+
+	res, err := updateonlystate.Run(ctx, sm.rdb, []string{key}, state, ttlSeconds).Result()
+	if err != nil {
+		return fmt.Errorf("%s: run script: %w", op, err)
+	}
+
+	if res == 0 {
+		return fmt.Errorf("%s: state was not updated", op)
 	}
 
 	return nil
