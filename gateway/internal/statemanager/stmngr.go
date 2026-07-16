@@ -52,6 +52,10 @@ type ShiritoriSession struct {
 	UserCorrectWords uint            `json:"user_correct_words"`
 }
 
+type ChattingSession struct {
+	SystemPrompt string `json:"system_prompt"`
+}
+
 // UserContext contains user state and additional data
 type UserContext struct {
 	State    int8

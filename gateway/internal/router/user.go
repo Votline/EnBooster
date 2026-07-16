@@ -235,7 +235,18 @@ func (srv *Server) handleState(c tele.Context) error {
 			return nil
 		}
 
-		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...", srv.uiInstns.Stopmenu)
+		aiSes, err := srv.sm.GetUserCtx(c.Sender().ID)
+		if err != nil {
+			return fmt.Errorf("%s: get user state: %w", op, err)
+		}
+		var chatSes sm.ChattingSession
+		uctxData := unsafe.Slice(unsafe.StringData(aiSes.JSONData), len(aiSes.JSONData))
+		if err := json.Unmarshal(uctxData, &chatSes); err != nil {
+			return fmt.Errorf("%s: unmarshal: %w", op, err)
+		}
+		sysPrompt := chatSes.SystemPrompt
+
+		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...")
 		if err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
@@ -246,12 +257,12 @@ func (srv *Server) handleState(c tele.Context) error {
 
 		var lastUpdate time.Time
 		reqTrace := uuid.NewString()
-		if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, reqTrace, func(res []byte) {
+		if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, sysPrompt, reqTrace, func(res []byte) {
 			resBuf.Write(res)
 
 			if time.Since(lastUpdate) > updateInterval {
 				lastUpdate = time.Now()
-				if _, err := c.Bot().Edit(msg, resBuf.String(), srv.uiInstns.Stopmenu); err != nil {
+				if _, err := c.Bot().Edit(msg, resBuf.String()); err != nil {
 					srv.log.Error("Failed to edit message",
 						zap.String("op", op),
 						zap.String("reqTrace", reqTrace),
