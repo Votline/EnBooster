@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"enbstr/internal/cbreaker"
+	stm "enbstr/internal/statemanager"
 	"enbstr/internal/ui"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
@@ -28,6 +29,7 @@ type UsersService struct {
 	name        string
 	adminUUID   int64
 	uiInstns    *ui.UI
+	sm          *stm.StateManager
 	ctxTimeout  time.Duration
 	log         *zap.Logger
 	cb          *gobreaker.CircuitBreaker[any]
@@ -55,7 +57,7 @@ func getTLSConfig(srvName, path string) (*tls.Config, error) {
 }
 
 // NewUS creates new UsersService instance
-func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, log *zap.Logger) (*UsersService, error) {
+func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.StateManager, bot *tele.Bot, log *zap.Logger) (*UsersService, error) {
 	const op = "users.NewUS"
 
 	log.Info("Creating users service",
@@ -88,17 +90,35 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, log *zap.
 		},
 	}
 
-	return &UsersService{
+	srv := &UsersService{
 		name:        "users",
 		adminUUID:   adminUUID,
 		uiInstns:    uiInstns,
+		sm:          sm,
 		ctxTimeout:  ctxTimeout,
 		log:         log,
 		conn:        conn,
 		cb:          cbreaker.NewCB("users", log),
 		client:      pb.NewUsersServiceClient(conn),
 		kafkaWriter: writer,
-	}, nil
+	}
+
+	bot.Handle(ui.AISystemPromptID, func(c tele.Context) error {
+		c.Respond()
+		srv.log.Debug("Catch change ai system prompt event",
+			zap.String("op", op))
+		if err := srv.HandleRoutes(ui.AISystemPromptID, c); err != nil {
+			srv.log.Error("Handle change system prompt button",
+				zap.String("op", op),
+				zap.Error(err))
+			return fmt.Errorf("%s: Handle change system prompt: %w", op, err)
+		}
+		srv.log.Debug("Successfully changed state",
+			zap.String("op", op))
+		return nil
+	})
+
+	return srv, nil
 }
 
 // HandleRoutes handle user messages which intended for user-service
@@ -113,9 +133,10 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		menu = us.uiInstns.UserMain
 	}
 
+	reqTrace := uuid.NewString()
+
 	switch msg {
 	case "/start":
-		reqTrace := uuid.NewString()
 		if err := us.Register(userID, reqTrace); err != nil {
 			return fmt.Errorf("%s: register user: %w", op, err)
 		}
@@ -123,19 +144,24 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 			return fmt.Errorf("%s: send welcome message: %w", op, err)
 		}
 	case "Profile":
-		reqTrace := uuid.NewString()
 		uuid := c.Message().Sender.ID
 		ud, err := us.GetData(uuid, reqTrace)
 		if err != nil {
 			return fmt.Errorf("%s: get user data: %w", op, err)
 		}
 
-		if err := c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nTask position:%d\nBest theme: %s | %d\nWorst theme: %s | %d\nStreak: %d",
+		if err := c.Send(fmt.Sprintf("Your data:\nUUID: %d\nLevel: %s\nTask position:%d\nBest theme: %s | %d\nWorst theme: %s | %d\nStreak: %d\nSystem prompt: %s",
 			ud.UUID, ud.Level, ud.TaskID,
 			ud.BestTheme, ud.BestThemeCnt,
-			ud.WorstTheme, ud.WorstThemeCnt, ud.Streak), menu); err != nil {
+			ud.WorstTheme, ud.WorstThemeCnt,
+			ud.Streak, ud.SystemPrompt), menu, us.uiInstns.UserSettings); err != nil {
 			return fmt.Errorf("%s: send user data: %w", op, err)
 		}
+	case ui.AISystemPromptID:
+		if err := us.sm.UpdUserStateCtx(c.Sender().ID, stm.StateSetSysPrompt); err != nil {
+			return fmt.Errorf("%s: update user state: %w", op, err)
+		}
+		return nil
 	}
 
 	return nil
