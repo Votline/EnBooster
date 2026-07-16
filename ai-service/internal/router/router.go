@@ -43,10 +43,11 @@ type aiResponse struct {
 
 // Router contains all needed fields to call AI
 type Router struct {
-	timeout int
-	url     string
-	client  *http.Client
-	reqBody requestBody
+	timeout  int
+	url      string
+	defaulsp string
+	client   *http.Client
+	reqBody  requestBody
 }
 
 func NewRouter() *Router {
@@ -55,6 +56,7 @@ func NewRouter() *Router {
 	timeout := utils.GetEnvInt(os.Getenv("AI_TIMEOUT"), 60) * int(time.Second)
 
 	url := fmt.Sprintf("http://%s:%s/api/generate", os.Getenv("AI_HOST"), os.Getenv("AI_PORT"))
+	defaultSystemPrompt := os.Getenv("AI_DEFAULT_SYSTEM_PROMPT")
 
 	temp := utils.GetEnvFloat(os.Getenv("AI_TEMP"), 0.7)
 	numPredicts := utils.GetEnvInt(os.Getenv("AI_NUM_PREDICTS"), 512)
@@ -73,19 +75,25 @@ func NewRouter() *Router {
 				RepeatPenalty: repeatPenalty,
 			},
 		},
-		url:     url,
-		timeout: timeout,
-		client:  http.DefaultClient,
+		url:      url,
+		timeout:  timeout,
+		client:   http.DefaultClient,
+		defaulsp: defaultSystemPrompt,
 	}
 }
 
 // Generate generates text from AI.
-func (r Router) Generate(text string, userContext []int, yield func(string)) ([]int, error) {
+func (r Router) Generate(prompt, systemPrompt string, userContext []int, yield func(string)) ([]int, error) {
 	const op = "router.Generate"
 
-	r.reqBody.Prompt = text
+	r.reqBody.Prompt = prompt
 	r.reqBody.Context = userContext
 	r.reqBody.Stream = true
+
+	r.reqBody.System = systemPrompt
+	if systemPrompt == "" || systemPrompt == "nop" {
+		r.reqBody.System = r.defaulsp
+	}
 
 	jsonData, err := json.Marshal(r.reqBody)
 	if err != nil {
