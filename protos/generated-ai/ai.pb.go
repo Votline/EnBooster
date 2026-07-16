@@ -24,8 +24,9 @@ const (
 type GenerateTextReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	Prompt        string                 `protobuf:"bytes,2,opt,name=prompt,proto3" json:"prompt,omitempty"`
+	SystemPrompt  string                 `protobuf:"bytes,3,opt,name=system_prompt,json=systemPrompt,proto3" json:"system_prompt,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,4,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -67,9 +68,16 @@ func (x *GenerateTextReq) GetUuid() int64 {
 	return 0
 }
 
-func (x *GenerateTextReq) GetText() string {
+func (x *GenerateTextReq) GetPrompt() string {
 	if x != nil {
-		return x.Text
+		return x.Prompt
+	}
+	return ""
+}
+
+func (x *GenerateTextReq) GetSystemPrompt() string {
+	if x != nil {
+		return x.SystemPrompt
 	}
 	return ""
 }
@@ -129,11 +137,12 @@ var File_ai_proto protoreflect.FileDescriptor
 
 const file_ai_proto_rawDesc = "" +
 	"\n" +
-	"\bai.proto\x12\x02ai\"^\n" +
+	"\bai.proto\x12\x02ai\"\x87\x01\n" +
 	"\x0fGenerateTextReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x12\n" +
-	"\x04text\x18\x02 \x01(\tR\x04text\x12#\n" +
-	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"%\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x16\n" +
+	"\x06prompt\x18\x02 \x01(\tR\x06prompt\x12#\n" +
+	"\rsystem_prompt\x18\x03 \x01(\tR\fsystemPrompt\x12#\n" +
+	"\rrequest_trace\x18\x04 \x01(\tR\frequestTrace\"%\n" +
 	"\x0fGenerateTextRes\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text2G\n" +
 	"\tAIService\x12:\n" +
