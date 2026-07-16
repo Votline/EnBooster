@@ -235,7 +235,7 @@ func (srv *Server) handleState(c tele.Context) error {
 			return nil
 		}
 
-		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...")
+		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...", srv.uiInstns.Stopmenu)
 		if err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
@@ -251,7 +251,7 @@ func (srv *Server) handleState(c tele.Context) error {
 
 			if time.Since(lastUpdate) > updateInterval {
 				lastUpdate = time.Now()
-				if _, err := c.Bot().Edit(msg, resBuf.String()); err != nil {
+				if _, err := c.Bot().Edit(msg, resBuf.String(), srv.uiInstns.Stopmenu); err != nil {
 					srv.log.Error("Failed to edit message",
 						zap.String("op", op),
 						zap.String("reqTrace", reqTrace),
@@ -261,6 +261,24 @@ func (srv *Server) handleState(c tele.Context) error {
 		}); err != nil {
 			return fmt.Errorf("%s: generate text: %w", op, err)
 		}
+	case sm.StateSetSysPrompt:
+		srv.log.Debug("Change system prompt",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		sp := c.Message().Text
+		if err := srv.usrsrv.UpdSystemPrompt(c.Sender().ID, sp, reqTrace); err != nil {
+			return fmt.Errorf("%s: update system prompt: %w", op, err)
+		}
+		if err := c.Send("System prompt updated"); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		srv.log.Debug("Successfully changed system prompt",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		setToNone = true
 	default:
 		setToNone = true
 	}
