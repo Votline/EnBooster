@@ -126,7 +126,7 @@ func (srv *Server) handleState(c tele.Context) error {
 				shiritoriSes.UserCorrectWords,
 				incorrectWords,
 			)
-			if err := c.Send("Shiritpri game stopped. " + msg); err != nil {
+			if err := c.Send("Shiritpri game stopped. "+msg, srv.uiInstns.UserMain); err != nil {
 				return fmt.Errorf("%s: bot send: %w", op, err)
 			}
 			return nil
@@ -229,7 +229,7 @@ func (srv *Server) handleState(c tele.Context) error {
 			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
 				return fmt.Errorf("%s: change state: %w", op, err)
 			}
-			if err := c.Send("Chatting mode stopped."); err != nil {
+			if err := c.Send("Chatting mode stopped.", srv.uiInstns.UserMain); err != nil {
 				return fmt.Errorf("%s: bot send: %w", op, err)
 			}
 			return nil
