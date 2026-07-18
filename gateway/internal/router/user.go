@@ -290,6 +290,25 @@ func (srv *Server) handleState(c tele.Context) error {
 			zap.String("request_trace", reqTrace))
 
 		setToNone = true
+	case sm.StateSetLangLevel:
+		srv.log.Debug("Change language level",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		lvl := c.Message().Text
+		if err := srv.usrsrv.UpdLangLevel(c.Sender().ID, lvl, reqTrace); err != nil {
+			return fmt.Errorf("%s: update language level: %w", op, err)
+		}
+
+		if err := c.Send("Level updated"); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		srv.log.Debug("Successfully changed language level",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		setToNone = true
 	default:
 		setToNone = true
 	}

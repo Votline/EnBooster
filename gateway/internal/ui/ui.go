@@ -18,14 +18,17 @@ type UI struct {
 	UserSettings  *tele.ReplyMarkup
 }
 
-const AISystemPromptID = "\fai_system_prompt"
+const (
+	AISystemPromptID  = "\fai_system_prompt"
+	ChangeLangLevelID = "\fchange_lang_level"
+)
 
 // NewUI creates a new UI instance
 func NewUI() *UI {
 	usermain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile"})
 	usersettings := inlineMenu(1, []InlineBtn{
 		{"Set AI system prompt", AISystemPromptID[1:]},
-		{"Set language level", "lang_level"},
+		{"Set language level", ChangeLangLevelID[1:]},
 	})
 	adminmain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile", "Help"})
 	admincmds := replyMenu(2, []string{"tasks_add", "task_del", "words_add", "word_del"})

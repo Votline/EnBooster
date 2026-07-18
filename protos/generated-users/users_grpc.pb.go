@@ -22,6 +22,7 @@ const (
 	UsersService_RegUser_FullMethodName         = "/users.UsersService/RegUser"
 	UsersService_GetUser_FullMethodName         = "/users.UsersService/GetUser"
 	UsersService_UpdSystemPrompt_FullMethodName = "/users.UsersService/UpdSystemPrompt"
+	UsersService_UpdLangLevel_FullMethodName    = "/users.UsersService/UpdLangLevel"
 	UsersService_DelUser_FullMethodName         = "/users.UsersService/DelUser"
 )
 
@@ -32,6 +33,7 @@ type UsersServiceClient interface {
 	RegUser(ctx context.Context, in *RegReq, opts ...grpc.CallOption) (*RegRes, error)
 	GetUser(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetRes, error)
 	UpdSystemPrompt(ctx context.Context, in *UpdSystemPromptReq, opts ...grpc.CallOption) (*UpdSystemPromptRes, error)
+	UpdLangLevel(ctx context.Context, in *UpdLangLevelReq, opts ...grpc.CallOption) (*UpdLangLevelRes, error)
 	DelUser(ctx context.Context, in *DelReq, opts ...grpc.CallOption) (*DelRes, error)
 }
 
@@ -73,6 +75,16 @@ func (c *usersServiceClient) UpdSystemPrompt(ctx context.Context, in *UpdSystemP
 	return out, nil
 }
 
+func (c *usersServiceClient) UpdLangLevel(ctx context.Context, in *UpdLangLevelReq, opts ...grpc.CallOption) (*UpdLangLevelRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdLangLevelRes)
+	err := c.cc.Invoke(ctx, UsersService_UpdLangLevel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usersServiceClient) DelUser(ctx context.Context, in *DelReq, opts ...grpc.CallOption) (*DelRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DelRes)
@@ -90,6 +102,7 @@ type UsersServiceServer interface {
 	RegUser(context.Context, *RegReq) (*RegRes, error)
 	GetUser(context.Context, *GetReq) (*GetRes, error)
 	UpdSystemPrompt(context.Context, *UpdSystemPromptReq) (*UpdSystemPromptRes, error)
+	UpdLangLevel(context.Context, *UpdLangLevelReq) (*UpdLangLevelRes, error)
 	DelUser(context.Context, *DelReq) (*DelRes, error)
 	mustEmbedUnimplementedUsersServiceServer()
 }
@@ -109,6 +122,9 @@ func (UnimplementedUsersServiceServer) GetUser(context.Context, *GetReq) (*GetRe
 }
 func (UnimplementedUsersServiceServer) UpdSystemPrompt(context.Context, *UpdSystemPromptReq) (*UpdSystemPromptRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdSystemPrompt not implemented")
+}
+func (UnimplementedUsersServiceServer) UpdLangLevel(context.Context, *UpdLangLevelReq) (*UpdLangLevelRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdLangLevel not implemented")
 }
 func (UnimplementedUsersServiceServer) DelUser(context.Context, *DelReq) (*DelRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method DelUser not implemented")
@@ -188,6 +204,24 @@ func _UsersService_UpdSystemPrompt_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersService_UpdLangLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdLangLevelReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersServiceServer).UpdLangLevel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersService_UpdLangLevel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersServiceServer).UpdLangLevel(ctx, req.(*UpdLangLevelReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsersService_DelUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DelReq)
 	if err := dec(in); err != nil {
@@ -224,6 +258,10 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdSystemPrompt",
 			Handler:    _UsersService_UpdSystemPrompt_Handler,
+		},
+		{
+			MethodName: "UpdLangLevel",
+			Handler:    _UsersService_UpdLangLevel_Handler,
 		},
 		{
 			MethodName: "DelUser",

@@ -24,6 +24,13 @@ message UpdSystemPromptReq {
 }
 message UpdSystemPromptRes {}
 
+message UpdLangLevelReq {
+  int64  uuid = 1;
+  string level = 2;
+  string request_trace = 3;
+}
+message UpdLangLevelRes {}
+
 message DelReq {
   int64 uuid = 1;
   string request_trace = 2;
@@ -34,5 +41,6 @@ service UsersService {
   rpc RegUser (RegReq) returns (RegRes);
   rpc GetUser (GetReq) returns (GetRes);
   rpc UpdSystemPrompt (UpdSystemPromptReq) returns (UpdSystemPromptRes);
+  rpc UpdLangLevel (UpdLangLevelReq) returns (UpdLangLevelRes);
   rpc DelUser (DelReq) returns (DelRes);
 }

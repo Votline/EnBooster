@@ -301,6 +301,102 @@ func (*UpdSystemPromptRes) Descriptor() ([]byte, []int) {
 	return file_users_proto_rawDescGZIP(), []int{5}
 }
 
+type UpdLangLevelReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Level         string                 `protobuf:"bytes,2,opt,name=level,proto3" json:"level,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdLangLevelReq) Reset() {
+	*x = UpdLangLevelReq{}
+	mi := &file_users_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdLangLevelReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdLangLevelReq) ProtoMessage() {}
+
+func (x *UpdLangLevelReq) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdLangLevelReq.ProtoReflect.Descriptor instead.
+func (*UpdLangLevelReq) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UpdLangLevelReq) GetUuid() int64 {
+	if x != nil {
+		return x.Uuid
+	}
+	return 0
+}
+
+func (x *UpdLangLevelReq) GetLevel() string {
+	if x != nil {
+		return x.Level
+	}
+	return ""
+}
+
+func (x *UpdLangLevelReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
+}
+
+type UpdLangLevelRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdLangLevelRes) Reset() {
+	*x = UpdLangLevelRes{}
+	mi := &file_users_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdLangLevelRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdLangLevelRes) ProtoMessage() {}
+
+func (x *UpdLangLevelRes) ProtoReflect() protoreflect.Message {
+	mi := &file_users_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdLangLevelRes.ProtoReflect.Descriptor instead.
+func (*UpdLangLevelRes) Descriptor() ([]byte, []int) {
+	return file_users_proto_rawDescGZIP(), []int{7}
+}
+
 type DelReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
@@ -311,7 +407,7 @@ type DelReq struct {
 
 func (x *DelReq) Reset() {
 	*x = DelReq{}
-	mi := &file_users_proto_msgTypes[6]
+	mi := &file_users_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -323,7 +419,7 @@ func (x *DelReq) String() string {
 func (*DelReq) ProtoMessage() {}
 
 func (x *DelReq) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[6]
+	mi := &file_users_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -336,7 +432,7 @@ func (x *DelReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DelReq.ProtoReflect.Descriptor instead.
 func (*DelReq) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{6}
+	return file_users_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DelReq) GetUuid() int64 {
@@ -361,7 +457,7 @@ type DelRes struct {
 
 func (x *DelRes) Reset() {
 	*x = DelRes{}
-	mi := &file_users_proto_msgTypes[7]
+	mi := &file_users_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -373,7 +469,7 @@ func (x *DelRes) String() string {
 func (*DelRes) ProtoMessage() {}
 
 func (x *DelRes) ProtoReflect() protoreflect.Message {
-	mi := &file_users_proto_msgTypes[7]
+	mi := &file_users_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -386,7 +482,7 @@ func (x *DelRes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DelRes.ProtoReflect.Descriptor instead.
 func (*DelRes) Descriptor() ([]byte, []int) {
-	return file_users_proto_rawDescGZIP(), []int{7}
+	return file_users_proto_rawDescGZIP(), []int{9}
 }
 
 var File_users_proto protoreflect.FileDescriptor
@@ -407,15 +503,21 @@ const file_users_proto_rawDesc = "" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rsystem_prompt\x18\x02 \x01(\tR\fsystemPrompt\x12#\n" +
 	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\x14\n" +
-	"\x12UpdSystemPromptRes\"A\n" +
+	"\x12UpdSystemPromptRes\"`\n" +
+	"\x0fUpdLangLevelReq\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x14\n" +
+	"\x05level\x18\x02 \x01(\tR\x05level\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\x11\n" +
+	"\x0fUpdLangLevelRes\"A\n" +
 	"\x06DelReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
-	"\x06DelRes2\xd2\x01\n" +
+	"\x06DelRes2\x92\x02\n" +
 	"\fUsersService\x12'\n" +
 	"\aRegUser\x12\r.users.RegReq\x1a\r.users.RegRes\x12'\n" +
 	"\aGetUser\x12\r.users.GetReq\x1a\r.users.GetRes\x12G\n" +
-	"\x0fUpdSystemPrompt\x12\x19.users.UpdSystemPromptReq\x1a\x19.users.UpdSystemPromptRes\x12'\n" +
+	"\x0fUpdSystemPrompt\x12\x19.users.UpdSystemPromptReq\x1a\x19.users.UpdSystemPromptRes\x12>\n" +
+	"\fUpdLangLevel\x12\x16.users.UpdLangLevelReq\x1a\x16.users.UpdLangLevelRes\x12'\n" +
 	"\aDelUser\x12\r.users.DelReq\x1a\r.users.DelResB\x1fZ\x1dgenerated-users/;usersserviceb\x06proto3"
 
 var (
@@ -430,7 +532,7 @@ func file_users_proto_rawDescGZIP() []byte {
 	return file_users_proto_rawDescData
 }
 
-var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_users_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_users_proto_goTypes = []any{
 	(*RegReq)(nil),             // 0: users.RegReq
 	(*RegRes)(nil),             // 1: users.RegRes
@@ -438,20 +540,24 @@ var file_users_proto_goTypes = []any{
 	(*GetRes)(nil),             // 3: users.GetRes
 	(*UpdSystemPromptReq)(nil), // 4: users.UpdSystemPromptReq
 	(*UpdSystemPromptRes)(nil), // 5: users.UpdSystemPromptRes
-	(*DelReq)(nil),             // 6: users.DelReq
-	(*DelRes)(nil),             // 7: users.DelRes
+	(*UpdLangLevelReq)(nil),    // 6: users.UpdLangLevelReq
+	(*UpdLangLevelRes)(nil),    // 7: users.UpdLangLevelRes
+	(*DelReq)(nil),             // 8: users.DelReq
+	(*DelRes)(nil),             // 9: users.DelRes
 }
 var file_users_proto_depIdxs = []int32{
 	0, // 0: users.UsersService.RegUser:input_type -> users.RegReq
 	2, // 1: users.UsersService.GetUser:input_type -> users.GetReq
 	4, // 2: users.UsersService.UpdSystemPrompt:input_type -> users.UpdSystemPromptReq
-	6, // 3: users.UsersService.DelUser:input_type -> users.DelReq
-	1, // 4: users.UsersService.RegUser:output_type -> users.RegRes
-	3, // 5: users.UsersService.GetUser:output_type -> users.GetRes
-	5, // 6: users.UsersService.UpdSystemPrompt:output_type -> users.UpdSystemPromptRes
-	7, // 7: users.UsersService.DelUser:output_type -> users.DelRes
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
+	6, // 3: users.UsersService.UpdLangLevel:input_type -> users.UpdLangLevelReq
+	8, // 4: users.UsersService.DelUser:input_type -> users.DelReq
+	1, // 5: users.UsersService.RegUser:output_type -> users.RegRes
+	3, // 6: users.UsersService.GetUser:output_type -> users.GetRes
+	5, // 7: users.UsersService.UpdSystemPrompt:output_type -> users.UpdSystemPromptRes
+	7, // 8: users.UsersService.UpdLangLevel:output_type -> users.UpdLangLevelRes
+	9, // 9: users.UsersService.DelUser:output_type -> users.DelRes
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -468,7 +574,7 @@ func file_users_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_users_proto_rawDesc), len(file_users_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

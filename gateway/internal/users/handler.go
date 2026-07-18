@@ -138,6 +138,41 @@ func (us *UsersService) UpdSystemPrompt(uuid int64, sp, reqTrace string) error {
 	return nil
 }
 
+func (us *UsersService) UpdLangLevel(uuid int64, level string, reqTrace string) error {
+	const op = "users.UpdLangLevel"
+
+	us.log.Debug("Udp language level request",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("level", level),
+		zap.String("reqTrace", reqTrace))
+
+	if _, ok := us.langLevels[level]; !ok {
+		return fmt.Errorf("%s: invalid language level: %s", op, level)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), us.ctxTimeout*time.Second)
+	defer cancel()
+
+	if _, err := services.CallRPC(us.cb, func() (*pb.UpdLangLevelRes, error) {
+		return us.client.UpdLangLevel(ctx, &pb.UpdLangLevelReq{
+			Uuid:         uuid,
+			Level:        level,
+			RequestTrace: reqTrace,
+		})
+	}); err != nil {
+		return fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	us.log.Debug("Set language level successfully",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("level", level),
+		zap.String("reqTrace", reqTrace))
+
+	return nil
+}
+
 // DelUser deletes a user
 func (us *UsersService) DelUser(uuid int64, reqTrace string) error {
 	const op = "users.DelUser"

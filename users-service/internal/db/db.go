@@ -225,6 +225,34 @@ func (d *DB) UpdateSystemPrompt(ctx context.Context, uuid int64, sp, reqTrace st
 	return nil
 }
 
+func (d *DB) UpdateLangLevel(ctx context.Context, uuid int64, level string, reqTrace string) error {
+	const op = "db.UpdateLangLevel"
+
+	query, args, err := d.bd.Update("users").
+		Set("level", level).
+		Where(sq.Eq{"uuid": uuid}).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: build update query: %w", op, err)
+	}
+
+	d.log.Debug("UpdateLangLevel query",
+		zap.String("query", query),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	if _, err := d.db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("%s: update lang level: %w", op, err)
+	}
+
+	d.log.Debug("LangLevel succesfully updated",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return nil
+}
+
 // DelUser delete user from database
 func (d *DB) DelUser(uuid int64, ctx context.Context, reqTrace string) error {
 	const op = "db.DelUser"

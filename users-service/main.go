@@ -293,6 +293,34 @@ func (s *usersserver) UpdSystemPrompt(ctx context.Context, req *pb.UpdSystemProm
 	return &pb.UpdSystemPromptRes{}, nil
 }
 
+func (s *usersserver) UpdLangLevel(ctx context.Context, req *pb.UpdLangLevelReq) (*pb.UpdLangLevelRes, error) {
+	const op = "usersserver.UpdLangLevel"
+
+	uuid := req.GetUuid()
+	if uuid == 0 {
+		return nil, fmt.Errorf("%s: empty uuid", op)
+	}
+	reqTrace := req.GetRequestTrace()
+	level := req.GetLevel()
+
+	s.log.Debug("UpdLangLevel request",
+		zap.Int64("uuid", uuid),
+		zap.String("lang_level", level),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	if err := s.db.UpdateLangLevel(ctx, uuid, level, reqTrace); err != nil {
+		return nil, fmt.Errorf("%s: db update lang level: %w", op, err)
+	}
+
+	s.log.Debug("Successfully updated lang level",
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace),
+		zap.String("op", op))
+
+	return &pb.UpdLangLevelRes{}, nil
+}
+
 // DelUser delete user from database with uuid from request.
 func (s *usersserver) DelUser(ctx context.Context, req *pb.DelReq) (*pb.DelRes, error) {
 	const op = "usersserver.DelUser"
