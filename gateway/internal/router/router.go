@@ -156,7 +156,10 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 
 		switch msg.Text {
 		case "/start", "Profile":
-			srv.usrsrv.HandleRoutes(msg.Text, c)
+			if err := srv.usrsrv.HandleRoutes(msg.Text, c); err != nil {
+				srv.log.Error("Failed to handle state", zap.Error(err))
+				return fmt.Errorf("%s: handle state: %w", op, err)
+			}
 		case "Learning":
 			if err := srv.learningTask(c); err != nil {
 				srv.log.Error("Failed to handle learning task", zap.Error(err))

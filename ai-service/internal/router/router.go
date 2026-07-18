@@ -91,8 +91,11 @@ func (r Router) Generate(prompt, systemPrompt string, userContext []int, yield f
 	r.reqBody.Stream = true
 
 	r.reqBody.System = systemPrompt
-	if systemPrompt == "" || systemPrompt == "nop" {
+	switch systemPrompt {
+	case "default":
 		r.reqBody.System = r.defaulsp
+	case "nop":
+		r.reqBody.System = ""
 	}
 
 	jsonData, err := json.Marshal(r.reqBody)

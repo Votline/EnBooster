@@ -107,6 +107,11 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		c.Respond()
 		srv.log.Debug("Catch change ai system prompt event",
 			zap.String("op", op))
+
+		if err := c.Send("Write new system prompt. For default send 'default'", srv.uiInstns.UserMain); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
 		if err := srv.HandleRoutes(ui.AISystemPromptID, c); err != nil {
 			srv.log.Error("Handle change system prompt button",
 				zap.String("op", op),
@@ -137,11 +142,16 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 
 	switch msg {
 	case "/start":
-		if err := us.Register(userID, reqTrace); err != nil {
-			return fmt.Errorf("%s: register user: %w", op, err)
-		}
+		us.log.Debug("Catch start command",
+			zap.Int64("user_id", c.Message().Sender.ID),
+			zap.String("op", op))
+
 		if err := c.Send("Welcome to EnBooster!", menu); err != nil {
 			return fmt.Errorf("%s: send welcome message: %w", op, err)
+		}
+
+		if err := us.Register(userID, reqTrace); err != nil {
+			return fmt.Errorf("%s: register user: %w", op, err)
 		}
 	case "Profile":
 		uuid := c.Message().Sender.ID
