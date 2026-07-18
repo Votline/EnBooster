@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"enbstr/internal/cbreaker"
@@ -28,6 +29,7 @@ import (
 type UsersService struct {
 	name        string
 	adminUUID   int64
+	langLevels  map[string]struct{}
 	uiInstns    *ui.UI
 	sm          *stm.StateManager
 	ctxTimeout  time.Duration
@@ -90,9 +92,20 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		},
 	}
 
+	langLevels := make(map[string]struct{})
+	langLevelsStr := os.Getenv("LANG_LEVELS")
+	langLevelsSlc := strings.Split(langLevelsStr, " ")
+	for _, lvl := range langLevelsSlc {
+		if lvl == "" {
+			continue
+		}
+		langLevels[lvl] = struct{}{}
+	}
+
 	srv := &UsersService{
 		name:        "users",
 		adminUUID:   adminUUID,
+		langLevels:  langLevels,
 		uiInstns:    uiInstns,
 		sm:          sm,
 		ctxTimeout:  ctxTimeout,
@@ -103,27 +116,53 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		kafkaWriter: writer,
 	}
 
+	srv.registerRoutes(bot)
+
+	return srv, nil
+}
+
+func (us *UsersService) registerRoutes(bot *tele.Bot) {
+	const op = "users.registerRoutes"
+
 	bot.Handle(ui.AISystemPromptID, func(c tele.Context) error {
 		c.Respond()
-		srv.log.Debug("Catch change ai system prompt event",
+		us.log.Debug("Catch change ai system prompt event",
 			zap.String("op", op))
 
-		if err := c.Send("Write new system prompt. For default send 'default'", srv.uiInstns.UserMain); err != nil {
+		if err := c.Send("Write new system prompt. For default send 'default'", us.uiInstns.UserMain); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
 
-		if err := srv.HandleRoutes(ui.AISystemPromptID, c); err != nil {
-			srv.log.Error("Handle change system prompt button",
+		if err := us.HandleRoutes(ui.AISystemPromptID, c); err != nil {
+			us.log.Error("Handle change system prompt button",
 				zap.String("op", op),
 				zap.Error(err))
 			return fmt.Errorf("%s: Handle change system prompt: %w", op, err)
 		}
-		srv.log.Debug("Successfully changed state",
+		us.log.Debug("Successfully changed state",
 			zap.String("op", op))
 		return nil
 	})
 
-	return srv, nil
+	bot.Handle(ui.ChangeLangLevelID, func(c tele.Context) error {
+		c.Respond()
+		us.log.Debug("Catch change language level event",
+			zap.String("op", op))
+
+		if err := c.Send("Write new language level", us.uiInstns.UserMain); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		if err := us.HandleRoutes(ui.ChangeLangLevelID, c); err != nil {
+			us.log.Error("Handle change language level button",
+				zap.String("op", op),
+				zap.Error(err))
+			return fmt.Errorf("%s: Handle change language level: %w", op, err)
+		}
+		us.log.Debug("Successfully changed state",
+			zap.String("op", op))
+		return nil
+	})
 }
 
 // HandleRoutes handle user messages which intended for user-service
@@ -169,6 +208,11 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 		}
 	case ui.AISystemPromptID:
 		if err := us.sm.UpdUserStateCtx(c.Sender().ID, stm.StateSetSysPrompt); err != nil {
+			return fmt.Errorf("%s: update user state: %w", op, err)
+		}
+		return nil
+	case ui.ChangeLangLevelID:
+		if err := us.sm.UpdUserStateCtx(c.Sender().ID, stm.StateSetLangLevel); err != nil {
 			return fmt.Errorf("%s: update user state: %w", op, err)
 		}
 		return nil

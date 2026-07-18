@@ -25,6 +25,7 @@ const (
 	StateShiritori
 	StateChatting
 	StateSetSysPrompt
+	StateSetLangLevel
 )
 
 // StateManager is a struct that manages the state of the user
