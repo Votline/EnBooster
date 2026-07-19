@@ -14,10 +14,8 @@ message GenerateTextRes {
 }
 
 message GenerateAudioReq {
-  int64 uuid = 1;
-  string prompt = 2;
-  string system_prompt = 3;
-  string request_trace = 4;
+  string text = 1;
+  string request_trace = 2;
 }
 message GenerateAudioRes {
   string audio_data = 1;
