@@ -166,28 +166,30 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle learning task: %w", op, err)
 			}
-			return nil
 		case "Shiritori":
 			if err := srv.shiritori(c); err != nil {
 				srv.log.Error("Failed to handle shiritori", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle shiritori: %w", op, err)
 			}
-			return nil
 		case "Chatting":
 			if err := srv.chatting(c); err != nil {
 				srv.log.Error("Failed to handle chatting", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle chatting: %w", op, err)
 			}
-			return nil
+		case "TTS":
+			if err := srv.tts(c); err != nil {
+				srv.log.Error("Failed to handle chatting", zap.Error(err))
+				c.Send("Something went wrong. Try again later")
+				return fmt.Errorf("%s: handle chatting: %w", op, err)
+			}
 		default:
 			if err := srv.handleDefaultState(c); err != nil {
 				srv.log.Error("Failed to handle default state", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle default state: %w", op, err)
 			}
-			return nil
 		}
 		return nil
 	})
@@ -292,6 +294,21 @@ func (srv *Server) chatting(c tele.Context) error {
 			"To exit write '/stop'.",
 		srv.uiInstns.Stopmenu); err != nil {
 		return fmt.Errorf("%s: send message: %w", op, err)
+	}
+
+	return nil
+}
+
+// tts activates TTS mode.
+func (srv *Server) tts(c tele.Context) error {
+	const op = "router.tts"
+
+	if err := c.Send("TTS mode activated."); err != nil {
+		return fmt.Errorf("%s: send message: %w", op, err)
+	}
+
+	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateTTS, nil); err != nil {
+		return fmt.Errorf("%s: set state: %w", op, err)
 	}
 
 	return nil

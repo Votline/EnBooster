@@ -26,6 +26,7 @@ const (
 	StateChatting
 	StateSetSysPrompt
 	StateSetLangLevel
+	StateTTS
 )
 
 // StateManager is a struct that manages the state of the user

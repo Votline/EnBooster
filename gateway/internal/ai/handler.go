@@ -72,3 +72,27 @@ func (ai *AIService) GenerateText(uuid int64, prompt, sysPrompt, reqTrace string
 
 	return nil
 }
+
+func (ai *AIService) GenerateAudio(usrMsg, reqTrace string, yield func(res []byte)) error {
+	const op = "ai.GenerateAudio"
+
+	ai.log.Debug("Generate audio request",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	res, err := ai.client.GenerateAudio(context.Background(), &pb.GenerateAudioReq{
+		Text:         usrMsg,
+		RequestTrace: reqTrace,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	ai.log.Debug("Generate audio successfully",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	yield(res.AudioData)
+
+	return nil
+}

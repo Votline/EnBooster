@@ -18,7 +18,7 @@ message GenerateAudioReq {
   string request_trace = 2;
 }
 message GenerateAudioRes {
-  string audio_data = 1;
+  bytes audio_data = 1;
 }
 
 service AIService {

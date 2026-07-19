@@ -235,17 +235,6 @@ func (srv *Server) handleState(c tele.Context) error {
 			return nil
 		}
 
-		aiSes, err := srv.sm.GetUserCtx(c.Sender().ID)
-		if err != nil {
-			return fmt.Errorf("%s: get user state: %w", op, err)
-		}
-		var chatSes sm.ChattingSession
-		uctxData := unsafe.Slice(unsafe.StringData(aiSes.JSONData), len(aiSes.JSONData))
-		if err := json.Unmarshal(uctxData, &chatSes); err != nil {
-			return fmt.Errorf("%s: unmarshal: %w", op, err)
-		}
-		sysPrompt := chatSes.SystemPrompt
-
 		msg, err := c.Bot().Send(c.Recipient(), "AI is generating text...")
 		if err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
@@ -257,21 +246,74 @@ func (srv *Server) handleState(c tele.Context) error {
 
 		var lastUpdate time.Time
 		reqTrace := uuid.NewString()
-		if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, sysPrompt, reqTrace, func(res []byte) {
-			resBuf.Write(res)
+
+		if err := srv.generateText(c, usrMsg, reqTrace, func(text string) {
+			resBuf.WriteString(text)
 
 			if time.Since(lastUpdate) > updateInterval {
 				lastUpdate = time.Now()
 				if _, err := c.Bot().Edit(msg, resBuf.String()); err != nil {
 					srv.log.Error("Failed to edit message",
 						zap.String("op", op),
-						zap.String("reqTrace", reqTrace),
+						zap.String("request_trace", reqTrace),
 						zap.Error(err))
 				}
 			}
 		}); err != nil {
 			return fmt.Errorf("%s: generate text: %w", op, err)
 		}
+
+	case sm.StateTTS:
+		usrMsg := c.Message().Text
+		if usrMsg == "/stop" {
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+				return fmt.Errorf("%s: change state: %w", op, err)
+			}
+			if err := c.Send("Chatting mode stopped.", srv.uiInstns.UserMain); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		}
+
+		statusMsg, err := c.Bot().Send(c.Recipient(), "AI is generating audio...")
+		if err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		resBuf := aiTextPool.Get().(*bytes.Buffer)
+		resBuf.Reset()
+		defer aiTextPool.Put(resBuf)
+
+		if err := srv.generateText(c, usrMsg, reqTrace, func(text string) {
+			resBuf.WriteString(text)
+		}); err != nil {
+			return fmt.Errorf("%s: generate text: %w", op, err)
+		}
+
+		generatedText := resBuf.String()
+		resBuf.Reset()
+
+		if err := srv.aisrv.GenerateAudio(generatedText, reqTrace, func(audio []byte) {
+			resBuf.Write(audio)
+		}); err != nil {
+			return fmt.Errorf("%s: generate audio: %w", op, err)
+		}
+
+		voiceMsg := &tele.Voice{
+			File: tele.FromReader(bytes.NewReader(resBuf.Bytes())),
+		}
+
+		if err := c.Bot().Delete(statusMsg); err != nil {
+			srv.log.Error("Failed to delete message",
+				zap.String("op", op),
+				zap.String("request_trace", reqTrace),
+				zap.Error(err))
+		}
+
+		if err := c.Send(voiceMsg); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
 	case sm.StateSetSysPrompt:
 		srv.log.Debug("Change system prompt",
 			zap.String("op", op),
@@ -332,4 +374,31 @@ func (srv *Server) saveState(c tele.Context, shiritoriSes sm.ShiritoriSession) e
 		return fmt.Errorf("%s: marshal json: %w", op, err)
 	}
 	return srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, jsonData)
+}
+
+// generateText
+func (srv *Server) generateText(c tele.Context, usrMsg, reqTrace string, yield func(text string)) error {
+	const op = "router.user.generateText"
+
+	aiSes, err := srv.sm.GetUserCtx(c.Sender().ID)
+	if err != nil {
+		return fmt.Errorf("%s: get user state: %w", op, err)
+	}
+	var chatSes sm.ChattingSession
+	if len(aiSes.JSONData) > 0 {
+		uctxData := unsafe.Slice(unsafe.StringData(aiSes.JSONData), len(aiSes.JSONData))
+		if err := json.Unmarshal(uctxData, &chatSes); err != nil {
+			return fmt.Errorf("%s: unmarshal: %w", op, err)
+		}
+	}
+	sysPrompt := chatSes.SystemPrompt
+
+	if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, sysPrompt, reqTrace, func(res []byte) {
+		resStr := unsafe.String(unsafe.SliceData(res), len(res))
+		yield(resStr)
+	}); err != nil {
+		return fmt.Errorf("%s: generate text: %w", op, err)
+	}
+
+	return nil
 }

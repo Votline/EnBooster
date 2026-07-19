@@ -187,7 +187,7 @@ func (x *GenerateAudioReq) GetRequestTrace() string {
 
 type GenerateAudioRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	AudioData     string                 `protobuf:"bytes,1,opt,name=audio_data,json=audioData,proto3" json:"audio_data,omitempty"`
+	AudioData     []byte                 `protobuf:"bytes,1,opt,name=audio_data,json=audioData,proto3" json:"audio_data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,11 +222,11 @@ func (*GenerateAudioRes) Descriptor() ([]byte, []int) {
 	return file_ai_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GenerateAudioRes) GetAudioData() string {
+func (x *GenerateAudioRes) GetAudioData() []byte {
 	if x != nil {
 		return x.AudioData
 	}
-	return ""
+	return nil
 }
 
 var File_ai_proto protoreflect.FileDescriptor
@@ -246,7 +246,7 @@ const file_ai_proto_rawDesc = "" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"1\n" +
 	"\x10GenerateAudioRes\x12\x1d\n" +
 	"\n" +
-	"audio_data\x18\x01 \x01(\tR\taudioData2\x84\x01\n" +
+	"audio_data\x18\x01 \x01(\fR\taudioData2\x84\x01\n" +
 	"\tAIService\x12:\n" +
 	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextRes0\x01\x12;\n" +
 	"\rGenerateAudio\x12\x14.ai.GenerateAudioReq\x1a\x14.ai.GenerateAudioResB\x19Z\x17generated-ai/;aiserviceb\x06proto3"

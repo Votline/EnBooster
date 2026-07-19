@@ -3,5 +3,6 @@ gateway/ssl/
 users-service/ssl/
 learn-service/ssl/
 ai-service/ssl/
+ai-service/scripts
 kafka/
 k8s/env-configmaps.yaml
