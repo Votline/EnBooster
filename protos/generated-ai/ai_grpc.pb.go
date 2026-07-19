@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AIService_GenerateText_FullMethodName = "/ai.AIService/GenerateText"
+	AIService_GenerateText_FullMethodName  = "/ai.AIService/GenerateText"
+	AIService_GenerateAudio_FullMethodName = "/ai.AIService/GenerateAudio"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AIServiceClient interface {
 	GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GenerateTextRes], error)
+	GenerateAudio(ctx context.Context, in *GenerateAudioReq, opts ...grpc.CallOption) (*GenerateAudioRes, error)
 }
 
 type aIServiceClient struct {
@@ -56,11 +58,22 @@ func (c *aIServiceClient) GenerateText(ctx context.Context, in *GenerateTextReq,
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_GenerateTextClient = grpc.ServerStreamingClient[GenerateTextRes]
 
+func (c *aIServiceClient) GenerateAudio(ctx context.Context, in *GenerateAudioReq, opts ...grpc.CallOption) (*GenerateAudioRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateAudioRes)
+	err := c.cc.Invoke(ctx, AIService_GenerateAudio_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
 type AIServiceServer interface {
 	GenerateText(*GenerateTextReq, grpc.ServerStreamingServer[GenerateTextRes]) error
+	GenerateAudio(context.Context, *GenerateAudioReq) (*GenerateAudioRes, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -73,6 +86,9 @@ type UnimplementedAIServiceServer struct{}
 
 func (UnimplementedAIServiceServer) GenerateText(*GenerateTextReq, grpc.ServerStreamingServer[GenerateTextRes]) error {
 	return status.Error(codes.Unimplemented, "method GenerateText not implemented")
+}
+func (UnimplementedAIServiceServer) GenerateAudio(context.Context, *GenerateAudioReq) (*GenerateAudioRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateAudio not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -106,13 +122,36 @@ func _AIService_GenerateText_Handler(srv interface{}, stream grpc.ServerStream) 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_GenerateTextServer = grpc.ServerStreamingServer[GenerateTextRes]
 
+func _AIService_GenerateAudio_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateAudioReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).GenerateAudio(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_GenerateAudio_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).GenerateAudio(ctx, req.(*GenerateAudioReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AIService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ai.AIService",
 	HandlerType: (*AIServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GenerateAudio",
+			Handler:    _AIService_GenerateAudio_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GenerateText",
