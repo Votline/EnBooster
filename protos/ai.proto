@@ -25,5 +25,5 @@ message GenerateAudioRes {
 
 service AIService {
   rpc GenerateText (GenerateTextReq) returns (stream GenerateTextRes);
-  rpc GenerateAudio (GenerateAudioReq) returns (stream GenerateAudioRes);
+  rpc GenerateAudio (GenerateAudioReq) returns (GenerateAudioRes);
 }

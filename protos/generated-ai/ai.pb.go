@@ -264,10 +264,10 @@ const file_ai_proto_rawDesc = "" +
 	"\rrequest_trace\x18\x04 \x01(\tR\frequestTrace\"1\n" +
 	"\x10GenerateAudioRes\x12\x1d\n" +
 	"\n" +
-	"audio_data\x18\x01 \x01(\tR\taudioData2\x86\x01\n" +
+	"audio_data\x18\x01 \x01(\tR\taudioData2\x84\x01\n" +
 	"\tAIService\x12:\n" +
-	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextRes0\x01\x12=\n" +
-	"\rGenerateAudio\x12\x14.ai.GenerateAudioReq\x1a\x14.ai.GenerateAudioRes0\x01B\x19Z\x17generated-ai/;aiserviceb\x06proto3"
+	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextRes0\x01\x12;\n" +
+	"\rGenerateAudio\x12\x14.ai.GenerateAudioReq\x1a\x14.ai.GenerateAudioResB\x19Z\x17generated-ai/;aiserviceb\x06proto3"
 
 var (
 	file_ai_proto_rawDescOnce sync.Once
