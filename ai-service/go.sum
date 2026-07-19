@@ -6,6 +6,12 @@ github.com/Votline/EnBooster/protos v1.1.1 h1:LUdc0qHonXc5N+09LFWdtz5PnKA3clmmCb
 github.com/Votline/EnBooster/protos v1.1.1/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/Votline/EnBooster/protos v1.1.5 h1:uoatLNg27KtiAtMfYDAEC2cgnW8tonMzVfGCHayqHlM=
 github.com/Votline/EnBooster/protos v1.1.5/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
+github.com/Votline/EnBooster/protos v1.1.7 h1:vEWSDq80rGbO/UDLymf4uEEvBVlVfHJ9V4v5JEfxALo=
+github.com/Votline/EnBooster/protos v1.1.7/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
+github.com/Votline/EnBooster/protos v1.1.8 h1:L3KrNAXmQrgV7KJaeruUa89yHbMXX6i/Otv9eUIIneE=
+github.com/Votline/EnBooster/protos v1.1.8/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
+github.com/Votline/EnBooster/protos v1.1.9 h1:6BtzMLBK4VfE4mo4TuMmhHRa2Ee4kxyyFEMQNLf5aZY=
+github.com/Votline/EnBooster/protos v1.1.9/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

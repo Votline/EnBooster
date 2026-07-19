@@ -3,12 +3,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"unsafe"
 
 	"aisrv/internal/rdb"
 	"aisrv/internal/router"
@@ -30,6 +32,13 @@ type aiserver struct {
 var bufPool = sync.Pool{
 	New: func() any {
 		return bytes.NewBuffer(make([]byte, 0, 512))
+	},
+}
+
+var audioPool = sync.Pool{
+	New: func() any {
+		b := make([]byte, 0, 4096)
+		return &b
 	},
 }
 
@@ -118,7 +127,7 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 	resBuf.Reset()
 	defer bufPool.Put(resBuf)
 
-	newUctx, err := s.rt.Generate(prompt, sysprompt, uctx, func(text string) {
+	newUctx, err := s.rt.GenerateText(prompt, sysprompt, uctx, func(text string) {
 		resBuf.WriteString(text)
 
 		if resBuf.Len() > batchSizeThreehold {
@@ -154,4 +163,32 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 		zap.Int("user_context_length", len(newUctx)))
 
 	return nil
+}
+
+func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) (*pb.GenerateAudioRes, error) {
+	const op = "aiserver.GenerateAudio"
+
+	text := req.GetText()
+	reqTrace := req.GetRequestTrace()
+
+	s.log.Debug("Generate audio request received",
+		zap.String("op", op),
+		zap.Int("text_len", len(text)),
+		zap.String("request_trace", reqTrace))
+
+	audioBuf := audioPool.Get().(*[]byte)
+	defer audioPool.Put(audioBuf)
+
+	if err := s.rt.GenerateAudio(text, audioBuf, ctx); err != nil {
+		return nil, fmt.Errorf("%s: : %w", op, err)
+	}
+
+	s.log.Debug("Generate audio response sent",
+		zap.String("op", op),
+		zap.Int("audio_len", len(*audioBuf)),
+		zap.String("request_trace", reqTrace))
+
+	audioTxt := unsafe.String(unsafe.SliceData(*audioBuf), len(*audioBuf))
+
+	return &pb.GenerateAudioRes{AudioData: audioTxt}, nil
 }
