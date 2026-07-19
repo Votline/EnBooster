@@ -53,7 +53,7 @@ type textToText struct {
 
 type textToSpeech struct {
 	path string
-	args string
+	args []string
 }
 
 // Router contains all needed fields to call AI
@@ -79,7 +79,11 @@ func NewRouter() *Router {
 	pathTTS := os.Getenv("TTS_PATH")
 	modelTTS := os.Getenv("TTS_MODEL")
 	sampleRate := utils.GetEnvInt(os.Getenv("TTS_SAMPLE_RATE"), 16000)
-	args := " -p " + modelTTS + " -R " + strconv.Itoa(sampleRate) + " -o /dev/stdout"
+	args := []string{
+		"-p", modelTTS,
+		"-R", strconv.Itoa(sampleRate),
+		"-o", "/dev/stdout",
+	}
 
 	return &Router{
 		ttt: textToText{
@@ -172,18 +176,20 @@ func (r Router) GenerateText(prompt, systemPrompt string, userContext []int, yie
 func (r Router) GenerateAudio(text string, buf *[]byte, ctx context.Context) error {
 	const op = "router.GenerateAudio"
 
-	cmd := exec.CommandContext(ctx, r.tts.path, r.tts.args)
+	cmd := exec.CommandContext(ctx, r.tts.path, r.tts.args...)
 
 	cmd.Stdin = strings.NewReader(text)
 
 	var outBuf bytes.Buffer
+	var errBuf bytes.Buffer
 	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() != nil {
 			return fmt.Errorf("%s: context done: %w", op, ctx.Err())
 		}
-		return fmt.Errorf("%s: cmd.Run: %w", op, err)
+		return fmt.Errorf("%s: cmd.Run: %w, stderr: %s", op, err, errBuf.String())
 	}
 
 	*buf = outBuf.Bytes()

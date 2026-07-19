@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"unsafe"
 
 	"aisrv/internal/rdb"
 	"aisrv/internal/router"
@@ -188,7 +187,5 @@ func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) 
 		zap.Int("audio_len", len(*audioBuf)),
 		zap.String("request_trace", reqTrace))
 
-	audioTxt := unsafe.String(unsafe.SliceData(*audioBuf), len(*audioBuf))
-
-	return &pb.GenerateAudioRes{AudioData: audioTxt}, nil
+	return &pb.GenerateAudioRes{AudioData: *audioBuf}, nil
 }
