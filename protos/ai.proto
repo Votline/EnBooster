@@ -13,6 +13,17 @@ message GenerateTextRes {
   string text = 1;
 }
 
+message GenerateAudioReq {
+  int64 uuid = 1;
+  string prompt = 2;
+  string system_prompt = 3;
+  string request_trace = 4;
+}
+message GenerateAudioRes {
+  string audio_data = 1;
+}
+
 service AIService {
   rpc GenerateText (GenerateTextReq) returns (stream GenerateTextRes);
+  rpc GenerateAudio (GenerateAudioReq) returns (stream GenerateAudioRes);
 }
