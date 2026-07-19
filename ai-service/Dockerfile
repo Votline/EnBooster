@@ -14,7 +14,7 @@ WORKDIR /aiservice
 
 RUN pacman -Syu --noconfirm \
     rhvoice \
-    rhvoice-language-russian \
+    rhvoice-language-english \
     rhvoice-voice-anna \
     bash \
     && pacman -Scc --noconfirm
