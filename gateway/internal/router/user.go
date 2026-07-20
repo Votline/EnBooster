@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -269,7 +270,7 @@ func (srv *Server) handleState(c tele.Context) error {
 			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
 				return fmt.Errorf("%s: change state: %w", op, err)
 			}
-			if err := c.Send("Chatting mode stopped.", srv.uiInstns.UserMain); err != nil {
+			if err := c.Send("TTS mode stopped.", srv.uiInstns.UserMain); err != nil {
 				return fmt.Errorf("%s: bot send: %w", op, err)
 			}
 			return nil
@@ -313,6 +314,60 @@ func (srv *Server) handleState(c tele.Context) error {
 		if err := c.Send(voiceMsg, srv.uiInstns.TranscriptVoice); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
+	case sm.StateSTT:
+		voiceMsg := c.Message().Voice
+		if voiceMsg == nil {
+			usrMsg := c.Message().Text
+			if usrMsg == "/stop" {
+				if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+					return fmt.Errorf("%s: change state: %w", op, err)
+				}
+				if err := c.Send("STT mode stopped.", srv.uiInstns.UserMain); err != nil {
+					return fmt.Errorf("%s: bot send: %w", op, err)
+				}
+				return nil
+			} else {
+				return c.Send("Invalid voice message")
+			}
+		}
+
+		reader, err := c.Bot().File(&voiceMsg.File)
+		if err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		oggBytes, err := io.ReadAll(reader)
+		if err != nil {
+			return fmt.Errorf("%s: read ogg file: %w", op, err)
+		}
+
+		statusMsg, err := c.Bot().Send(c.Recipient(), "AI is recognizing audio...")
+		if err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		srv.log.Debug("Recognize audio request",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		var lastUpdate time.Time
+		if err := srv.aisrv.RecognizeAudio(oggBytes, reqTrace, func(text string) {
+			if time.Since(lastUpdate) > updateInterval {
+				lastUpdate = time.Now()
+				if _, err := c.Bot().Edit(statusMsg, text); err != nil {
+					srv.log.Error("Failed to edit message",
+						zap.String("op", op),
+						zap.String("request_trace", reqTrace),
+						zap.Error(err))
+				}
+			}
+		}); err != nil {
+			return fmt.Errorf("%s: generate text: %w", op, err)
+		}
+
+		srv.log.Debug("Recognize audio successfully",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
 
 	case sm.StateSetSysPrompt:
 		srv.log.Debug("Change system prompt",

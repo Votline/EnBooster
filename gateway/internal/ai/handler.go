@@ -96,3 +96,47 @@ func (ai *AIService) GenerateAudio(usrMsg, reqTrace string, yield func(res []byt
 
 	return nil
 }
+
+func (ai *AIService) RecognizeAudio(oggBytes []byte, reqTrace string, yield func(res string)) error {
+	const op = "ai.RecognizeAudio"
+
+	ai.log.Debug("Recognize audio request",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	stream, err := services.CallRPC(ai.cb, func() (pb.AIService_RecognizeAudioClient, error) {
+		return ai.client.RecognizeAudio(context.Background(), &pb.RecognizeAudioReq{
+			AudioData:    oggBytes,
+			RequestTrace: reqTrace,
+		})
+	})
+	if err != nil {
+		return fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	ai.log.Debug("Successfully connected to ai-service",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	for {
+		res, err := stream.Recv()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return fmt.Errorf("%s: stream recv: %w", op, err)
+		}
+
+		ai.log.Debug("Received response from ai-service",
+			zap.String("op", op),
+			zap.String("reqTrace", reqTrace))
+
+		yield(res.Text)
+	}
+
+	ai.log.Debug("Recognize audio successfully",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	return nil
+}
