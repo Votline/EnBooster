@@ -181,7 +181,13 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 			}
 		case "TTS":
 			if err := srv.tts(c); err != nil {
-				srv.log.Error("Failed to handle chatting", zap.Error(err))
+				srv.log.Error("Failed to handle tts", zap.Error(err))
+				c.Send("Something went wrong. Try again later")
+				return fmt.Errorf("%s: handle chatting: %w", op, err)
+			}
+		case "STT":
+			if err := srv.stt(c); err != nil {
+				srv.log.Error("Failed to handle stt", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle chatting: %w", op, err)
 			}
@@ -191,6 +197,15 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle default state: %w", op, err)
 			}
+		}
+		return nil
+	})
+
+	bot.Handle(tele.OnVoice, func(c tele.Context) error {
+		if err := srv.handleDefaultState(c); err != nil {
+			srv.log.Error("Failed to handle default state", zap.Error(err))
+			c.Send("Something went wrong. Try again later")
+			return fmt.Errorf("%s: handle default state: %w", op, err)
 		}
 		return nil
 	})
@@ -304,11 +319,26 @@ func (srv *Server) chatting(c tele.Context) error {
 func (srv *Server) tts(c tele.Context) error {
 	const op = "router.tts"
 
-	if err := c.Send("TTS mode activated."); err != nil {
+	if err := c.Send("TTS mode activated.", srv.uiInstns.Stopmenu); err != nil {
 		return fmt.Errorf("%s: send message: %w", op, err)
 	}
 
 	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateTTS, nil); err != nil {
+		return fmt.Errorf("%s: set state: %w", op, err)
+	}
+
+	return nil
+}
+
+// stt activates stt mode.
+func (srv *Server) stt(c tele.Context) error {
+	const op = "router.stt"
+
+	if err := c.Send("STT mode activated.", srv.uiInstns.Stopmenu); err != nil {
+		return fmt.Errorf("%s: send message: %w", op, err)
+	}
+
+	if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateSTT, nil); err != nil {
 		return fmt.Errorf("%s: set state: %w", op, err)
 	}
 

@@ -229,6 +229,102 @@ func (x *GenerateAudioRes) GetAudioData() []byte {
 	return nil
 }
 
+type RecognizeAudioReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AudioData     []byte                 `protobuf:"bytes,1,opt,name=audio_data,json=audioData,proto3" json:"audio_data,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecognizeAudioReq) Reset() {
+	*x = RecognizeAudioReq{}
+	mi := &file_ai_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecognizeAudioReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecognizeAudioReq) ProtoMessage() {}
+
+func (x *RecognizeAudioReq) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecognizeAudioReq.ProtoReflect.Descriptor instead.
+func (*RecognizeAudioReq) Descriptor() ([]byte, []int) {
+	return file_ai_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RecognizeAudioReq) GetAudioData() []byte {
+	if x != nil {
+		return x.AudioData
+	}
+	return nil
+}
+
+func (x *RecognizeAudioReq) GetRequestTrace() string {
+	if x != nil {
+		return x.RequestTrace
+	}
+	return ""
+}
+
+type RecognizeAudioRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecognizeAudioRes) Reset() {
+	*x = RecognizeAudioRes{}
+	mi := &file_ai_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecognizeAudioRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecognizeAudioRes) ProtoMessage() {}
+
+func (x *RecognizeAudioRes) ProtoReflect() protoreflect.Message {
+	mi := &file_ai_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecognizeAudioRes.ProtoReflect.Descriptor instead.
+func (*RecognizeAudioRes) Descriptor() ([]byte, []int) {
+	return file_ai_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *RecognizeAudioRes) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 var File_ai_proto protoreflect.FileDescriptor
 
 const file_ai_proto_rawDesc = "" +
@@ -246,10 +342,17 @@ const file_ai_proto_rawDesc = "" +
 	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"1\n" +
 	"\x10GenerateAudioRes\x12\x1d\n" +
 	"\n" +
-	"audio_data\x18\x01 \x01(\fR\taudioData2\x84\x01\n" +
+	"audio_data\x18\x01 \x01(\fR\taudioData\"W\n" +
+	"\x11RecognizeAudioReq\x12\x1d\n" +
+	"\n" +
+	"audio_data\x18\x01 \x01(\fR\taudioData\x12#\n" +
+	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"'\n" +
+	"\x11RecognizeAudioRes\x12\x12\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text2\xc6\x01\n" +
 	"\tAIService\x12:\n" +
 	"\fGenerateText\x12\x13.ai.GenerateTextReq\x1a\x13.ai.GenerateTextRes0\x01\x12;\n" +
-	"\rGenerateAudio\x12\x14.ai.GenerateAudioReq\x1a\x14.ai.GenerateAudioResB\x19Z\x17generated-ai/;aiserviceb\x06proto3"
+	"\rGenerateAudio\x12\x14.ai.GenerateAudioReq\x1a\x14.ai.GenerateAudioRes\x12@\n" +
+	"\x0eRecognizeAudio\x12\x15.ai.RecognizeAudioReq\x1a\x15.ai.RecognizeAudioRes0\x01B\x19Z\x17generated-ai/;aiserviceb\x06proto3"
 
 var (
 	file_ai_proto_rawDescOnce sync.Once
@@ -263,20 +366,24 @@ func file_ai_proto_rawDescGZIP() []byte {
 	return file_ai_proto_rawDescData
 }
 
-var file_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_ai_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_ai_proto_goTypes = []any{
-	(*GenerateTextReq)(nil),  // 0: ai.GenerateTextReq
-	(*GenerateTextRes)(nil),  // 1: ai.GenerateTextRes
-	(*GenerateAudioReq)(nil), // 2: ai.GenerateAudioReq
-	(*GenerateAudioRes)(nil), // 3: ai.GenerateAudioRes
+	(*GenerateTextReq)(nil),   // 0: ai.GenerateTextReq
+	(*GenerateTextRes)(nil),   // 1: ai.GenerateTextRes
+	(*GenerateAudioReq)(nil),  // 2: ai.GenerateAudioReq
+	(*GenerateAudioRes)(nil),  // 3: ai.GenerateAudioRes
+	(*RecognizeAudioReq)(nil), // 4: ai.RecognizeAudioReq
+	(*RecognizeAudioRes)(nil), // 5: ai.RecognizeAudioRes
 }
 var file_ai_proto_depIdxs = []int32{
 	0, // 0: ai.AIService.GenerateText:input_type -> ai.GenerateTextReq
 	2, // 1: ai.AIService.GenerateAudio:input_type -> ai.GenerateAudioReq
-	1, // 2: ai.AIService.GenerateText:output_type -> ai.GenerateTextRes
-	3, // 3: ai.AIService.GenerateAudio:output_type -> ai.GenerateAudioRes
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	4, // 2: ai.AIService.RecognizeAudio:input_type -> ai.RecognizeAudioReq
+	1, // 3: ai.AIService.GenerateText:output_type -> ai.GenerateTextRes
+	3, // 4: ai.AIService.GenerateAudio:output_type -> ai.GenerateAudioRes
+	5, // 5: ai.AIService.RecognizeAudio:output_type -> ai.RecognizeAudioRes
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -293,7 +400,7 @@ func file_ai_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_ai_proto_rawDesc), len(file_ai_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"sync"
 	"syscall"
+	"unsafe"
 
 	"aisrv/internal/rdb"
 	"aisrv/internal/router"
@@ -62,7 +64,10 @@ func main() {
 		log.Fatal("failed to connect to database", zap.Error(err))
 	}
 
-	rt := router.NewRouter()
+	rt, err := router.NewRouter()
+	if err != nil {
+		log.Fatal("failed to create router", zap.Error(err))
+	}
 
 	s := aiserver{rdb: rdb, rt: rt, log: log}
 	srv := grpc.NewServer(grpc.Creds(creds))
@@ -188,4 +193,70 @@ func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) 
 		zap.String("request_trace", reqTrace))
 
 	return &pb.GenerateAudioRes{AudioData: *audioBuf}, nil
+}
+
+func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService_RecognizeAudioServer) error {
+	const op = "aiserver.RecognizeAudio"
+
+	audioData := req.GetAudioData()
+	reqTrace := req.GetRequestTrace()
+
+	s.log.Debug("STT message request received",
+		zap.String("op", op),
+		zap.Int("audio_data_len", len(audioData)),
+		zap.String("request_trace", reqTrace))
+
+	pcm, err := decodeOggToPCM(audioData)
+	if err != nil {
+		return fmt.Errorf("%s: : %w", op, err)
+	}
+
+	if err := s.rt.RecognizeSpeech(pcm, func(delta string) {
+		if err := stream.Send(&pb.RecognizeAudioRes{Text: delta}); err != nil {
+			s.log.Error("failed to send response", zap.String("op", op), zap.Error(err))
+		}
+	}); err != nil {
+		return fmt.Errorf("%s: : %w", op, err)
+	}
+
+	return nil
+}
+
+func decodeOggToPCM(oggBytes []byte) ([]int16, error) {
+	if len(oggBytes) == 0 {
+		return nil, fmt.Errorf("empty audio data input")
+	}
+
+	cmd := exec.Command("ffmpeg",
+		"-hide_banner",
+		"-loglevel", "error",
+		"-i", "pipe:0",
+		"-f", "s16le",
+		"-ac", "1",
+		"-ar", "16000",
+		"pipe:1",
+	)
+
+	cmd.Stdin = bytes.NewReader(oggBytes)
+	var outBuf bytes.Buffer
+	var errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+
+	if err := cmd.Run(); err != nil {
+		return nil, fmt.Errorf("ffmpeg error: %w (stderr: %s)", err, errBuf.String())
+	}
+
+	pcmBytes := outBuf.Bytes()
+	if len(pcmBytes) == 0 {
+		return nil, fmt.Errorf("ffmpeg generated empty PCM stream")
+	}
+
+	if len(pcmBytes)%2 != 0 {
+		pcmBytes = pcmBytes[:len(pcmBytes)-1]
+	}
+
+	pcmI16 := unsafe.Slice((*int16)(unsafe.Pointer(&pcmBytes[0])), len(pcmBytes)/2)
+
+	return pcmI16, nil
 }

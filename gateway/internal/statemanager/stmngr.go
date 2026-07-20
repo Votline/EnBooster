@@ -27,6 +27,7 @@ const (
 	StateSetSysPrompt
 	StateSetLangLevel
 	StateTTS
+	StateSTT
 	StateTranscriptVoice
 )
 
