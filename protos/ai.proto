@@ -21,7 +21,16 @@ message GenerateAudioRes {
   bytes audio_data = 1;
 }
 
+message STTMessageReq {
+  bytes audio_data = 1;
+  string request_trace = 2;
+}
+message STTMessageRes {
+  string text = 1;
+}
+
 service AIService {
   rpc GenerateText (GenerateTextReq) returns (stream GenerateTextRes);
   rpc GenerateAudio (GenerateAudioReq) returns (GenerateAudioRes);
+  rpc STTMessage (STTMessageReq) returns (stream STTMessageRes);
 }

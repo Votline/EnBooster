@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	AIService_GenerateText_FullMethodName  = "/ai.AIService/GenerateText"
 	AIService_GenerateAudio_FullMethodName = "/ai.AIService/GenerateAudio"
+	AIService_STTMessage_FullMethodName    = "/ai.AIService/STTMessage"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -29,6 +30,7 @@ const (
 type AIServiceClient interface {
 	GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GenerateTextRes], error)
 	GenerateAudio(ctx context.Context, in *GenerateAudioReq, opts ...grpc.CallOption) (*GenerateAudioRes, error)
+	STTMessage(ctx context.Context, in *STTMessageReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[STTMessageRes], error)
 }
 
 type aIServiceClient struct {
@@ -68,12 +70,32 @@ func (c *aIServiceClient) GenerateAudio(ctx context.Context, in *GenerateAudioRe
 	return out, nil
 }
 
+func (c *aIServiceClient) STTMessage(ctx context.Context, in *STTMessageReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[STTMessageRes], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &AIService_ServiceDesc.Streams[1], AIService_STTMessage_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[STTMessageReq, STTMessageRes]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AIService_STTMessageClient = grpc.ServerStreamingClient[STTMessageRes]
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
 type AIServiceServer interface {
 	GenerateText(*GenerateTextReq, grpc.ServerStreamingServer[GenerateTextRes]) error
 	GenerateAudio(context.Context, *GenerateAudioReq) (*GenerateAudioRes, error)
+	STTMessage(*STTMessageReq, grpc.ServerStreamingServer[STTMessageRes]) error
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -89,6 +111,9 @@ func (UnimplementedAIServiceServer) GenerateText(*GenerateTextReq, grpc.ServerSt
 }
 func (UnimplementedAIServiceServer) GenerateAudio(context.Context, *GenerateAudioReq) (*GenerateAudioRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method GenerateAudio not implemented")
+}
+func (UnimplementedAIServiceServer) STTMessage(*STTMessageReq, grpc.ServerStreamingServer[STTMessageRes]) error {
+	return status.Error(codes.Unimplemented, "method STTMessage not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -140,6 +165,17 @@ func _AIService_GenerateAudio_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AIService_STTMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(STTMessageReq)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(AIServiceServer).STTMessage(m, &grpc.GenericServerStream[STTMessageReq, STTMessageRes]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type AIService_STTMessageServer = grpc.ServerStreamingServer[STTMessageRes]
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -156,6 +192,11 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "GenerateText",
 			Handler:       _AIService_GenerateText_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "STTMessage",
+			Handler:       _AIService_STTMessage_Handler,
 			ServerStreams: true,
 		},
 	},
