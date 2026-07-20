@@ -310,7 +310,7 @@ func (srv *Server) handleState(c tele.Context) error {
 				zap.Error(err))
 		}
 
-		if err := c.Send(voiceMsg); err != nil {
+		if err := c.Send(voiceMsg, srv.uiInstns.TranscriptVoice); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
 
@@ -376,7 +376,8 @@ func (srv *Server) saveState(c tele.Context, shiritoriSes sm.ShiritoriSession) e
 	return srv.sm.SetUserCtx(c.Sender().ID, sm.StateShiritori, jsonData)
 }
 
-// generateText
+// generateText generates a text message from the given user message and
+// yields the result to the given callback function.
 func (srv *Server) generateText(c tele.Context, usrMsg, reqTrace string, yield func(text string)) error {
 	const op = "router.user.generateText"
 
@@ -393,11 +394,26 @@ func (srv *Server) generateText(c tele.Context, usrMsg, reqTrace string, yield f
 	}
 	sysPrompt := chatSes.SystemPrompt
 
+	var builder strings.Builder
 	if err := srv.aisrv.GenerateText(c.Sender().ID, usrMsg, sysPrompt, reqTrace, func(res []byte) {
 		resStr := unsafe.String(unsafe.SliceData(res), len(res))
+		builder.WriteString(resStr)
 		yield(resStr)
+
+		srv.log.Debug("Save bot msg", zap.String("str", resStr))
 	}); err != nil {
 		return fmt.Errorf("%s: generate text: %w", op, err)
+	}
+
+	chatSes.LastMessage = builder.String()
+
+	jsonData, err := json.Marshal(chatSes)
+	if err != nil {
+		return fmt.Errorf("%s: marshal json: %w", op, err)
+	}
+
+	if err := srv.sm.UpdateUserDataCtx(c.Sender().ID, jsonData); err != nil {
+		return fmt.Errorf("%s: update user data: %w", op, err)
 	}
 
 	return nil

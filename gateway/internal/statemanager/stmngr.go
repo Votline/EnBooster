@@ -27,6 +27,7 @@ const (
 	StateSetSysPrompt
 	StateSetLangLevel
 	StateTTS
+	StateTranscriptVoice
 )
 
 // StateManager is a struct that manages the state of the user
@@ -56,6 +57,7 @@ type ShiritoriSession struct {
 
 type ChattingSession struct {
 	SystemPrompt string `json:"system_prompt"`
+	LastMessage  string `json:"last_message"`
 }
 
 // UserContext contains user state and additional data
@@ -177,6 +179,41 @@ func (sm *StateManager) UpdUserStateCtx(uuid int64, state int8) error {
 
 	if res == 0 {
 		return fmt.Errorf("%s: state was not updated", op)
+	}
+
+	return nil
+}
+
+var updateonlyjsondata = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) == 1 then
+    redis.call("HSET", KEYS[1], "json_data", ARGV[1])
+    redis.call("EXPIRE", KEYS[1], ARGV[2])
+    return 1
+else
+    redis.call("HSET", KEYS[1], "state", 0, "json_data", ARGV[1])
+    redis.call("EXPIRE", KEYS[1], ARGV[2])
+    return 2
+end
+`)
+
+// UpdateUserDataCtx updates the user data in redis
+func (sm *StateManager) UpdateUserDataCtx(uuid int64, jsonData []byte) error {
+	const op = "statemanager.UpdateUserDataCtx"
+
+	ctx, cancel := context.WithTimeout(context.Background(), sm.ctxTimeout*time.Second)
+	defer cancel()
+
+	key := "users:state" + strconv.FormatInt(uuid, 10)
+
+	ttlSeconds := int64((sm.stateTTL * time.Minute).Seconds())
+
+	res, err := updateonlyjsondata.Run(ctx, sm.rdb, []string{key}, jsonData, ttlSeconds).Result()
+	if err != nil {
+		return fmt.Errorf("%s: run script: %w", op, err)
+	}
+
+	if res == 0 {
+		return fmt.Errorf("%s: user data was not updated", op)
 	}
 
 	return nil
