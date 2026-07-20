@@ -127,7 +127,8 @@ func (srv *Server) setupServices() {
 	}
 	srv.lrnsrv = lrnsrv
 
-	airsrv, err := ai.NewAIS(aiTimeout, srv.uiInstns, srv.log)
+	airsrv, err := ai.NewAIS(aiTimeout, srv.sm,
+		srv.uiInstns, srv.b, srv.log)
 	if err != nil {
 		srv.log.Fatal("Failed to create ai service", zap.Error(err))
 	}

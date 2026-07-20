@@ -11,16 +11,18 @@ type InlineBtn struct {
 
 // UI contains all the keyboards for the bot
 type UI struct {
-	UserMain      *tele.ReplyMarkup
-	AdminMain     *tele.ReplyMarkup
-	AdminCommands *tele.ReplyMarkup
-	Stopmenu      *tele.ReplyMarkup
-	UserSettings  *tele.ReplyMarkup
+	UserMain        *tele.ReplyMarkup
+	AdminMain       *tele.ReplyMarkup
+	AdminCommands   *tele.ReplyMarkup
+	Stopmenu        *tele.ReplyMarkup
+	UserSettings    *tele.ReplyMarkup
+	TranscriptVoice *tele.ReplyMarkup
 }
 
 const (
 	AISystemPromptID  = "\fai_system_prompt"
 	ChangeLangLevelID = "\fchange_lang_level"
+	TranscriptVoiceID = "\ftranscript_voice"
 )
 
 // NewUI creates a new UI instance
@@ -30,15 +32,19 @@ func NewUI() *UI {
 		{"Set AI system prompt", AISystemPromptID[1:]},
 		{"Set language level", ChangeLangLevelID[1:]},
 	})
+	transcriptVoice := inlineMenu(1, []InlineBtn{
+		{"Transcript voice", TranscriptVoiceID[1:]},
+	})
 	adminmain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile", "Help"})
 	admincmds := replyMenu(2, []string{"tasks_add", "task_del", "words_add", "word_del"})
 	stopmenu := replyMenu(1, []string{"/stop"})
 	return &UI{
-		UserMain:      usermain,
-		UserSettings:  usersettings,
-		AdminMain:     adminmain,
-		AdminCommands: admincmds,
-		Stopmenu:      stopmenu,
+		UserMain:        usermain,
+		UserSettings:    usersettings,
+		AdminMain:       adminmain,
+		AdminCommands:   admincmds,
+		Stopmenu:        stopmenu,
+		TranscriptVoice: transcriptVoice,
 	}
 }
 
