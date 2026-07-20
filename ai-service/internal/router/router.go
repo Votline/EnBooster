@@ -15,8 +15,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 
 	"aisrv/internal/utils"
+
+	vosk "github.com/alphacep/vosk-api/go"
 )
 
 // option contains AI model options.
@@ -56,14 +59,33 @@ type textToSpeech struct {
 	args []string
 }
 
+type speechToText struct {
+	rec      *vosk.VoskRecognizer
+	start    int
+	estEnd   int
+	end      int
+	skipCnt  int
+	trashLen int
+	defLen   int
+}
+
 // Router contains all needed fields to call AI
 type Router struct {
 	timeout int
 	ttt     textToText
 	tts     textToSpeech
+	stt     speechToText
 }
 
-func NewRouter() *Router {
+const (
+	sttTrashLen = len(`"partial": "`)
+	sttDefLen   = 256
+	sttStep     = 3200
+)
+
+func NewRouter() (*Router, error) {
+	const op = "router.NewRouter"
+
 	model := os.Getenv("AI_MODEL")
 	system := os.Getenv("AI_SYSTEM")
 	timeout := utils.GetEnvInt(os.Getenv("AI_TIMEOUT"), 60) * int(time.Second)
@@ -84,6 +106,19 @@ func NewRouter() *Router {
 		"-R", strconv.Itoa(sampleRate),
 		"-o", "/dev/stdout",
 	}
+
+	sttPath := os.Getenv("STT_PATH")
+	sttSampleRate := utils.GetEnvInt(os.Getenv("STT_SAMPLE_RATE"), 16000)
+
+	sttModel, err := vosk.NewModel(sttPath)
+	if err != nil {
+		return nil, fmt.Errorf("%s: vosk.NewModel: %w", op, err)
+	}
+	rec, err := vosk.NewRecognizer(sttModel, float64(sttSampleRate))
+	if err != nil {
+		return nil, fmt.Errorf("%s: vosk.NewRecognizer: %w", op, err)
+	}
+	rec.SetMaxAlternatives(0)
 
 	return &Router{
 		ttt: textToText{
@@ -106,8 +141,13 @@ func NewRouter() *Router {
 			path: pathTTS,
 			args: args,
 		},
+		stt: speechToText{
+			rec:   rec,
+			start: 0,
+			end:   sttDefLen - sttTrashLen,
+		},
 		timeout: timeout,
-	}
+	}, nil
 }
 
 // GenerateText generates text from AI.
@@ -195,4 +235,156 @@ func (r Router) GenerateAudio(text string, buf *[]byte, ctx context.Context) err
 	*buf = outBuf.Bytes()
 
 	return nil
+}
+
+// RecognizeSpeech uses Vosk to recognize speech from PCM stream.
+func (r Router) RecognizeSpeech(pcmI16 []int16, yield func(delta string)) error {
+	const op = "router.RecognizeSpeech"
+
+	if len(pcmI16) == 0 {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	for i := 0; i < len(pcmI16); i += sttStep {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("%s: context done: %w", op, ctx.Err())
+		default:
+		}
+
+		endIdx := i + sttStep
+		endIdx = min(endIdx, len(pcmI16))
+
+		chunk := pcmI16[i:endIdx]
+
+		r.processChunk(chunk, func(delta []byte) {
+			deltaStr := unsafe.String(unsafe.SliceData(delta), len(delta))
+			yield(deltaStr)
+		})
+	}
+
+	finalJSON := r.stt.rec.FinalResult()
+	var trimmed []byte
+	if len(finalJSON) > 0 {
+		trimmed = []byte(finalJSON)
+		trimJSON(&trimmed, []byte(`"text" : "`))
+		if len(trimmed) > 0 && r.stt.start < len(trimmed) {
+			yield(string(trimmed[r.stt.start:]))
+		}
+	}
+
+	return nil
+}
+
+// processChunk uses window method to process chunk of PCM stream.
+// It makes a custom data stream with result from Vosk
+func (r Router) processChunk(chunkI16 []int16, yield func(delta []byte)) {
+	if len(chunkI16) == 0 {
+		return
+	}
+
+	bytesSamples := unsafe.Slice((*byte)(unsafe.Pointer(&chunkI16[0])), len(chunkI16)*2)
+
+	final := r.stt.rec.AcceptWaveform(bytesSamples)
+
+	var res string
+	var jsonPattern []byte
+
+	if final == 1 {
+		res = r.stt.rec.Result()
+		jsonPattern = []byte(`"text" : "`)
+	} else {
+		res = r.stt.rec.PartialResult()
+		jsonPattern = []byte(`"partial" : "`)
+	}
+
+	if len(res) == 0 {
+		return
+	}
+
+	trimmed := []byte(res)
+	trimJSON(&trimmed, jsonPattern)
+
+	if len(trimmed) == 0 {
+		return
+	}
+
+	if final == 1 {
+		if r.stt.start < len(trimmed) {
+			yield(trimmed[r.stt.start:])
+		}
+		r.stt.start = 0
+		r.stt.skipCnt = 0
+		return
+	}
+
+	if len(trimmed) < r.stt.start {
+		return
+	}
+
+	if r.stt.skipCnt >= 10 {
+		r.stt.skipCnt = 0
+
+		localEnd := bytes.IndexByte(trimmed[r.stt.estEnd:], ' ')
+		if localEnd == -1 {
+			localEnd = r.stt.estEnd
+		} else {
+			localEnd += r.stt.estEnd
+		}
+		r.stt.end = localEnd
+
+		if r.stt.start < r.stt.end {
+			yield(trimmed[r.stt.start:r.stt.end])
+		}
+
+		r.stt.start = r.stt.end
+		r.stt.estEnd = 0
+		r.stt.end = sttDefLen - sttTrashLen
+	} else if r.stt.skipCnt == 0 {
+		r.stt.skipCnt++
+		r.stt.estEnd = r.stt.end
+	} else {
+		r.stt.skipCnt++
+	}
+}
+
+// float32ToVosk converts float32 slice to bytes
+func float32ToVosk(pcm []float32, int16Samples []int16) {
+	if len(pcm) == 0 {
+		return
+	}
+
+	for i, f := range pcm {
+		if f > 1.0 {
+			f = 1.0
+		} else if f < -1.0 {
+			f = -1.0
+		}
+
+		int16Samples[i] = int16(f * 32767.0)
+	}
+}
+
+// trimJSON removes the pattern from the JSON
+// Used for removing "partial" : "" from the JSON
+func trimJSON(d *[]byte, pattern []byte) {
+	json := *d
+
+	start := bytes.Index(json, pattern)
+	if start == -1 {
+		return
+	}
+	start += len(pattern)
+
+	end := bytes.LastIndexByte(json[start:], '"')
+	if end == -1 {
+		*d = json[start:]
+		return
+	}
+	end += start
+
+	*d = json[start:end]
 }
