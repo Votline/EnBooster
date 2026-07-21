@@ -47,6 +47,7 @@ type aiResponse struct {
 	Context  []int  `json:"context"`
 }
 
+// textToText used for text to text.
 type textToText struct {
 	url      string
 	defaulsp string
@@ -54,11 +55,13 @@ type textToText struct {
 	reqBody  requestBody
 }
 
+// textToSpeech used for text to speech.
 type textToSpeech struct {
 	path string
 	args []string
 }
 
+// speechToText used for speech recognition.
 type speechToText struct {
 	rec      *vosk.VoskRecognizer
 	start    int
@@ -78,9 +81,11 @@ type Router struct {
 }
 
 const (
-	sttTrashLen = len(`"partial": "`)
-	sttDefLen   = 256
-	sttStep     = 3200
+	sttTrashLen    = len(`"partial": "`)
+	sttDefLen      = 256
+	sttStep        = 3200
+	patternFinal   = `"text" : "`
+	patternPartial = `"partial" : "`
 )
 
 func NewRouter() (*Router, error) {
@@ -151,7 +156,7 @@ func NewRouter() (*Router, error) {
 }
 
 // GenerateText generates text from AI.
-func (r Router) GenerateText(prompt, systemPrompt string, userContext []int, yield func(string)) ([]int, error) {
+func (r Router) GenerateText(prompt, systemPrompt string, userContext []int, buf *[]int, yield func(string)) error {
 	const op = "router.GenerateText"
 
 	r.ttt.reqBody.Prompt = prompt
@@ -168,7 +173,7 @@ func (r Router) GenerateText(prompt, systemPrompt string, userContext []int, yie
 
 	jsonData, err := json.Marshal(r.ttt.reqBody)
 	if err != nil {
-		return nil, fmt.Errorf("%s:json.Marshal: %w", op, err)
+		return fmt.Errorf("%s:json.Marshal: %w", op, err)
 	}
 	jsonReader := bytes.NewReader(jsonData)
 
@@ -177,18 +182,18 @@ func (r Router) GenerateText(prompt, systemPrompt string, userContext []int, yie
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.ttt.url, jsonReader)
 	if err != nil {
-		return nil, fmt.Errorf("%s: http.NewRequestWithContext: %w", op, err)
+		return fmt.Errorf("%s: http.NewRequestWithContext: %w", op, err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	res, err := r.ttt.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%s: client.Do: %w", op, err)
+		return fmt.Errorf("%s: client.Do: %w", op, err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s: bad status code: %d", op, res.StatusCode)
+		return fmt.Errorf("%s: bad status code: %d", op, res.StatusCode)
 	}
 
 	var lastContext []int
@@ -199,17 +204,19 @@ func (r Router) GenerateText(prompt, systemPrompt string, userContext []int, yie
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return nil, fmt.Errorf("%s: reader.ttt.ReadBytes: %w", op, err)
+			return fmt.Errorf("%s: reader.ttt.ReadBytes: %w", op, err)
 		}
 		aiRes := aiResponse{}
 		if err := json.Unmarshal(line, &aiRes); err != nil {
-			return nil, fmt.Errorf("%s: json.Unmarshal: %w", op, err)
+			return fmt.Errorf("%s: json.Unmarshal: %w", op, err)
 		}
 		lastContext = aiRes.Context
 		yield(aiRes.Response)
 	}
 
-	return lastContext, nil
+	*buf = lastContext
+
+	return nil
 }
 
 // GenerateAudio calls script to generate audio from text.
@@ -270,7 +277,7 @@ func (r Router) RecognizeSpeech(pcmI16 []int16, yield func(delta string)) error 
 	var trimmed []byte
 	if len(finalJSON) > 0 {
 		trimmed = []byte(finalJSON)
-		trimJSON(&trimmed, []byte(`"text" : "`))
+		trimJSON(&trimmed, patternFinal)
 		if len(trimmed) > 0 && r.stt.start < len(trimmed) {
 			yield(string(trimmed[r.stt.start:]))
 		}
@@ -291,21 +298,21 @@ func (r Router) processChunk(chunkI16 []int16, yield func(delta []byte)) {
 	final := r.stt.rec.AcceptWaveform(bytesSamples)
 
 	var res string
-	var jsonPattern []byte
+	jsonPattern := ""
 
 	if final == 1 {
 		res = r.stt.rec.Result()
-		jsonPattern = []byte(`"text" : "`)
+		jsonPattern = patternFinal
 	} else {
 		res = r.stt.rec.PartialResult()
-		jsonPattern = []byte(`"partial" : "`)
+		jsonPattern = patternPartial
 	}
 
 	if len(res) == 0 {
 		return
 	}
 
-	trimmed := []byte(res)
+	trimmed := unsafe.Slice(unsafe.StringData(res), len(res))
 	trimJSON(&trimmed, jsonPattern)
 
 	if len(trimmed) == 0 {
@@ -370,14 +377,16 @@ func float32ToVosk(pcm []float32, int16Samples []int16) {
 
 // trimJSON removes the pattern from the JSON
 // Used for removing "partial" : "" from the JSON
-func trimJSON(d *[]byte, pattern []byte) {
+func trimJSON(d *[]byte, patternStr string) {
 	json := *d
 
-	start := bytes.Index(json, pattern)
+	patternBytes := unsafe.Slice(unsafe.StringData(patternStr), len(patternStr))
+
+	start := bytes.Index(json, patternBytes)
 	if start == -1 {
 		return
 	}
-	start += len(pattern)
+	start += len(patternBytes)
 
 	end := bytes.LastIndexByte(json[start:], '"')
 	if end == -1 {
