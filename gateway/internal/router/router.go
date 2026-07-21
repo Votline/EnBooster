@@ -3,7 +3,6 @@ package router
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -174,20 +173,8 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 				return fmt.Errorf("%s: handle shiritori: %w", op, err)
 			}
 		case "Chatting":
-			if err := srv.chatting(c); err != nil {
+			if err := srv.aisrv.HandleRoutes(c.Message().Text, c); err != nil {
 				srv.log.Error("Failed to handle chatting", zap.Error(err))
-				c.Send("Something went wrong. Try again later")
-				return fmt.Errorf("%s: handle chatting: %w", op, err)
-			}
-		case "TTS":
-			if err := srv.tts(c); err != nil {
-				srv.log.Error("Failed to handle tts", zap.Error(err))
-				c.Send("Something went wrong. Try again later")
-				return fmt.Errorf("%s: handle chatting: %w", op, err)
-			}
-		case "STT":
-			if err := srv.stt(c); err != nil {
-				srv.log.Error("Failed to handle stt", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle chatting: %w", op, err)
 			}
@@ -276,43 +263,6 @@ func (srv *Server) shiritori(c tele.Context) error {
 		"Shiritori mode activated."+
 			"To exit push '/stop' button. \nWrite any word.",
 		srv.uiInstns.Stopmenu)
-}
-
-// chatting handles 'Chatting' command
-func (srv *Server) chatting(c tele.Context) error {
-	const op = "router.chatting"
-
-	userUUID := c.Sender().ID
-	reqtrace := uuid.NewString()
-	ud, err := srv.usrsrv.GetData(userUUID, reqtrace)
-	if err != nil {
-		return fmt.Errorf("%s: get user data: %w", op, err)
-	}
-
-	srv.log.Debug("Chatting mode activated",
-		zap.Int64("user_id", c.Sender().ID),
-		zap.String("reqtrace", reqtrace))
-
-	chattingSession := sm.ChattingSession{
-		SystemPrompt: ud.SystemPrompt,
-	}
-	jsonData, err := json.Marshal(chattingSession)
-	if err != nil {
-		return fmt.Errorf("%s: marshal chatting session: %w", op, err)
-	}
-
-	if err := srv.sm.SetUserCtx(userUUID, sm.StateChatting, jsonData); err != nil {
-		return fmt.Errorf("%s: set state: %w", op, err)
-	}
-
-	if err := c.Send(
-		"Chatting mode activated."+
-			"To exit write '/stop'.",
-		srv.uiInstns.Stopmenu); err != nil {
-		return fmt.Errorf("%s: send message: %w", op, err)
-	}
-
-	return nil
 }
 
 // tts activates TTS mode.

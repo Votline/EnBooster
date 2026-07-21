@@ -17,6 +17,7 @@ type UI struct {
 	Stopmenu        *tele.ReplyMarkup
 	UserSettings    *tele.ReplyMarkup
 	TranscriptVoice *tele.ReplyMarkup
+	AISettings      *tele.ReplyMarkup
 }
 
 const (
@@ -38,6 +39,7 @@ func NewUI() *UI {
 	adminmain := replyMenu(2, []string{"Learning", "Shiritori", "Chatting", "Profile", "Help"})
 	admincmds := replyMenu(2, []string{"tasks_add", "task_del", "words_add", "word_del"})
 	stopmenu := replyMenu(1, []string{"/stop"})
+	aisettings := replyMenu(2, []string{"Use TTS", "Use STT", "Use STT And TTS", "Use TTT"})
 	return &UI{
 		UserMain:        usermain,
 		UserSettings:    usersettings,
@@ -45,6 +47,7 @@ func NewUI() *UI {
 		AdminCommands:   admincmds,
 		Stopmenu:        stopmenu,
 		TranscriptVoice: transcriptVoice,
+		AISettings:      aisettings,
 	}
 }
 

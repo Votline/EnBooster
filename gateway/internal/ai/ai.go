@@ -144,7 +144,13 @@ func (ai *AIService) HandleRoutes(msg string, c tele.Context) error {
 		if err := c.Send(aiSes.LastMessage, ai.uiInstns.UserMain); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
-		return nil
+	case "Chatting":
+		if err := c.Send("Choose your way to use AI", ai.uiInstns.AISettings); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+		if err := ai.sm.UpdUserStateCtx(c.Sender().ID, stm.StateAiSetting); err != nil {
+			return fmt.Errorf("%s: upd user state: %w", op, err)
+		}
 	}
 
 	return nil

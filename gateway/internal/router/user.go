@@ -224,7 +224,7 @@ func (srv *Server) handleState(c tele.Context) error {
 		if err := c.Send(fmt.Sprintf("Word:\n%v", botWord)); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
-	case sm.StateChatting:
+	case sm.StateTTT:
 		usrMsg := c.Message().Text
 		if usrMsg == "/stop" {
 			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
@@ -265,95 +265,20 @@ func (srv *Server) handleState(c tele.Context) error {
 		}
 
 	case sm.StateTTS:
-		usrMsg := c.Message().Text
-		if usrMsg == "/stop" {
-			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
-				return fmt.Errorf("%s: change state: %w", op, err)
-			}
-			if err := c.Send("TTS mode stopped.", srv.uiInstns.UserMain); err != nil {
-				return fmt.Errorf("%s: bot send: %w", op, err)
-			}
-			return nil
-		}
-
-		statusMsg, err := c.Bot().Send(c.Recipient(), "AI is generating audio...")
-		if err != nil {
-			return fmt.Errorf("%s: bot send: %w", op, err)
-		}
-
-		resBuf := aiTextPool.Get().(*bytes.Buffer)
-		resBuf.Reset()
-		defer aiTextPool.Put(resBuf)
-
-		if err := srv.generateText(c, usrMsg, reqTrace, func(text string) {
-			resBuf.WriteString(text)
-		}); err != nil {
-			return fmt.Errorf("%s: generate text: %w", op, err)
-		}
-
-		generatedText := resBuf.String()
-		resBuf.Reset()
-
-		if err := srv.aisrv.GenerateAudio(generatedText, reqTrace, func(audio []byte) {
-			resBuf.Write(audio)
-		}); err != nil {
-			return fmt.Errorf("%s: generate audio: %w", op, err)
-		}
-
-		voiceMsg := &tele.Voice{
-			File: tele.FromReader(bytes.NewReader(resBuf.Bytes())),
-		}
-
-		if err := c.Bot().Delete(statusMsg); err != nil {
-			srv.log.Error("Failed to delete message",
-				zap.String("op", op),
-				zap.String("request_trace", reqTrace),
-				zap.Error(err))
-		}
-
-		if err := c.Send(voiceMsg, srv.uiInstns.TranscriptVoice); err != nil {
-			return fmt.Errorf("%s: bot send: %w", op, err)
+		if err := srv.handleTTS(c, c.Message().Text, "TTS mode stopped.", reqTrace); err != nil {
+			return fmt.Errorf("%s: handle tts: %w", op, err)
 		}
 	case sm.StateSTT:
-		voiceMsg := c.Message().Voice
-		if voiceMsg == nil {
-			usrMsg := c.Message().Text
-			if usrMsg == "/stop" {
-				if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
-					return fmt.Errorf("%s: change state: %w", op, err)
-				}
-				if err := c.Send("STT mode stopped.", srv.uiInstns.UserMain); err != nil {
-					return fmt.Errorf("%s: bot send: %w", op, err)
-				}
-				return nil
-			} else {
-				return c.Send("Invalid voice message")
-			}
-		}
-
-		reader, err := c.Bot().File(&voiceMsg.File)
-		if err != nil {
-			return fmt.Errorf("%s: bot send: %w", op, err)
-		}
-
-		oggBytes, err := io.ReadAll(reader)
-		if err != nil {
-			return fmt.Errorf("%s: read ogg file: %w", op, err)
-		}
-
 		statusMsg, err := c.Bot().Send(c.Recipient(), "AI is recognizing audio...")
 		if err != nil {
-			return fmt.Errorf("%s: bot send: %w", op, err)
+			return fmt.Errorf("%s: bot send status: %w", op, err)
 		}
 
-		srv.log.Debug("Recognize audio request",
-			zap.String("op", op),
-			zap.String("request_trace", reqTrace))
-
 		var lastUpdate time.Time
-		if err := srv.aisrv.RecognizeAudio(oggBytes, reqTrace, func(text string) {
+		if err := srv.handleVoice(c, "STT mode stopped.", reqTrace, func(text string) {
 			if time.Since(lastUpdate) > updateInterval {
 				lastUpdate = time.Now()
+
 				if _, err := c.Bot().Edit(statusMsg, text); err != nil {
 					srv.log.Error("Failed to edit message",
 						zap.String("op", op),
@@ -362,12 +287,36 @@ func (srv *Server) handleState(c tele.Context) error {
 				}
 			}
 		}); err != nil {
-			return fmt.Errorf("%s: generate text: %w", op, err)
+			return fmt.Errorf("%s: handle voice: %w", op, err)
+		}
+	case sm.StateSTTandTTS:
+		statusMsg, err := c.Bot().Send(c.Recipient(), "AI is recognizing audio...")
+		if err != nil {
+			return fmt.Errorf("%s: bot send status: %w", op, err)
 		}
 
-		srv.log.Debug("Recognize audio successfully",
-			zap.String("op", op),
-			zap.String("request_trace", reqTrace))
+		resBuf := aiTextPool.Get().(*bytes.Buffer)
+		resBuf.Reset()
+		defer aiTextPool.Put(resBuf)
+
+		if err := srv.handleVoice(c, "STT mode stopped.", reqTrace, func(text string) {
+			resBuf.WriteString(text)
+		}); err != nil {
+			return fmt.Errorf("%s: handle voice: %w", op, err)
+		}
+		recognizedText := resBuf.String()
+		resBuf.Reset()
+
+		if err := c.Bot().Delete(statusMsg); err != nil {
+			srv.log.Error("Failed to delete message",
+				zap.String("op", op),
+				zap.String("request_trace", reqTrace),
+				zap.Error(err))
+		}
+
+		if err := srv.handleTTS(c, recognizedText, "STT and TTS mode stopped.", reqTrace); err != nil {
+			return fmt.Errorf("%s: handle tts: %w", op, err)
+		}
 
 	case sm.StateSetSysPrompt:
 		srv.log.Debug("Change system prompt",
@@ -406,6 +355,33 @@ func (srv *Server) handleState(c tele.Context) error {
 			zap.String("request_trace", reqTrace))
 
 		setToNone = true
+	case sm.StateAiSetting:
+		srv.log.Debug("Change AI settings",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
+
+		usrMsg := c.Message().Text
+		var newState int8 = sm.StateNone
+		switch usrMsg {
+		case "Use TTS":
+			newState = sm.StateTTS
+		case "Use STT":
+			newState = sm.StateSTT
+		case "Use STT And TTS":
+			newState = sm.StateSTTandTTS
+		case "Use TTT":
+			newState = sm.StateTTT
+		}
+		if err := srv.sm.UpdUserStateCtx(c.Sender().ID, newState); err != nil {
+			return fmt.Errorf("%s: upd user state: %w", op, err)
+		}
+		if err := c.Send("AI settings updated"); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+
+		srv.log.Debug("Successfully changed AI settings",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace))
 	default:
 		setToNone = true
 	}
@@ -469,6 +445,119 @@ func (srv *Server) generateText(c tele.Context, usrMsg, reqTrace string, yield f
 
 	if err := srv.sm.UpdateUserDataCtx(c.Sender().ID, jsonData); err != nil {
 		return fmt.Errorf("%s: update user data: %w", op, err)
+	}
+
+	return nil
+}
+
+// handleVoice handles voice messages, call recognition service and yields
+// the result to the given callback function.
+func (srv *Server) handleVoice(c tele.Context, exitMsg, reqTrace string, yield func(text string)) error {
+	const op = "router.user.handleVoice"
+
+	voiceMsg := c.Message().Voice
+	if voiceMsg == nil {
+		usrMsg := c.Message().Text
+		if usrMsg == "/stop" {
+			if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+				return fmt.Errorf("%s: change state: %w", op, err)
+			}
+			if err := c.Send(exitMsg, srv.uiInstns.UserMain); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		} else {
+			if err := c.Send("Invalid voice message"); err != nil {
+				return fmt.Errorf("%s: bot send: %w", op, err)
+			}
+			return nil
+		}
+	}
+
+	reader, err := c.Bot().File(&voiceMsg.File)
+	if err != nil {
+		return fmt.Errorf("%s: bot send: %w", op, err)
+	}
+
+	oggBytes, err := io.ReadAll(reader)
+	if err != nil {
+		return fmt.Errorf("%s: read ogg file: %w", op, err)
+	}
+
+	srv.log.Debug("Recognize audio request",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	if err := srv.aisrv.RecognizeAudio(oggBytes, reqTrace, yield); err != nil {
+		return fmt.Errorf("%s: generate text: %w", op, err)
+	}
+
+	srv.log.Debug("Recognize audio successfully",
+		zap.String("op", op),
+		zap.String("request_trace", reqTrace))
+
+	return nil
+}
+
+// handleTTS handles TTS messages, call AI service and yields
+// the result to the given callback function.
+func (srv *Server) handleTTS(c tele.Context, usrMsg, exitMsg, reqTrace string) error {
+	const op = "router.user.handleTTS"
+
+	if usrMsg == "/stop" {
+		if err := srv.sm.SetUserCtx(c.Sender().ID, sm.StateNone, nil); err != nil {
+			return fmt.Errorf("%s: change state: %w", op, err)
+		}
+		if err := c.Send(exitMsg, srv.uiInstns.UserMain); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+		return nil
+	}
+
+	statusMsg, err := c.Bot().Send(c.Recipient(), "AI is generating text...")
+	if err != nil {
+		return fmt.Errorf("%s: bot send: %w", op, err)
+	}
+
+	resBuf := aiTextPool.Get().(*bytes.Buffer)
+	resBuf.Reset()
+	defer aiTextPool.Put(resBuf)
+
+	if err := srv.generateText(c, usrMsg, reqTrace, func(text string) {
+		resBuf.WriteString(text)
+	}); err != nil {
+		return fmt.Errorf("%s: generate text: %w", op, err)
+	}
+
+	generatedText := resBuf.String()
+	resBuf.Reset()
+
+	if _, err := c.Bot().Edit(statusMsg, "AI is generating audio..."); err != nil {
+		srv.log.Error("Failed to edit message",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace),
+			zap.Error(err))
+	}
+
+	if err := srv.aisrv.GenerateAudio(generatedText, reqTrace, func(audio []byte) {
+		resBuf.Write(audio)
+	}); err != nil {
+		return fmt.Errorf("%s: generate audio: %w", op, err)
+	}
+
+	voiceMsg := &tele.Voice{
+		File: tele.FromReader(bytes.NewReader(resBuf.Bytes())),
+	}
+
+	if err := c.Bot().Delete(statusMsg); err != nil {
+		srv.log.Error("Failed to delete message",
+			zap.String("op", op),
+			zap.String("request_trace", reqTrace),
+			zap.Error(err))
+	}
+
+	if err := c.Send(voiceMsg, srv.uiInstns.TranscriptVoice); err != nil {
+		return fmt.Errorf("%s: bot send: %w", op, err)
 	}
 
 	return nil
