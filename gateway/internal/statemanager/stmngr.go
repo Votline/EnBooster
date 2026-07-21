@@ -23,12 +23,14 @@ const (
 	StateTaskLearning
 	StateAdminNotCommand
 	StateShiritori
-	StateChatting
 	StateSetSysPrompt
 	StateSetLangLevel
 	StateTTS
 	StateSTT
+	StateTTT
+	StateSTTandTTS
 	StateTranscriptVoice
+	StateAiSetting
 )
 
 // StateManager is a struct that manages the state of the user
