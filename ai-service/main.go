@@ -43,6 +43,20 @@ var audioPool = sync.Pool{
 	},
 }
 
+var pcmPool = sync.Pool{
+	New: func() any {
+		b := make([]int16, 0, 4096)
+		return &b
+	},
+}
+
+var userCtxPool = sync.Pool{
+	New: func() any {
+		b := make([]int, 0, 512)
+		return &b
+	},
+}
+
 const batchSizeThreehold = 128
 
 func main() {
@@ -131,7 +145,10 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 	resBuf.Reset()
 	defer bufPool.Put(resBuf)
 
-	newUctx, err := s.rt.GenerateText(prompt, sysprompt, uctx, func(text string) {
+	newUctx := userCtxPool.Get().(*[]int)
+	defer userCtxPool.Put(newUctx)
+
+	if err := s.rt.GenerateText(prompt, sysprompt, uctx, newUctx, func(text string) {
 		resBuf.WriteString(text)
 
 		if resBuf.Len() > batchSizeThreehold {
@@ -140,8 +157,7 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 			}
 			resBuf.Reset()
 		}
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("%s: : %w", op, err)
 	}
 
@@ -157,14 +173,14 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 		zap.Int("res_length", resBuf.Len()),
 		zap.String("request_trace", reqTrace))
 
-	if err := s.rdb.SetUserContext(uuid, newUctx); err != nil {
+	if err := s.rdb.SetUserContext(uuid, *newUctx); err != nil {
 		return fmt.Errorf("%s: : %w", op, err)
 	}
 
 	s.log.Debug("User context updated",
 		zap.String("op", op),
 		zap.Int64("uuid", uuid),
-		zap.Int("user_context_length", len(newUctx)))
+		zap.Int("user_context_length", len(*newUctx)))
 
 	return nil
 }
@@ -206,12 +222,14 @@ func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService
 		zap.Int("audio_data_len", len(audioData)),
 		zap.String("request_trace", reqTrace))
 
-	pcm, err := decodeOggToPCM(audioData)
-	if err != nil {
+	pcm := pcmPool.Get().(*[]int16)
+	defer pcmPool.Put(pcm)
+
+	if err := decodeOggToPCM(audioData, pcm); err != nil {
 		return fmt.Errorf("%s: : %w", op, err)
 	}
 
-	if err := s.rt.RecognizeSpeech(pcm, func(delta string) {
+	if err := s.rt.RecognizeSpeech(*pcm, func(delta string) {
 		if err := stream.Send(&pb.RecognizeAudioRes{Text: delta}); err != nil {
 			s.log.Error("failed to send response", zap.String("op", op), zap.Error(err))
 		}
@@ -222,9 +240,10 @@ func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService
 	return nil
 }
 
-func decodeOggToPCM(oggBytes []byte) ([]int16, error) {
+// decodeOggToPCM decodes OGG audio data to PCM via ffmpeg.
+func decodeOggToPCM(oggBytes []byte, buf *[]int16) error {
 	if len(oggBytes) == 0 {
-		return nil, fmt.Errorf("empty audio data input")
+		return fmt.Errorf("empty audio data input")
 	}
 
 	cmd := exec.Command("ffmpeg",
@@ -233,7 +252,7 @@ func decodeOggToPCM(oggBytes []byte) ([]int16, error) {
 		"-i", "pipe:0",
 		"-f", "s16le",
 		"-ac", "1",
-		"-ar", "16000",
+		"-ar", os.Getenv("STT_SAMPLE_RATE"),
 		"pipe:1",
 	)
 
@@ -244,12 +263,12 @@ func decodeOggToPCM(oggBytes []byte) ([]int16, error) {
 	cmd.Stderr = &errBuf
 
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("ffmpeg error: %w (stderr: %s)", err, errBuf.String())
+		return fmt.Errorf("ffmpeg error: %w (stderr: %s)", err, errBuf.String())
 	}
 
 	pcmBytes := outBuf.Bytes()
 	if len(pcmBytes) == 0 {
-		return nil, fmt.Errorf("ffmpeg generated empty PCM stream")
+		return fmt.Errorf("ffmpeg generated empty PCM stream")
 	}
 
 	if len(pcmBytes)%2 != 0 {
@@ -257,6 +276,7 @@ func decodeOggToPCM(oggBytes []byte) ([]int16, error) {
 	}
 
 	pcmI16 := unsafe.Slice((*int16)(unsafe.Pointer(&pcmBytes[0])), len(pcmBytes)/2)
+	*buf = pcmI16
 
-	return pcmI16, nil
+	return nil
 }
