@@ -371,6 +371,8 @@ func (srv *Server) handleState(c tele.Context) error {
 			newState = sm.StateSTTandTTS
 		case "Use TTT":
 			newState = sm.StateTTT
+		default:
+			return fmt.Errorf("%s: invalid user message: %s", op, usrMsg)
 		}
 		if err := srv.sm.UpdUserStateCtx(c.Sender().ID, newState); err != nil {
 			return fmt.Errorf("%s: upd user state: %w", op, err)

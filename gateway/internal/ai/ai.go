@@ -110,6 +110,30 @@ func (ai *AIService) registerRoutes(bot *tele.Bot) {
 			zap.String("op", op))
 		return nil
 	})
+
+	bot.Handle(ui.ClearAIContextID, func(c tele.Context) error {
+		c.Respond()
+		reqTrace := uuid.NewString()
+		ai.log.Debug("Catch clear ai context event",
+			zap.String("op", op))
+
+		if err := ai.ClearAIContext(c.Sender().ID, reqTrace); err != nil {
+			ai.log.Error("Handle clear ai context button",
+				zap.String("op", op),
+				zap.Error(err))
+			c.Send("Something went wrong. Try again later")
+			return fmt.Errorf("%s: Handle clear ai context: %w", op, err)
+		}
+		ai.log.Debug("Successfully cleared ai context",
+			zap.String("op", op))
+
+		if err := c.Send("AI context cleared."+
+			"The context is cleared every 10 minutes",
+			ai.uiInstns.UserMain); err != nil {
+			return fmt.Errorf("%s: bot send: %w", op, err)
+		}
+		return nil
+	})
 }
 
 // HandleRoutes handle user messages which intended for ai-service
