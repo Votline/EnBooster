@@ -22,6 +22,7 @@ const (
 	AIService_GenerateText_FullMethodName   = "/ai.AIService/GenerateText"
 	AIService_GenerateAudio_FullMethodName  = "/ai.AIService/GenerateAudio"
 	AIService_RecognizeAudio_FullMethodName = "/ai.AIService/RecognizeAudio"
+	AIService_ClearAIContext_FullMethodName = "/ai.AIService/ClearAIContext"
 )
 
 // AIServiceClient is the client API for AIService service.
@@ -31,6 +32,7 @@ type AIServiceClient interface {
 	GenerateText(ctx context.Context, in *GenerateTextReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[GenerateTextRes], error)
 	GenerateAudio(ctx context.Context, in *GenerateAudioReq, opts ...grpc.CallOption) (*GenerateAudioRes, error)
 	RecognizeAudio(ctx context.Context, in *RecognizeAudioReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[RecognizeAudioRes], error)
+	ClearAIContext(ctx context.Context, in *ClearAIContextReq, opts ...grpc.CallOption) (*ClearAIContextRes, error)
 }
 
 type aIServiceClient struct {
@@ -89,6 +91,16 @@ func (c *aIServiceClient) RecognizeAudio(ctx context.Context, in *RecognizeAudio
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_RecognizeAudioClient = grpc.ServerStreamingClient[RecognizeAudioRes]
 
+func (c *aIServiceClient) ClearAIContext(ctx context.Context, in *ClearAIContextReq, opts ...grpc.CallOption) (*ClearAIContextRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClearAIContextRes)
+	err := c.cc.Invoke(ctx, AIService_ClearAIContext_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AIServiceServer is the server API for AIService service.
 // All implementations must embed UnimplementedAIServiceServer
 // for forward compatibility.
@@ -96,6 +108,7 @@ type AIServiceServer interface {
 	GenerateText(*GenerateTextReq, grpc.ServerStreamingServer[GenerateTextRes]) error
 	GenerateAudio(context.Context, *GenerateAudioReq) (*GenerateAudioRes, error)
 	RecognizeAudio(*RecognizeAudioReq, grpc.ServerStreamingServer[RecognizeAudioRes]) error
+	ClearAIContext(context.Context, *ClearAIContextReq) (*ClearAIContextRes, error)
 	mustEmbedUnimplementedAIServiceServer()
 }
 
@@ -114,6 +127,9 @@ func (UnimplementedAIServiceServer) GenerateAudio(context.Context, *GenerateAudi
 }
 func (UnimplementedAIServiceServer) RecognizeAudio(*RecognizeAudioReq, grpc.ServerStreamingServer[RecognizeAudioRes]) error {
 	return status.Error(codes.Unimplemented, "method RecognizeAudio not implemented")
+}
+func (UnimplementedAIServiceServer) ClearAIContext(context.Context, *ClearAIContextReq) (*ClearAIContextRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ClearAIContext not implemented")
 }
 func (UnimplementedAIServiceServer) mustEmbedUnimplementedAIServiceServer() {}
 func (UnimplementedAIServiceServer) testEmbeddedByValue()                   {}
@@ -176,6 +192,24 @@ func _AIService_RecognizeAudio_Handler(srv interface{}, stream grpc.ServerStream
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type AIService_RecognizeAudioServer = grpc.ServerStreamingServer[RecognizeAudioRes]
 
+func _AIService_ClearAIContext_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearAIContextReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AIServiceServer).ClearAIContext(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AIService_ClearAIContext_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AIServiceServer).ClearAIContext(ctx, req.(*ClearAIContextReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AIService_ServiceDesc is the grpc.ServiceDesc for AIService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -186,6 +220,10 @@ var AIService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateAudio",
 			Handler:    _AIService_GenerateAudio_Handler,
+		},
+		{
+			MethodName: "ClearAIContext",
+			Handler:    _AIService_ClearAIContext_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
