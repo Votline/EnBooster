@@ -175,16 +175,16 @@ func (srv *Server) handleMessages(bot *tele.Bot) {
 			}
 		case "Chatting":
 			if err := srv.aisrv.HandleRoutes(c.Message().Text, c); err != nil {
-				if strings.Contains(err.Error(), "ResourceExhausted") {
-					c.Send("No workerks available. Try again later")
-					return nil
-				}
 				srv.log.Error("Failed to handle chatting", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle chatting: %w", op, err)
 			}
 		default:
 			if err := srv.handleDefaultState(c); err != nil {
+				if strings.Contains(err.Error(), "ResourceExhausted") {
+					c.Send("No workerks available. Try again later")
+					return nil
+				}
 				srv.log.Error("Failed to handle default state", zap.Error(err))
 				c.Send("Something went wrong. Try again later")
 				return fmt.Errorf("%s: handle default state: %w", op, err)
