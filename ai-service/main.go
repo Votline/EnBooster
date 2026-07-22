@@ -10,23 +10,38 @@ import (
 	"os/exec"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"unsafe"
 
 	"aisrv/internal/rdb"
 	"aisrv/internal/router"
+	"aisrv/internal/utils"
 
 	pb "github.com/Votline/EnBooster/protos/generated-ai"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
+
+// workers contains number of workers for each task.
+type workers struct {
+	tttCnt   int32
+	ttsCnt   int32
+	sttCnt   int32
+	tttLimit int32
+	ttsLimit int32
+	sttLimit int32
+}
 
 // aiserver is the ai service implementation.
 type aiserver struct {
-	log *zap.Logger
-	rdb *rdb.RDB
-	rt  *router.Router
+	log  *zap.Logger
+	rdb  *rdb.RDB
+	rt   *router.Router
+	wrks *workers
 	pb.UnimplementedAIServiceServer
 }
 
@@ -83,7 +98,19 @@ func main() {
 		log.Fatal("failed to create router", zap.Error(err))
 	}
 
-	s := aiserver{rdb: rdb, rt: rt, log: log}
+	tttWorkersLimit := utils.GetEnvInt(os.Getenv("GENERATE_TEXT_WORKERS"), 5)
+	ttsWorkersLimit := utils.GetEnvInt(os.Getenv("GENERATE_AUDIO_WORKERS"), 5)
+	sttWorkersLimit := utils.GetEnvInt(os.Getenv("RECOGNIZE_AUDIO_WORKERS"), 5)
+	wrks := workers{
+		tttCnt:   0,
+		ttsCnt:   0,
+		sttCnt:   0,
+		tttLimit: int32(tttWorkersLimit),
+		ttsLimit: int32(ttsWorkersLimit),
+		sttLimit: int32(sttWorkersLimit),
+	}
+
+	s := aiserver{rdb: rdb, rt: rt, wrks: &wrks, log: log}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterAIServiceServer(srv, &s)
 
@@ -114,6 +141,11 @@ func gracefulShutdown(s *aiserver, srv *grpc.Server) {
 
 func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_GenerateTextServer) error {
 	const op = "aiserver.GenerateText"
+
+	defer atomic.AddInt32(&s.wrks.tttCnt, -1)
+	if atomic.AddInt32(&s.wrks.tttCnt, 1) > s.wrks.tttLimit {
+		return status.Error(codes.ResourceExhausted, "too many workers")
+	}
 
 	uuid := req.GetUuid()
 	prompt := req.GetPrompt()
@@ -188,6 +220,11 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) (*pb.GenerateAudioRes, error) {
 	const op = "aiserver.GenerateAudio"
 
+	defer atomic.AddInt32(&s.wrks.ttsCnt, -1)
+	if atomic.AddInt32(&s.wrks.ttsCnt, 1) > s.wrks.ttsLimit {
+		return nil, status.Error(codes.ResourceExhausted, "too many workers")
+	}
+
 	text := req.GetText()
 	reqTrace := req.GetRequestTrace()
 
@@ -214,6 +251,11 @@ func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) 
 func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService_RecognizeAudioServer) error {
 	const op = "aiserver.RecognizeAudio"
 
+	defer atomic.AddInt32(&s.wrks.sttCnt, -1)
+	if atomic.AddInt32(&s.wrks.sttCnt, 1) > s.wrks.sttLimit {
+		return status.Error(codes.ResourceExhausted, "too many workers")
+	}
+
 	audioData := req.GetAudioData()
 	reqTrace := req.GetRequestTrace()
 
@@ -226,6 +268,9 @@ func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService
 	defer pcmPool.Put(pcm)
 
 	if err := decodeOggToPCM(audioData, pcm); err != nil {
+		if err.Error() == "too many workers" {
+			return status.Error(codes.ResourceExhausted, err.Error())
+		}
 		return fmt.Errorf("%s: : %w", op, err)
 	}
 
