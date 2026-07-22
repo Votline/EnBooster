@@ -101,3 +101,18 @@ func (r *RDB) SetUserContext(uuid int64, uctx []int) error {
 
 	return nil
 }
+
+func (r *RDB) ClearAIContext(uuid int64) error {
+	const op = "rdb.ClearAIContext"
+
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	key := fmt.Sprintf("user_context:%d", uuid)
+
+	if err := r.rdb.Del(ctx, key).Err(); err != nil {
+		return fmt.Errorf("%s: redis del: %w", op, err)
+	}
+
+	return nil
+}

@@ -24,6 +24,7 @@ const (
 	AISystemPromptID  = "\fai_system_prompt"
 	ChangeLangLevelID = "\fchange_lang_level"
 	TranscriptVoiceID = "\ftranscript_voice"
+	ClearAIContextID  = "\fclear_ai_context"
 )
 
 // NewUI creates a new UI instance
@@ -32,6 +33,7 @@ func NewUI() *UI {
 	usersettings := inlineMenu(1, []InlineBtn{
 		{"Set AI system prompt", AISystemPromptID[1:]},
 		{"Set language level", ChangeLangLevelID[1:]},
+		{"Clear AI context", ClearAIContextID[1:]},
 	})
 	transcriptVoice := inlineMenu(1, []InlineBtn{
 		{"Transcript voice", TranscriptVoiceID[1:]},

@@ -80,9 +80,11 @@ func (ai *AIService) GenerateAudio(usrMsg, reqTrace string, yield func(res []byt
 		zap.String("op", op),
 		zap.String("reqTrace", reqTrace))
 
-	res, err := ai.client.GenerateAudio(context.Background(), &pb.GenerateAudioReq{
-		Text:         usrMsg,
-		RequestTrace: reqTrace,
+	res, err := services.CallRPC(ai.cb, func() (*pb.GenerateAudioRes, error) {
+		return ai.client.GenerateAudio(context.Background(), &pb.GenerateAudioReq{
+			Text:         usrMsg,
+			RequestTrace: reqTrace,
+		})
 	})
 	if err != nil {
 		return fmt.Errorf("%s: rpc call: %w", op, err)
@@ -135,6 +137,29 @@ func (ai *AIService) RecognizeAudio(oggBytes []byte, reqTrace string, yield func
 	}
 
 	ai.log.Debug("Recognize audio successfully",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	return nil
+}
+
+func (ai *AIService) ClearAIContext(uuid int64, reqTrace string) error {
+	const op = "ai.ClearAIContext"
+
+	ai.log.Debug("Clear ai context request",
+		zap.String("op", op),
+		zap.String("reqTrace", reqTrace))
+
+	if _, err := services.CallRPC(ai.cb, func() (*pb.ClearAIContextRes, error) {
+		return ai.client.ClearAIContext(context.Background(), &pb.ClearAIContextReq{
+			Uuid:         uuid,
+			RequestTrace: reqTrace,
+		})
+	}); err != nil {
+		return fmt.Errorf("%s: rpc call: %w", op, err)
+	}
+
+	ai.log.Debug("Clear ai context successfully",
 		zap.String("op", op),
 		zap.String("reqTrace", reqTrace))
 
