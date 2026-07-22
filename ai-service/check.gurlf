@@ -3,8 +3,9 @@ Target:localhost:50053
 Endpoint:ai.AIService/GenerateText
 Data:`
     {
-        "uuid": "{RANDOM oneof=int}",
-        "text": "hgf",
+        "uuid": {RANDOM oneof=int},
+        "prompt": "Hello",
+        "system_prompt": "",
         "request_trace": "{RANDOM oneof=uuid}"
     }
 `
@@ -13,6 +14,6 @@ ID:0
 Type:grpc
 Timeout:20s
 Certs:{VARIABLE key=cacrt ; default=../gateway/ssl/ca.crt}
-Response:{"text":"Well, here we go then! What’s the mess you've dragged us into this time? Just tell us what your character wants to do - as long as it involves a bit of chaos, things are usually worth talking about.  Let’s hear it!"}
+Response:InvokeRpc is for unary methods; "ai.AIService.GenerateText" is server-streaming
 [\grpc_config]
 
