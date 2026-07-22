@@ -18,6 +18,8 @@ github.com/Votline/EnBooster/protos v1.2.1 h1:vXmjod0UbZQ+S0HbXtzt18XhHgavbyGDof
 github.com/Votline/EnBooster/protos v1.2.1/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/Votline/EnBooster/protos v1.2.2 h1:mqu3e3R3U1aQiCzKn0bsk2svR5917wsWDqETEVQisdQ=
 github.com/Votline/EnBooster/protos v1.2.2/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
+github.com/Votline/EnBooster/protos v1.2.3 h1:1GROgj+QlDiKnP+CX9s1nvdPmGr0ME89HOemTCLU0Uc=
+github.com/Votline/EnBooster/protos v1.2.3/go.mod h1:SEdrv6X/Gj/3ghZkiCxRAvIwR0diDo3rj5c4Dd1JX4I=
 github.com/alphacep/vosk-api/go v0.3.50 h1:2vSN41RCU1WdHEqBrhKtTggfKL6Yu5Dmj+urVszwiuw=
 github.com/alphacep/vosk-api/go v0.3.50/go.mod h1:9X8IJsHnFk/b1xyvjlZifo+ZL5VTAx3LW+JQce/eRcA=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=

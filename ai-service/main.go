@@ -240,6 +240,29 @@ func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService
 	return nil
 }
 
+func (s *aiserver) ClearAIContext(ctx context.Context, req *pb.ClearAIContextReq) (*pb.ClearAIContextRes, error) {
+	const op = "aiserver.ClearAIContext"
+
+	uuid := req.GetUuid()
+	reqTrace := req.GetRequestTrace()
+
+	s.log.Debug("Clear AI context request received",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace))
+
+	if err := s.rdb.ClearAIContext(uuid); err != nil {
+		return nil, fmt.Errorf("%s: : %w", op, err)
+	}
+
+	s.log.Debug("Clear AI context response sent",
+		zap.String("op", op),
+		zap.Int64("uuid", uuid),
+		zap.String("request_trace", reqTrace))
+
+	return &pb.ClearAIContextRes{}, nil
+}
+
 // decodeOggToPCM decodes OGG audio data to PCM via ffmpeg.
 func decodeOggToPCM(oggBytes []byte, buf *[]int16) error {
 	if len(oggBytes) == 0 {
