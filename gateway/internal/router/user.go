@@ -432,7 +432,6 @@ func (srv *Server) generateText(c tele.Context, usrMsg, reqTrace string, yield f
 		resStr := unsafe.String(unsafe.SliceData(res), len(res))
 		builder.WriteString(resStr)
 		yield(resStr)
-
 		srv.log.Debug("Save bot msg", zap.String("str", resStr))
 	}); err != nil {
 		return fmt.Errorf("%s: generate text: %w", op, err)

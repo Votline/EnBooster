@@ -14,6 +14,8 @@ import (
 
 	pb "github.com/Votline/EnBooster/protos/generated-ai"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // GenerateText call ai-service Generate method
@@ -37,6 +39,9 @@ func (ai *AIService) GenerateText(uuid int64, prompt, sysPrompt, reqTrace string
 		})
 	})
 	if err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.ResourceExhausted {
+			return fmt.Errorf("ResourceExhausted")
+		}
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
@@ -87,6 +92,9 @@ func (ai *AIService) GenerateAudio(usrMsg, reqTrace string, yield func(res []byt
 		})
 	})
 	if err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.ResourceExhausted {
+			return fmt.Errorf("ResourceExhausted")
+		}
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
@@ -113,6 +121,9 @@ func (ai *AIService) RecognizeAudio(oggBytes []byte, reqTrace string, yield func
 		})
 	})
 	if err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.ResourceExhausted {
+			return fmt.Errorf("ResourceExhausted")
+		}
 		return fmt.Errorf("%s: rpc call: %w", op, err)
 	}
 
