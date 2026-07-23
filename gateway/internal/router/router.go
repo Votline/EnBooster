@@ -266,7 +266,7 @@ func (srv *Server) shiritori(c tele.Context) error {
 	}
 	return c.Send(
 		"Shiritori mode activated."+
-			"To exit push '/stop' button. \nWrite any word.",
+			" To exit push '/stop' button. \nWrite any word.",
 		srv.uiInstns.Stopmenu)
 }
 
@@ -309,10 +309,12 @@ func (srv *Server) handleDefaultState(c tele.Context) error {
 		return fmt.Errorf("%s: get user state: %w", op, err)
 	}
 	if c.Sender().ID == srv.adminUUID && usrctx.State != sm.StateAdminNotCommand {
-		if err := srv.handleAdmin(c); err != nil {
+		handled, err := srv.handleAdmin(c)
+		if err != nil && handled {
 			return fmt.Errorf("%s: handle admin: %w", op, err)
+		} else if handled {
+			return nil
 		}
-		return nil
 	}
 	if err := srv.handleState(c); err != nil {
 		return fmt.Errorf("%s: handle state: %w", op, err)

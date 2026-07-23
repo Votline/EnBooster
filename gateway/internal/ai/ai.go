@@ -128,7 +128,7 @@ func (ai *AIService) registerRoutes(bot *tele.Bot) {
 			zap.String("op", op))
 
 		if err := c.Send("AI context cleared."+
-			"The context is cleared every 10 minutes",
+			" The context is cleared every 10 minutes",
 			ai.uiInstns.UserMain); err != nil {
 			return fmt.Errorf("%s: bot send: %w", op, err)
 		}
