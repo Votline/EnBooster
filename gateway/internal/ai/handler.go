@@ -78,7 +78,7 @@ func (ai *AIService) GenerateText(uuid int64, prompt, sysPrompt, reqTrace string
 	return nil
 }
 
-func (ai *AIService) GenerateAudio(usrMsg, reqTrace string, yield func(res []byte)) error {
+func (ai *AIService) GenerateAudio(uuid int64, usrMsg, reqTrace string, yield func(res []byte)) error {
 	const op = "ai.GenerateAudio"
 
 	ai.log.Debug("Generate audio request",
@@ -107,7 +107,7 @@ func (ai *AIService) GenerateAudio(usrMsg, reqTrace string, yield func(res []byt
 	return nil
 }
 
-func (ai *AIService) RecognizeAudio(oggBytes []byte, reqTrace string, yield func(res string)) error {
+func (ai *AIService) RecognizeAudio(uuid int64, oggBytes []byte, reqTrace string, yield func(res string)) error {
 	const op = "ai.RecognizeAudio"
 
 	ai.log.Debug("Recognize audio request",

@@ -489,7 +489,7 @@ func (srv *Server) handleVoice(c tele.Context, exitMsg, reqTrace string, yield f
 		zap.String("op", op),
 		zap.String("request_trace", reqTrace))
 
-	if err := srv.aisrv.RecognizeAudio(oggBytes, reqTrace, yield); err != nil {
+	if err := srv.aisrv.RecognizeAudio(c.Sender().ID, oggBytes, reqTrace, yield); err != nil {
 		return fmt.Errorf("%s: generate text: %w", op, err)
 	}
 
@@ -540,7 +540,7 @@ func (srv *Server) handleTTS(c tele.Context, usrMsg, exitMsg, reqTrace string) e
 			zap.Error(err))
 	}
 
-	if err := srv.aisrv.GenerateAudio(generatedText, reqTrace, func(audio []byte) {
+	if err := srv.aisrv.GenerateAudio(c.Sender().ID, generatedText, reqTrace, func(audio []byte) {
 		resBuf.Write(audio)
 	}); err != nil {
 		return fmt.Errorf("%s: generate audio: %w", op, err)

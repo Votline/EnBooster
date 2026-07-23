@@ -14,16 +14,18 @@ message GenerateTextRes {
 }
 
 message GenerateAudioReq {
-  string text = 1;
-  string request_trace = 2;
+  int64 uuid = 1;
+  string text = 2;
+  string request_trace = 3;
 }
 message GenerateAudioRes {
   bytes audio_data = 1;
 }
 
 message RecognizeAudioReq {
-  bytes audio_data = 1;
-  string request_trace = 2;
+  int64 uuid = 1;
+  bytes audio_data = 2;
+  string request_trace = 3;
 }
 message RecognizeAudioRes {
   string text = 1;
