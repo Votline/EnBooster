@@ -38,10 +38,11 @@ type workers struct {
 
 // aiserver is the ai service implementation.
 type aiserver struct {
-	log  *zap.Logger
-	rdb  *rdb.RDB
-	rt   *router.Router
-	wrks *workers
+	adminUUID int64
+	log       *zap.Logger
+	rdb       *rdb.RDB
+	rt        *router.Router
+	wrks      *workers
 	pb.UnimplementedAIServiceServer
 }
 
@@ -109,8 +110,9 @@ func main() {
 		ttsLimit: int32(ttsWorkersLimit),
 		sttLimit: int32(sttWorkersLimit),
 	}
+	adminUUID := int64(utils.GetEnvInt(os.Getenv("ADMIN_UUID"), 0))
 
-	s := aiserver{rdb: rdb, rt: rt, wrks: &wrks, log: log}
+	s := aiserver{adminUUID: adminUUID, rdb: rdb, rt: rt, wrks: &wrks, log: log}
 	srv := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterAIServiceServer(srv, &s)
 
@@ -142,12 +144,13 @@ func gracefulShutdown(s *aiserver, srv *grpc.Server) {
 func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_GenerateTextServer) error {
 	const op = "aiserver.GenerateText"
 
+	uuid := req.GetUuid()
+
 	defer atomic.AddInt32(&s.wrks.tttCnt, -1)
-	if atomic.AddInt32(&s.wrks.tttCnt, 1) > s.wrks.tttLimit {
+	if atomic.AddInt32(&s.wrks.tttCnt, 1) > s.wrks.tttLimit && uuid != s.adminUUID {
 		return status.Error(codes.ResourceExhausted, "too many workers")
 	}
 
-	uuid := req.GetUuid()
 	prompt := req.GetPrompt()
 	sysprompt := req.GetSystemPrompt()
 	reqTrace := req.GetRequestTrace()
@@ -220,8 +223,10 @@ func (s *aiserver) GenerateText(req *pb.GenerateTextReq, stream pb.AIService_Gen
 func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) (*pb.GenerateAudioRes, error) {
 	const op = "aiserver.GenerateAudio"
 
+	uuid := req.GetUuid()
+
 	defer atomic.AddInt32(&s.wrks.ttsCnt, -1)
-	if atomic.AddInt32(&s.wrks.ttsCnt, 1) > s.wrks.ttsLimit {
+	if atomic.AddInt32(&s.wrks.ttsCnt, 1) > s.wrks.ttsLimit && uuid != s.adminUUID {
 		return nil, status.Error(codes.ResourceExhausted, "too many workers")
 	}
 
@@ -251,8 +256,10 @@ func (s *aiserver) GenerateAudio(ctx context.Context, req *pb.GenerateAudioReq) 
 func (s *aiserver) RecognizeAudio(req *pb.RecognizeAudioReq, stream pb.AIService_RecognizeAudioServer) error {
 	const op = "aiserver.RecognizeAudio"
 
+	uuid := req.GetUuid()
+
 	defer atomic.AddInt32(&s.wrks.sttCnt, -1)
-	if atomic.AddInt32(&s.wrks.sttCnt, 1) > s.wrks.sttLimit {
+	if atomic.AddInt32(&s.wrks.sttCnt, 1) > s.wrks.sttLimit && uuid != s.adminUUID {
 		return status.Error(codes.ResourceExhausted, "too many workers")
 	}
 
