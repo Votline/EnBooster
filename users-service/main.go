@@ -80,16 +80,10 @@ func main() {
 	}
 	defer pdb.Close()
 
-	kafkaTLS, err := getTLSConfig(os.Getenv("KAFKA_SERVER_NAME"), "ssl/kafka.crt")
-	if err != nil {
-		log.Fatal("failed to get TLS config", zap.Error(err))
-	}
-
 	ctxTimeout := time.Duration(db.GetEnvInt("CTX_TIMEOUT", 10))
 	dialer := &kafka.Dialer{
 		Timeout:   ctxTimeout * time.Second,
 		DualStack: true,
-		TLS:       kafkaTLS,
 	}
 
 	sesTimeout := time.Duration(db.GetEnvInt("KAFKA_SESSION_TIMEOUT", 6))
@@ -99,7 +93,7 @@ func main() {
 	kafkaAddr := os.Getenv("KAFKA_ADDR")
 	kafkaTopic := os.Getenv("KAFKA_TOPIC_GTW_US")
 
-	ensureTopics(kafkaAddr, kafkaTopic, kafkaTLS)
+	ensureTopics(kafkaAddr, kafkaTopic)
 
 	log.Debug("Kafka topics successfully created")
 
@@ -146,14 +140,11 @@ func main() {
 	gracefulShutdown(&s, srv)
 }
 
-func ensureTopics(kafkaAddr, kafkaTopic string, kafkaTLS *tls.Config) error {
+func ensureTopics(kafkaAddr, kafkaTopic string) error {
 	const op = "usersserver.ensureTopics"
 	client := &kafka.Client{
 		Addr:    kafka.TCP(kafkaAddr),
 		Timeout: 5 * time.Second,
-		Transport: &kafka.Transport{
-			TLS: kafkaTLS,
-		},
 	}
 
 	resp, err := client.CreateTopics(context.Background(), &kafka.CreateTopicsRequest{

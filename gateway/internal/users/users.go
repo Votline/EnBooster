@@ -77,19 +77,11 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		return nil, fmt.Errorf("%s: failed to create client: %w", op, err)
 	}
 
-	kafkaCert, err := getTLSConfig(os.Getenv("KAFKA_SERVER_NAME"), "ssl/kafka.crt")
-	if err != nil {
-		return nil, fmt.Errorf("%s: get certs: %w", op, err)
-	}
-
 	writer := &kafka.Writer{
 		Addr:     kafka.TCP(os.Getenv("KAFKA_ADDR")),
 		Topic:    os.Getenv("KAFKA_TOPIC_GTW_US"),
 		Balancer: &kafka.LeastBytes{},
 		Async:    true,
-		Transport: &kafka.Transport{
-			TLS: kafkaCert,
-		},
 	}
 
 	langLevels := make(map[string]struct{})
