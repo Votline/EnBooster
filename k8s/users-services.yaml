@@ -19,42 +19,20 @@ spec:
             - sh
             - -c
             - |
-              until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
-                    --command-config /etc/kafka-client/client.properties --list; do
-                echo "Kafka ещё не готова, жду..."
+              until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list; do
+                echo "Waiting for kafka"
                 sleep 2
               done
-              echo "Kafka готова"
-          volumeMounts:
-            - name: kafka-client-config
-              mountPath: /etc/kafka-client/client.properties
-              subPath: client.properties
-            - name: kafka-truststore
-              mountPath: /etc/kafka-client/kafka.truststore.p12
-              subPath: kafka.truststore.p12
+              echo "Kafka is done"
       containers:
-      - name: users-service
-        image: users-service:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 50051
-        envFrom:
-        - configMapRef:
-            name: users-config
-        volumeMounts:
-          - name: kafka-ca-cert
-            mountPath: /build/ssl/kafka.crt
-            subPath: kafka.crt
-      volumes:
-        - name: kafka-ca-cert
-          configMap:
-            name: kafka-ca-cert
-        - name: kafka-client-config
-          configMap:
-            name: kafka-client-config
-        - name: kafka-truststore
-          secret:
-            secretName: kafka-keystore
+        - name: users-service
+          image: users-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 50051
+          envFrom:
+            - configMapRef:
+                name: users-config
 ---
 apiVersion: v1
 kind: Service
