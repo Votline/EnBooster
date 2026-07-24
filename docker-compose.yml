@@ -70,6 +70,7 @@ services:
     volumes:
       - ./users-service/init.sql:/docker-entrypoint-initdb.d/1-users.sql:ro
       - ./learn-service/init.sql:/docker-entrypoint-initdb.d/2-learn.sql:ro
+      - pgdata:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -197,3 +198,6 @@ services:
       - /opt/ollama/models:/root/.ollama/models
     ports:
       - "${OLLAMA_PORT_OUT}:${OLLAMA_PORT}"
+
+volumes:
+  pgdata:
