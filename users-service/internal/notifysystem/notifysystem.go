@@ -38,7 +38,7 @@ func NewNS(db *db.DB, wrt *kafka.Writer, log *zap.Logger) *NotificationSystem {
 // every hour in a 'slots' var
 func (ns *NotificationSystem) Scheduler(ctx context.Context) {
 	const op = "usersserver.scheduler"
-	slots := []int{0, 12, 16, 18, 20, 22}
+	slots := []int{6, 9, 13, 15, 17, 19} // Moscow minus 3 (UTC)
 	chatIds := make([]int64, 0, 20)
 	msgs := make([]kafka.Message, 0, 20)
 	bufs := make([][]byte, 20)
@@ -48,7 +48,8 @@ func (ns *NotificationSystem) Scheduler(ctx context.Context) {
 		nextRun := getNextSlotTime(now, slots)
 		sleepDuration := time.Until(nextRun)
 		ns.log.Info("Next notification push",
-			zap.Int("at", nextRun.Hour()),
+			zap.Time("at", nextRun),
+			zap.Duration("sleep", sleepDuration),
 			zap.String("op", op))
 
 		timer := time.NewTimer(sleepDuration)
@@ -79,7 +80,7 @@ func getNextSlotTime(now time.Time, slots []int) time.Time {
 		}
 	}
 
-	tomorrow := now.Add(24 * time.Hour)
+	tomorrow := now.AddDate(0, 0, 1)
 	return time.Date(
 		tomorrow.Year(), tomorrow.Month(), tomorrow.Day(),
 		slots[0], 0, 0, 0, now.Location())

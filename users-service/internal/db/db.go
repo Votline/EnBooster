@@ -73,12 +73,12 @@ func (d *DB) Close() error {
 }
 
 // RegUser add user to database.
-func (d *DB) RegUser(uuid int64, ctx context.Context, reqTrace string) error {
+func (d *DB) RegUser(uuid, chatID int64, ctx context.Context, reqTrace string) error {
 	const op = "db.RegUser"
 
 	query, args, err := d.bd.Insert("users").
-		Columns("uuid").
-		Values(uuid).
+		Columns("uuid", "chat_id").
+		Values(uuid, chatID).
 		ToSql()
 	if err != nil {
 		return fmt.Errorf("%s: build insert query: %w", op, err)

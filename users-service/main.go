@@ -212,6 +212,7 @@ func gracefulShutdown(s *usersserver, srv *grpc.Server) {
 func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, error) {
 	const op = "usersserver.RegUser"
 	uuid := req.GetUuid()
+	chatID := req.GetChatId()
 	if uuid == 0 {
 		return nil, fmt.Errorf("%s: empty uuid", op)
 	}
@@ -222,7 +223,7 @@ func (s *usersserver) RegUser(ctx context.Context, req *pb.RegReq) (*pb.RegRes, 
 		zap.String("request_trace", reqTrace),
 		zap.String("op", op))
 
-	if err := s.db.RegUser(uuid, ctx, reqTrace); err != nil {
+	if err := s.db.RegUser(uuid, chatID, ctx, reqTrace); err != nil {
 		return nil, fmt.Errorf("%s: db insert user: %w", op, err)
 	}
 
