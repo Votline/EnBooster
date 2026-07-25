@@ -5,6 +5,7 @@ package users
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
+	tele "gopkg.in/telebot.v3"
 )
 
 // UserData is a struct that represents user data
@@ -350,4 +352,88 @@ func (us *UsersService) UpdateUserShiritoriCtx(
 	}
 
 	return isRepeat, notMatch, nil
+}
+
+// HandleNotifications is a background worker which
+// send notification messages to users
+func (us *UsersService) HandleNotifications(b *tele.Bot, ctx context.Context) error {
+	const op = "users.HandleNotifications"
+
+	us.log.Debug("Handler notification worker started",
+		zap.String("op", op))
+
+	chatIds := make([]int64, 0, 20)
+	msgsToCommit := make([]kafka.Message, 0, 20)
+
+	for {
+		select {
+		case <-ctx.Done():
+			us.log.Debug("Kafka consumer stopped gracefully",
+				zap.String("op", op))
+		default:
+		}
+
+		chatIds = chatIds[:0]
+		msgsToCommit = msgsToCommit[:0]
+
+		for len(chatIds) < cap(chatIds) {
+			loopCtx, cancel := context.WithTimeout(ctx, us.ctxTimeout*time.Second)
+
+			msg, err := us.kafkaReader.FetchMessage(loopCtx)
+			cancel()
+
+			if err != nil {
+				if errors.Is(err, context.Canceled) {
+					return nil
+				}
+				if strings.Contains(err.Error(), "Group Coordinator Not Available") {
+					time.Sleep(time.Second)
+					continue
+				}
+				if errors.Is(err, context.DeadlineExceeded) {
+					break
+				}
+				us.log.Error("Failed to read kafka message",
+					zap.Error(err),
+					zap.String("op", op))
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			id := atoi(msg.Value)
+			chatIds = append(chatIds, id)
+			msgsToCommit = append(msgsToCommit, msg)
+		}
+
+		if len(chatIds) == 0 {
+			continue
+		}
+
+		for _, chatID := range chatIds {
+			if _, err := b.Send(tele.ChatID(chatID), "DO THE FUCKING TASK"); err != nil {
+				us.log.Error("Failed to send message",
+					zap.String("op", op),
+					zap.Error(err))
+			}
+		}
+
+		if err := us.kafkaReader.CommitMessages(ctx, msgsToCommit...); err != nil {
+			us.log.Error("Failed to commit messages",
+				zap.String("op", op),
+				zap.Error(err))
+		}
+	}
+}
+
+// atoi converts a byte to in64 with zero alloc
+func atoi(b []byte) int64 {
+	var n int64
+	for _, ch := range b {
+		if ch < '0' || ch > '9' {
+			break
+		}
+		n = n*10 + int64(ch-'0')
+	}
+
+	return n
 }
