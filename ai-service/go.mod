@@ -3,7 +3,7 @@ module aisrv
 go 1.26.3
 
 require (
-	github.com/Votline/EnBooster/protos v1.2.5
+	github.com/Votline/EnBooster/protos v1.2.6
 	github.com/go-redis/redis/v8 v8.11.5
 	go.uber.org/zap v1.28.0
 	google.golang.org/grpc v1.82.0
