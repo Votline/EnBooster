@@ -5,7 +5,8 @@ option go_package="generated-users/;usersservice";
 
 message RegReq {
   int64 uuid = 1;
-  string request_trace = 2;
+  int64 chat_id = 2;
+  string request_trace = 3;
 }
 message RegRes {}
 

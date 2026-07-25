@@ -24,7 +24,8 @@ const (
 type RegReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          int64                  `protobuf:"varint,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	RequestTrace  string                 `protobuf:"bytes,2,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
+	ChatId        int64                  `protobuf:"varint,2,opt,name=chat_id,json=chatId,proto3" json:"chat_id,omitempty"`
+	RequestTrace  string                 `protobuf:"bytes,3,opt,name=request_trace,json=requestTrace,proto3" json:"request_trace,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,6 +63,13 @@ func (*RegReq) Descriptor() ([]byte, []int) {
 func (x *RegReq) GetUuid() int64 {
 	if x != nil {
 		return x.Uuid
+	}
+	return 0
+}
+
+func (x *RegReq) GetChatId() int64 {
+	if x != nil {
+		return x.ChatId
 	}
 	return 0
 }
@@ -489,10 +497,11 @@ var File_users_proto protoreflect.FileDescriptor
 
 const file_users_proto_rawDesc = "" +
 	"\n" +
-	"\vusers.proto\x12\x05users\"A\n" +
+	"\vusers.proto\x12\x05users\"Z\n" +
 	"\x06RegReq\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
-	"\rrequest_trace\x18\x02 \x01(\tR\frequestTrace\"\b\n" +
+	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12\x17\n" +
+	"\achat_id\x18\x02 \x01(\x03R\x06chatId\x12#\n" +
+	"\rrequest_trace\x18\x03 \x01(\tR\frequestTrace\"\b\n" +
 	"\x06RegRes\"A\n" +
 	"\x06GetReq\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\x03R\x04uuid\x12#\n" +
