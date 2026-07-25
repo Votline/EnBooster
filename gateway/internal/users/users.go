@@ -172,6 +172,7 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 	const op = "users.RegisterRoutes"
 
 	userID := c.Message().Sender.ID
+	chatID := c.Message().Chat.ID
 	var menu *tele.ReplyMarkup
 	if userID == us.adminUUID {
 		menu = us.uiInstns.AdminMain
@@ -191,7 +192,7 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 			return fmt.Errorf("%s: send welcome message: %w", op, err)
 		}
 
-		if err := us.Register(userID, reqTrace); err != nil {
+		if err := us.Register(userID, chatID, reqTrace); err != nil {
 			return fmt.Errorf("%s: register user: %w", op, err)
 		}
 	case "Profile":

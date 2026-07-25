@@ -44,7 +44,7 @@ type UserAnswer struct {
 }
 
 // Register registers a new user
-func (us *UsersService) Register(uuid int64, reqTrace string) error {
+func (us *UsersService) Register(uuid, chatID int64, reqTrace string) error {
 	const op = "users.Register"
 
 	us.log.Debug("Register user request",
@@ -58,6 +58,7 @@ func (us *UsersService) Register(uuid int64, reqTrace string) error {
 	if _, err := services.CallRPC(us.cb, func() (*pb.RegRes, error) {
 		return us.client.RegUser(ctx, &pb.RegReq{
 			Uuid:         uuid,
+			ChatId:       chatID,
 			RequestTrace: reqTrace,
 		})
 	}); err != nil {
