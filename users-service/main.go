@@ -17,6 +17,7 @@ import (
 	"unsafe"
 
 	"users/internal/db"
+	"users/internal/notifysystem"
 
 	pb "github.com/Votline/EnBooster/protos/generated-users"
 	"github.com/segmentio/kafka-go"
@@ -91,15 +92,16 @@ func main() {
 	maxWait := time.Duration(db.GetEnvInt("KAFKA_MAX_WAIT", 100))
 
 	kafkaAddr := os.Getenv("KAFKA_ADDR")
-	kafkaTopic := os.Getenv("KAFKA_TOPIC_GTW_US")
+	kafkaGatewayToUS := os.Getenv("KAFKA_TOPIC_GTW_US")
+	kafkaUSToGateway := os.Getenv("KAFKA_TOPIC_US_GTW")
 
-	ensureTopics(kafkaAddr, kafkaTopic)
+	ensureTopics(kafkaAddr, kafkaGatewayToUS, kafkaUSToGateway)
 
 	log.Debug("Kafka topics successfully created")
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  []string{kafkaAddr},
-		Topic:    kafkaTopic,
+		Topic:    kafkaGatewayToUS,
 		GroupID:  os.Getenv("KAFKA_GROUP_ID"),
 		MinBytes: db.GetEnvInt("KAFKA_MIN_BYTES", 1),
 		MaxBytes: db.GetEnvInt("KAFKA_MAX_BYTES", 10e6),
@@ -113,6 +115,16 @@ func main() {
 		WatchPartitionChanges: true,
 	})
 	defer reader.Close()
+
+	writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:      []string{kafkaAddr},
+		Topic:        kafkaUSToGateway,
+		Balancer:     &kafka.LeastBytes{},
+		MaxAttempts:  5,
+		RequiredAcks: int(kafka.RequireOne),
+		Async:        false,
+	})
+	defer writer.Close()
 
 	log.Debug("Kafka reader successfully created")
 
@@ -128,9 +140,12 @@ func main() {
 		}
 	}()
 
+	ns := notifysystem.NewNS(pdb, writer, log)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	go ns.Scheduler(ctx)
 	go s.ApplyAnswer(ctx)
 
 	quit := make(chan os.Signal, 1)
@@ -140,32 +155,35 @@ func main() {
 	gracefulShutdown(&s, srv)
 }
 
-func ensureTopics(kafkaAddr, kafkaTopic string) error {
+func ensureTopics(kafkaAddr string, topics ...string) error {
 	const op = "usersserver.ensureTopics"
 	client := &kafka.Client{
 		Addr:    kafka.TCP(kafkaAddr),
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := client.CreateTopics(context.Background(), &kafka.CreateTopicsRequest{
-		Topics: []kafka.TopicConfig{
-			{
-				Topic:             kafkaTopic,
-				NumPartitions:     1,
-				ReplicationFactor: 1,
-			},
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("%s: kafka create topics: %w", op, err)
+	topicsCfg := make([]kafka.TopicConfig, 0, len(topics))
+	for _, topic := range topics {
+		topicsCfg = append(topicsCfg, kafka.TopicConfig{
+			Topic:             topic,
+			NumPartitions:     1,
+			ReplicationFactor: 1,
+		})
 	}
 
-	for _, topicErr := range resp.Errors {
+	resp, err := client.CreateTopics(context.Background(), &kafka.CreateTopicsRequest{
+		Topics: topicsCfg,
+	})
+	if err != nil {
+		return fmt.Errorf("%s: kafka create topics:%w", op, err)
+	}
+
+	for topic, topicErr := range resp.Errors {
 		if topicErr != nil {
 			if errors.Is(topicErr, kafka.TopicAlreadyExists) {
-				return nil
+				continue
 			}
-			return fmt.Errorf("%s: kafka failed to create topic: %w", op, topicErr)
+			return fmt.Errorf("%s: kafka failed to create %q topic: %w", op, topic, topicErr)
 		}
 	}
 
