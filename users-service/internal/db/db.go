@@ -20,6 +20,7 @@ type DB struct {
 	bd  sq.StatementBuilderType
 }
 
+// User is a overall structure for any operations with user
 type User struct {
 	UUID              int64  `db:"uuid" json:"uuid"`
 	Level             string `db:"level" json:"level"`
@@ -72,12 +73,12 @@ func (d *DB) Close() error {
 }
 
 // RegUser add user to database.
-func (d *DB) RegUser(uuid int64, ctx context.Context, reqTrace string) error {
+func (d *DB) RegUser(uuid, chatID int64, ctx context.Context, reqTrace string) error {
 	const op = "db.RegUser"
 
 	query, args, err := d.bd.Insert("users").
-		Columns("uuid").
-		Values(uuid).
+		Columns("uuid", "chat_id").
+		Values(uuid, chatID).
 		ToSql()
 	if err != nil {
 		return fmt.Errorf("%s: build insert query: %w", op, err)
@@ -132,6 +133,30 @@ func (d *DB) GetUser(uuid int64, ctx context.Context, reqTrace string) (*User, e
 		zap.String("op", op))
 
 	return &user, nil
+}
+
+// GetUsersByID get 20 chat_id by 'id' - SERIAL field
+func (d *DB) GetUsersByID(ctx context.Context, id int32, chatBuf *[]int64) error {
+	const op = "db.GetUsersByID"
+
+	currentDay := time.Now().UTC().Unix() / 86400
+
+	query, args, err := d.bd.Select("chat_id").
+		From("users").
+		Where(sq.Gt{"id": id}).
+		Where(sq.Lt{"last_done_day": currentDay}).
+		OrderBy("id ASC").
+		Limit(20).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("%s: build get query", op)
+	}
+
+	if err := d.db.SelectContext(ctx, chatBuf, query, args...); err != nil {
+		return fmt.Errorf("%s: get users: %w", op, err)
+	}
+
+	return nil
 }
 
 // UpdateStreak atomically updates the streak of a user

@@ -62,7 +62,7 @@ func GetEnvInt(key string, defaultVal int) int {
 
 // Setup creates a new Server instance
 // with created services and middlewares
-func Setup(bot *tele.Bot, log *zap.Logger) *Server {
+func Setup(bot *tele.Bot, log *zap.Logger, ctxClose context.Context) *Server {
 	srv := &Server{
 		b:        bot,
 		log:      log,
@@ -90,7 +90,7 @@ func Setup(bot *tele.Bot, log *zap.Logger) *Server {
 	srv.sm = states
 
 	srv.setupMiddlewares(redisCtxTimeout, ratelimitTTL, pingTimeout)
-	srv.setupServices()
+	srv.setupServices(ctxClose)
 	srv.handleMessages(bot)
 
 	return srv
@@ -111,7 +111,7 @@ func (srv *Server) setupMiddlewares(ctxTimout, rlTTL, pingTimeout time.Duration)
 }
 
 // setupServices creates services and appends them to closable
-func (srv *Server) setupServices() {
+func (srv *Server) setupServices(ctx context.Context) {
 	aiTimeout := time.Duration(GetEnvInt("AI_TIMEOUT", 30))
 
 	usrsrv, err := users.NewUS(srv.ctxTimeout, srv.adminUUID,
@@ -133,6 +133,8 @@ func (srv *Server) setupServices() {
 		srv.log.Fatal("Failed to create ai service", zap.Error(err))
 	}
 	srv.aisrv = airsrv
+
+	go usrsrv.HandleNotifications(srv.b, ctx)
 
 	srv.closable = append(srv.closable, usrsrv, lrnsrv)
 }

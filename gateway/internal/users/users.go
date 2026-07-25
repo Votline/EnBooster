@@ -38,6 +38,7 @@ type UsersService struct {
 	conn        *grpc.ClientConn
 	client      pb.UsersServiceClient
 	kafkaWriter *kafka.Writer
+	kafkaReader *kafka.Reader
 }
 
 // getTLSConfig returns tls config from path with servername
@@ -84,6 +85,14 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		Async:    true,
 	}
 
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  []string{os.Getenv("KAFKA_ADDR")},
+		Topic:    os.Getenv("KAFKA_TOPIC_US_GTW"),
+		GroupID:  os.Getenv("KAFKA_GROUP_ID"),
+		MinBytes: 1,
+		MaxBytes: 10e6,
+	})
+
 	langLevels := make(map[string]struct{})
 	langLevelsStr := os.Getenv("LANG_LEVELS")
 	langLevelsSlc := strings.Split(langLevelsStr, " ")
@@ -106,6 +115,7 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		cb:          cbreaker.NewCB("users", log),
 		client:      pb.NewUsersServiceClient(conn),
 		kafkaWriter: writer,
+		kafkaReader: reader,
 	}
 
 	srv.registerRoutes(bot)
@@ -162,6 +172,7 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 	const op = "users.RegisterRoutes"
 
 	userID := c.Message().Sender.ID
+	chatID := c.Message().Chat.ID
 	var menu *tele.ReplyMarkup
 	if userID == us.adminUUID {
 		menu = us.uiInstns.AdminMain
@@ -181,7 +192,7 @@ func (us *UsersService) HandleRoutes(msg string, c tele.Context) error {
 			return fmt.Errorf("%s: send welcome message: %w", op, err)
 		}
 
-		if err := us.Register(userID, reqTrace); err != nil {
+		if err := us.Register(userID, chatID, reqTrace); err != nil {
 			return fmt.Errorf("%s: register user: %w", op, err)
 		}
 	case "Profile":
