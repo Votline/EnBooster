@@ -30,6 +30,7 @@ type UsersService struct {
 	name        string
 	adminUUID   int64
 	langLevels  map[string]struct{}
+	notifyMsgs  []string
 	uiInstns    *ui.UI
 	sm          *stm.StateManager
 	ctxTimeout  time.Duration
@@ -103,10 +104,13 @@ func NewUS(ctxTimeout time.Duration, adminUUID int64, uiInstns *ui.UI, sm *stm.S
 		langLevels[lvl] = struct{}{}
 	}
 
+	notifyMsgs := strings.Split(os.Getenv("NOTIFICATION_MESSAGES"), ";")
+
 	srv := &UsersService{
 		name:        "users",
 		adminUUID:   adminUUID,
 		langLevels:  langLevels,
+		notifyMsgs:  notifyMsgs,
 		uiInstns:    uiInstns,
 		sm:          sm,
 		ctxTimeout:  ctxTimeout,

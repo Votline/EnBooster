@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"strconv"
 	"strings"
 	"time"
@@ -410,8 +411,10 @@ func (us *UsersService) HandleNotifications(b *tele.Bot, ctx context.Context) er
 			continue
 		}
 
+		notifyMsg := us.notifyMsgs[rand.N(len(us.notifyMsgs))]
+
 		for _, chatID := range chatIds {
-			if _, err := b.Send(tele.ChatID(chatID), "DO THE FUCKING TASK"); err != nil {
+			if _, err := b.Send(tele.ChatID(chatID), notifyMsg); err != nil {
 				us.log.Error("Failed to send message",
 					zap.String("op", op),
 					zap.Error(err))
